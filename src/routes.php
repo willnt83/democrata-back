@@ -1,0 +1,353 @@
+<?php
+use Slim\Http\Request;
+use Slim\Http\Response;
+require '../classes/unidades.php';
+require '../classes/setores.php';
+require '../classes/subsetores.php';
+require '../classes/produtos.php';
+require '../classes/subprodutos.php';
+require '../classes/cores.php';
+require '../classes/usuarios.php';
+require '../classes/conjuntos.php';
+require '../classes/linhasDeProducao.php';
+require '../classes/producoes.php';
+require '../classes/perfis.php';
+require '../classes/funcionarios.php';
+require '../classes/diasNaoUteis.php';
+require '../classes/relatorios.php';
+require '../classes/codigoDeBarras.php';
+
+
+// Routes
+/************************ GET ************************/
+/* Unidades */
+$app->get('/getUnidades', function (Request $request, Response $response){
+    $classUnidades = new Unidades($this->db);
+    return $response->write($classUnidades->getUnidades($request->getQueryParams()));
+});
+
+$app->get('/deleteUnidade', function (Request $request, Response $response){
+    $classUnidades = new Unidades($this->db);
+    return $response->write($classUnidades->deleteUnidade($request->getQueryParams()));
+});
+
+/* Setores */
+$app->get('/getSetores', function (Request $request, Response $response){
+    $classSetores = new Setores($this->db);
+    return $response->write($classSetores->getSetores($request->getQueryParams()));
+});
+
+$app->get('/deleteSetor', function (Request $request, Response $response){
+    $classSetores = new Setores($this->db);
+    return $response->write($classSetores->deleteSetor($request->getQueryParams()));
+});
+
+$app->get('/getSetoresTitulo', function (Request $request, Response $response){
+    $classSetores = new Setores($this->db);
+    return $response->write($classSetores->getSetoresTitulo($request->getQueryParams()));
+});
+
+/* Subsetores */
+$app->get('/getSubsetores', function (Request $request, Response $response){
+    $classSubsetores = new Subsetores($this->db);
+    return $response->write($classSubsetores->getSubsetores($request->getQueryParams()));
+});
+
+$app->get('/deleteSubsetor', function (Request $request, Response $response){
+    $classSubsetores = new Subsetores($this->db);
+    return $response->write($classSubsetores->deleteSubsetor($request->getQueryParams()));
+});
+
+/* Produtos */
+$app->get('/getProdutos', function (Request $request, Response $response){
+    $classProdutos = new Produtos($this->db);
+    return $response->write($classProdutos->getProdutos($request->getQueryParams()));
+});
+
+$app->get('/getProdutosFull', function (Request $request, Response $response){
+    $classProdutos = new Produtos($this->db);
+    return $response->write($classProdutos->getProdutosFull($request->getQueryParams()));
+});
+
+$app->get('/deleteProduto', function (Request $request, Response $response){
+    $classProdutos = new Produtos($this->db);
+    return $response->write($classProdutos->deleteProduto($request->getQueryParams()));
+});
+
+/* Subprodutos */
+$app->get('/getSubprodutos', function (Request $request, Response $response){
+    $classSubprodutos = new Subprodutos($this->db);
+    return $response->write($classSubprodutos->getSubprodutos($request->getQueryParams()));
+});
+
+$app->get('/deleteSubproduto', function (Request $request, Response $response){
+    $classSubprodutos = new Subprodutos($this->db);
+    return $response->write($classSubprodutos->deleteSubproduto($request->getQueryParams()));
+});
+
+$app->get('/getSubprodutosPorProducaoSetor', function (Request $request, Response $response){
+    $classSubprodutos = new Subprodutos($this->db);
+    return $response->write($classSubprodutos->getSubprodutosPorProducaoSetor($request->getQueryParams()));
+});
+
+/* Cores */
+$app->get('/getCores', function (Request $request, Response $response){
+    $classCores = new Cores($this->db);
+    return $response->write($classCores->getCores($request->getQueryParams()));
+});
+
+$app->get('/deleteCor', function (Request $request, Response $response){
+    $classCores = new Cores($this->db);
+    return $response->write($classCores->deleteCor($request->getQueryParams()));
+});
+
+/* Usuários */
+$app->get('/getUsuarios', function (Request $request, Response $response){
+    $classUsuarios = new Usuarios($this->db);
+    return $response->write($classUsuarios->getUsuarios($request->getQueryParams()));
+});
+
+$app->get('/deleteUsuario', function (Request $request, Response $response){
+    $classUsuarios = new Usuarios($this->db);
+    return $response->write($classUsuarios->deleteUsuario($request->getQueryParams()));
+});
+
+$app->get('/logout', function (Request $request, Response $response){
+    $classUsuarios = new Usuarios($this->db);
+    return $response->write($classUsuarios->logout($request->getQueryParams()));
+});
+
+/* Conjuntos */
+$app->get('/getConjuntos', function (Request $request, Response $response){
+    $classConjuntos = new Conjuntos($this->db);
+    return $response->write($classConjuntos->getConjuntos($request->getQueryParams()));
+});
+
+$app->get('/deleteConjunto', function (Request $request, Response $response){
+    $classConjuntos = new Conjuntos($this->db);
+    return $response->write($classConjuntos->deleteConjunto($request->getQueryParams()));
+});
+
+/* Linhas de Produção */
+$app->get('/getLinhasDeProducao', function (Request $request, Response $response){
+    $classLinhasDeProducao = new LinhasDeProducao($this->db);
+    return $response->write($classLinhasDeProducao->getLinhasDeProducao($request->getQueryParams()));
+});
+
+$app->get('/deleteLinhaDeProducao', function (Request $request, Response $response){
+    $classLinhasDeProducao = new LinhasDeProducao($this->db);
+    return $response->write($classLinhasDeProducao->deleteLinhaDeProducao($request->getQueryParams()));
+});
+
+/* Setores por Linha de Produção */
+$app->get('/getSetoresPorLinhaDeProducao', function (Request $request, Response $response){
+    $classLinhasDeProducao = new LinhasDeProducao($this->db);
+    return $response->write($classLinhasDeProducao->getSetoresPorLinhaDeProducao($request->getQueryParams()));
+});
+
+/* Produção */
+$app->get('/getProducoesTitulo', function (Request $request, Response $response){
+    $classProducoes= new Producoes($this->db);
+    return $response->write($classProducoes->getProducoesTitulo($request->getQueryParams()));
+});
+
+$app->get('/getProducoes', function (Request $request, Response $response){
+    $classProducoes= new Producoes($this->db);
+    return $response->write($classProducoes->getProducoes($request->getQueryParams()));
+});
+
+$app->get('/getProducaoAcompanhamento', function (Request $request, Response $response){
+    $classProducoes= new Producoes($this->db);
+    return $response->write($classProducoes->getProducaoAcompanhamento($request->getQueryParams()));
+});
+
+/* Perfis */
+$app->get('/getPerfis', function (Request $request, Response $response){
+    $classPerfis = new Perfis($this->db);
+    return $response->write($classPerfis->getPerfis($request->getQueryParams()));
+});
+
+$app->get('/deletePerfil', function (Request $request, Response $response){
+    $classPerfis = new Perfis($this->db);
+    return $response->write($classPerfis->deletePerfil($request->getQueryParams()));
+});
+
+/* Funcionários */
+$app->get('/getFuncionarios', function (Request $request, Response $response){
+    $classFuncionarios = new Funcionarios($this->db);
+    return $response->write($classFuncionarios->getFuncionarios($request->getQueryParams()));
+});
+
+$app->get('/deleteFuncionario', function (Request $request, Response $response){
+    $classFuncionarios = new Funcionarios($this->db);
+    return $response->write($classFuncionarios->deleteFuncionario($request->getQueryParams()));
+});
+
+
+/* Dias não Úteis */
+$app->get('/getDiasNaoUteis', function (Request $request, Response $response){
+    $classDiasNaoUteis= new DiasNaoUteis($this->db);
+    return $response->write($classDiasNaoUteis->getDiasNaoUteis($request->getQueryParams()));
+});
+
+$app->get('/deleteDiaNaoUtil', function (Request $request, Response $response){
+    $classDiasNaoUteis = new DiasNaoUteis($this->db);
+    return $response->write($classDiasNaoUteis->deleteDiaNaoUtil($request->getQueryParams()));
+});
+
+/* Relatórios */
+$app->get('/reportProdutosCadastrados', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportProdutosCadastrados($request->getQueryParams()));
+});
+
+$app->get('/reportProducoes', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportProducoes($request->getQueryParams()));
+});
+
+$app->get('/reportFuncionariosPontuacoes', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportBonusPontuacao($request->getQueryParams()));
+});
+
+/* Código de Barras */
+$app->get('/gerarCodigosDeBarrasCSV', function (Request $request, Response $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->gerarCodigosDeBarrasCSV($request->getQueryParams()));
+});
+
+$app->get('/gerarCodigosDeBarras', function (Request $request, Response $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->gerarCodigosDeBarras($request->getQueryParams()));
+});
+
+$app->get('/getCodigosDeBarrasLancados', function (Request $request, Response $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->getCodigosDeBarrasLancados($request->getQueryParams()));
+});
+
+$app->get('/getCodigosDeBarrasProducao', function (Request $request, Response $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->getCodigosDeBarrasProducao($request->getQueryParams()));
+});
+
+$app->get('/getCodigosDeBarrasEstornados', function (Request $request, Response $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->getCodigosDeBarrasEstornados($request->getQueryParams()));
+});
+/*****************************************************/
+
+
+
+/************************ POST ************************/
+/* Unidades */
+$app->post('/createUpdateUnidade', function ($request, $response){
+    $classUnidades = new Unidades($this->db);
+    return $response->write($classUnidades->createUpdateUnidade(json_decode($request->getBody(), true)));
+});
+
+/* Setores */
+$app->post('/createUpdateSetor', function ($request, $response){
+    $classSetores = new Setores($this->db);
+    return $response->write($classSetores->createUpdateSetor(json_decode($request->getBody(), true)));
+});
+
+/* Subsetores */
+$app->post('/createUpdateSubsetor', function ($request, $response){
+    $classSubsetores = new Subsetores($this->db);
+    return $response->write($classSubsetores->createUpdateSubsetor(json_decode($request->getBody(), true)));
+});
+
+/* Produtos */
+$app->post('/createUpdateProduto', function ($request, $response){
+    $classProdutos = new Produtos($this->db);
+    return $response->write($classProdutos->createUpdateProduto(json_decode($request->getBody(), true)));
+});
+
+/* Subprodutos */
+$app->post('/createUpdateSubproduto', function ($request, $response){
+    $classSubprodutos = new Subprodutos($this->db);
+    return $response->write($classSubprodutos->createUpdateSubproduto(json_decode($request->getBody(), true)));
+});
+
+/* Cores */
+$app->post('/createUpdateCor', function ($request, $response){
+    $classCores = new Cores($this->db);
+    return $response->write($classCores->createUpdateCor(json_decode($request->getBody(), true)));
+});
+
+/* Usuários */
+$app->post('/createUpdateUsuario', function ($request, $response){
+    $classUsuarios = new Usuarios($this->db);
+    return $response->write($classUsuarios->createUpdateUsuario(json_decode($request->getBody(), true)));
+});
+
+
+$app->post('/login', function ($request, $response){
+    $classUsuarios = new Usuarios($this->db);
+    return $response->write($classUsuarios->login(json_decode($request->getBody(), true)));
+});
+
+/* Conjuntos */
+$app->post('/createUpdateConjunto', function ($request, $response){
+    $classConjuntos = new Conjuntos($this->db);
+    return $response->write($classConjuntos->createUpdateConjunto(json_decode($request->getBody(), true)));
+});
+
+/* Linhas de Produção */
+$app->post('/createUpdateLinhaDeProducao', function ($request, $response){
+    $classLinhasDeProducao = new LinhasDeProducao($this->db);
+    return $response->write($classLinhasDeProducao->createUpdateLinhaDeProducao(json_decode($request->getBody(), true)));
+});
+
+/* Produções */
+$app->post('/createUpdateProducao', function ($request, $response){
+    $classProducoes = new Producoes($this->db);
+    return $response->write($classProducoes->createUpdateProducao(json_decode($request->getBody(), true)));
+});
+
+$app->post('/deleteProducao', function ($request, $response){
+    $classProducoes = new Producoes($this->db);
+    return $response->write($classProducoes->deleteProducao(json_decode($request->getBody(), true)));
+});
+
+$app->post('/updateRealizadoQuantidade', function ($request, $response){
+    $classProducoes = new Producoes($this->db);
+    return $response->write($classProducoes->updateRealizadoQuantidade(json_decode($request->getBody(), true)));
+});
+
+/* Perfis */
+$app->post('/createUpdatePerfil', function ($request, $response){
+    $classPerfis = new Perfis($this->db);
+    return $response->write($classPerfis->createUpdatePerfil(json_decode($request->getBody(), true)));
+});
+
+/* Funcionários */
+$app->post('/createUpdateFuncionario', function ($request, $response){
+    $classFuncionarios = new Funcionarios($this->db);
+    return $response->write($classFuncionarios->createUpdateFuncionario(json_decode($request->getBody(), true)));
+});
+
+/* Dias não Úteis */
+$app->post('/createUpdateDiaNaoUtil', function ($request, $response){
+    $classDiasNaoUteis = new DiasNaoUteis($this->db);
+    return $response->write($classDiasNaoUteis->createUpdateDiaNaoUtil(json_decode($request->getBody(), true)));
+});
+
+/* Código de Barras */
+$app->post('/lancamentoCodigoDeBarras', function ($request, $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->lancamentoCodigoDeBarras(json_decode($request->getBody(), true)));
+});
+
+$app->post('/conferenciaCodigoDeBarras', function ($request, $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->conferenciaCodigoDeBarras(json_decode($request->getBody(), true)));
+});
+
+$app->post('/estornoCodigoDeBarras', function ($request, $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->estornoCodigoDeBarras(json_decode($request->getBody(), true)));
+});
+/******************************************************/
