@@ -6,6 +6,8 @@ require '../classes/setores.php';
 require '../classes/subsetores.php';
 require '../classes/produtos.php';
 require '../classes/subprodutos.php';
+require '../classes/insumos.php';
+require '../classes/unidadesmedidas.php';
 require '../classes/cores.php';
 require '../classes/usuarios.php';
 require '../classes/conjuntos.php';
@@ -183,7 +185,6 @@ $app->get('/deleteFuncionario', function (Request $request, Response $response){
     return $response->write($classFuncionarios->deleteFuncionario($request->getQueryParams()));
 });
 
-
 /* Dias não Úteis */
 $app->get('/getDiasNaoUteis', function (Request $request, Response $response){
     $classDiasNaoUteis= new DiasNaoUteis($this->db);
@@ -193,6 +194,28 @@ $app->get('/getDiasNaoUteis', function (Request $request, Response $response){
 $app->get('/deleteDiaNaoUtil', function (Request $request, Response $response){
     $classDiasNaoUteis = new DiasNaoUteis($this->db);
     return $response->write($classDiasNaoUteis->deleteDiaNaoUtil($request->getQueryParams()));
+});
+
+/* Insumos */
+$app->get('/getInsumos', function (Request $request, Response $response){
+    $classInsumos = new Insumos($this->db);
+    return $response->write($classInsumos->getInsumos($request->getQueryParams()));
+});
+
+$app->get('/deleteInsumo', function (Request $request, Response $response){
+    $classInsumos = new Insumos($this->db);
+    return $response->write($classInsumos->deleteInsumo($request->getQueryParams()));
+});
+
+/* Unidade de Medidas */
+$app->get('/getUnidadesMedidas', function (Request $request, Response $response){
+    $classUnidadesMedidas = new UnidadesMedidas($this->db);
+    return $response->write($classUnidadesMedidas->getUnidadesMedidas($request->getQueryParams()));
+});
+
+$app->get('/deleteUnidadeMedida', function (Request $request, Response $response){
+    $classUnidadesMedidas = new UnidadesMedidas($this->db);
+    return $response->write($classUnidadesMedidas->deleteUnidadeMedida($request->getQueryParams()));
 });
 
 /* Relatórios */
@@ -283,7 +306,6 @@ $app->post('/createUpdateUsuario', function ($request, $response){
     return $response->write($classUsuarios->createUpdateUsuario(json_decode($request->getBody(), true)));
 });
 
-
 $app->post('/login', function ($request, $response){
     $classUsuarios = new Usuarios($this->db);
     return $response->write($classUsuarios->login(json_decode($request->getBody(), true)));
@@ -333,6 +355,18 @@ $app->post('/createUpdateFuncionario', function ($request, $response){
 $app->post('/createUpdateDiaNaoUtil', function ($request, $response){
     $classDiasNaoUteis = new DiasNaoUteis($this->db);
     return $response->write($classDiasNaoUteis->createUpdateDiaNaoUtil(json_decode($request->getBody(), true)));
+});
+
+/* Insumos */
+$app->post('/createUpdateInsumo', function ($request, $response){
+    $classInsumos = new Insumos($this->db);
+    return $response->write($classInsumos->createUpdateInsumo(json_decode($request->getBody(), true)));
+});
+
+/* Unidade de Medidas */
+$app->post('/createUpdateUnidadeMedidas', function ($request, $response){
+    $classUnidadesMedidas = new UnidadesMedidas($this->db);
+    return $response->write($classUnidadesMedidas->createUpdateUnidadeMedidas(json_decode($request->getBody(), true)));
 });
 
 /* Código de Barras */
