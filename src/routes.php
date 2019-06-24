@@ -7,7 +7,9 @@ require '../classes/subsetores.php';
 require '../classes/produtos.php';
 require '../classes/subprodutos.php';
 require '../classes/insumos.php';
-require '../classes/unidadesmedidas.php';
+require '../classes/unidadesmedida.php';
+require '../classes/almoxarifados.php';
+require '../classes/posicaoArmazem.php';
 require '../classes/cores.php';
 require '../classes/usuarios.php';
 require '../classes/conjuntos.php';
@@ -207,15 +209,37 @@ $app->get('/deleteInsumo', function (Request $request, Response $response){
     return $response->write($classInsumos->deleteInsumo($request->getQueryParams()));
 });
 
-/* Unidade de Medidas */
-$app->get('/getUnidadesMedidas', function (Request $request, Response $response){
-    $classUnidadesMedidas = new UnidadesMedidas($this->db);
-    return $response->write($classUnidadesMedidas->getUnidadesMedidas($request->getQueryParams()));
+/* Unidades de Medida */
+$app->get('/getUnidadesMedida', function (Request $request, Response $response){
+    $classUnidadesMedida = new UnidadesMedida($this->db);
+    return $response->write($classUnidadesMedida->getUnidadesMedida($request->getQueryParams()));
 });
 
 $app->get('/deleteUnidadeMedida', function (Request $request, Response $response){
-    $classUnidadesMedidas = new UnidadesMedidas($this->db);
-    return $response->write($classUnidadesMedidas->deleteUnidadeMedida($request->getQueryParams()));
+    $classUnidadesMedida = new UnidadesMedida($this->db);
+    return $response->write($classUnidadesMedida->deleteUnidadeMedida($request->getQueryParams()));
+});
+
+/* Almoxarifados */
+$app->get('/getAlmoxarifados', function (Request $request, Response $response){
+    $classAlmoxarifados = new Almoxarifados($this->db);
+    return $response->write($classAlmoxarifados->getAlmoxarifados($request->getQueryParams()));
+});
+
+$app->get('/deleteAlmoxarifado', function (Request $request, Response $response){
+    $classAlmoxarifados = new Almoxarifados($this->db);
+    return $response->write($classAlmoxarifados->deleteAlmoxarifado($request->getQueryParams()));
+});
+
+/* Almoxarifados */
+$app->get('/getPosicaoArmazens', function (Request $request, Response $response){
+    $classPosicaoArmazem = new PosicaoArmazem($this->db);
+    return $response->write($classPosicaoArmazem->getPosicaoArmazens($request->getQueryParams()));
+});
+
+$app->get('/deletePosicaoArmazem', function (Request $request, Response $response){
+    $classPosicaoArmazem = new PosicaoArmazem($this->db);
+    return $response->write($classPosicaoArmazem->deletePosicaoArmazem($request->getQueryParams()));
 });
 
 /* Relatórios */
@@ -363,11 +387,23 @@ $app->post('/createUpdateInsumo', function ($request, $response){
     return $response->write($classInsumos->createUpdateInsumo(json_decode($request->getBody(), true)));
 });
 
-/* Unidade de Medidas */
-$app->post('/createUpdateUnidadeMedidas', function ($request, $response){
-    $classUnidadesMedidas = new UnidadesMedidas($this->db);
-    return $response->write($classUnidadesMedidas->createUpdateUnidadeMedidas(json_decode($request->getBody(), true)));
+/* Unidades de Medida */
+$app->post('/createUpdateUnidadeMedida', function ($request, $response){
+    $classUnidadesMedida = new UnidadesMedida($this->db);
+    return $response->write($classUnidadesMedida->createUpdateUnidadeMedida(json_decode($request->getBody(), true)));
 });
+
+/* Almoxarifados */
+$app->post('/createUpdateAlmoxarifado', function ($request, $response){
+    $classAlmoxarifados = new Almoxarifados($this->db);
+    return $response->write($classAlmoxarifados->createUpdateAlmoxarifado(json_decode($request->getBody(), true)));
+});
+
+$app->post('/createUpdatePosicaoArmazem', function ($request, $response){
+    $classPosicaoArmazem = new PosicaoArmazem($this->db);
+    return $response->write($classPosicaoArmazem->createUpdatePosicaoArmazem(json_decode($request->getBody(), true)));
+});
+
 
 /* Código de Barras */
 $app->post('/lancamentoCodigoDeBarras', function ($request, $response){

@@ -18,9 +18,12 @@ class Insumos{
         }
 
         $sql = '
-            select  insumos.*, unidade.id idUnidadeMedidas, unidade.nome nomeUnidadeMedidas
+            select  insumos.id, insumos.nome, insumos.ativo, insumos.categoria, 
+                    unidadesMedida.id idUnidadeMedida, unidadesMedida.nome nomeUnidadeMedida,
+                    unidade.id idUnidade, unidade.nome nomeUnidade
             from    pcp_insumos as insumos
-                    join pcp_unidades_medidas as unidade on insumos.id_unidade_medidas = unidade.id
+                    join pcp_unidades_medida as unidadesMedida on insumos.id_unidade_medida = unidadesMedida.id
+                    join pcp_unidades as unidade on insumos.id_unidade = unidade.id
             '.$where.'
             order by id';
 
@@ -29,13 +32,10 @@ class Insumos{
 
         $responseData = array();
         while ($row = $stmt->fetch()) {
-            $responseData[] = array(
-                'id' => (int)$row->id,
-                'nome' => $row->nome,
-                'ativo' => $row->ativo,
-                'idUnidadeMedidas' => $row->idUnidadeMedidas,
-                'nomeUnidadeMedidas' => $row->nomeUnidadeMedidas,
-            );
+            $row->id = (int) $row->id;
+            $row->idUnidade = (int) $row->idUnidade;
+            $row->idUnidadeMedida = (int) $row->idUnidadeMedida;
+            $responseData[] = $row;
         }
 
         return json_encode(array(
@@ -51,8 +51,12 @@ class Insumos{
                 throw new \Exception('Campo Nome é obrigatório.');
             if(!array_key_exists('ativo', $request) or $request['ativo'] === '' or $request['ativo'] === null)
                 throw new \Exception('Campo Ativo é obrigatório.');
-            if(!array_key_exists('unidademedidas', $request) or $request['unidademedidas'] === '' or $request['unidademedidas'] === null)
-                throw new \Exception('Campo Unidade de Medidas é obrigatório.');    
+            if(!array_key_exists('categoria', $request) or $request['categoria'] === '' or $request['categoria'] === null)
+                throw new \Exception('Campo Categoria é obrigatório.');                
+            if(!array_key_exists('unidade', $request) or $request['unidade'] === '' or $request['unidade'] === null)
+                throw new \Exception('Campo Unidade é obrigatório.');                  
+            if(!array_key_exists('unidademedida', $request) or $request['unidademedida'] === '' or $request['unidademedida'] === null)
+                throw new \Exception('Campo Unidade de Medida é obrigatório.');    
 
             if($request['id']){
                 // Edit
@@ -61,7 +65,9 @@ class Insumos{
                     set
                         nome = :nome,
                         ativo = :ativo,
-                        id_unidade_medidas = :unidademedidas
+                        categoria =:categoria,
+                        id_unidade_medida = :unidademedida,
+                        id_unidade = :unidade
                     where id = :id';
                 $msg = 'Insumo atualizado com sucesso.';
             }
@@ -71,7 +77,9 @@ class Insumos{
                     set
                         nome = :nome,
                         ativo = :ativo,
-                        id_unidade_medidas = :unidademedidas';
+                        categoria = :categoria,
+                        id_unidade_medida = :unidademedida,
+                        id_unidade = :unidade';
                 $msg = 'Insumo cadastrado com sucesso.';
             }
 
@@ -79,7 +87,10 @@ class Insumos{
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':nome', $request['nome']);
             $stmt->bindParam(':ativo', $request['ativo']);
-            $stmt->bindParam(':unidademedidas', $request['unidademedidas']);
+            $stmt->bindParam(':categoria', $request['categoria']);   
+            $stmt->bindParam(':unidade', $request['unidade']);         
+            $stmt->bindParam(':unidademedida', $request['unidademedida']);
+            if($request['id']) $stmt->bindParam(':id', $request['id']);
             $stmt->execute();
 
             // Reponse

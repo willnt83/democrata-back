@@ -1,11 +1,11 @@
 <?php
 
-class UnidadesMedidas{
+class Almoxarifados{
     public function __construct($db){
         $this->pdo = $db;
     }
 
-    public function getUnidadesMedidas($filters){
+    public function getAlmoxarifados($filters){
         $where = '';
         if(count($filters) > 0){
             $where = 'where ';
@@ -19,7 +19,7 @@ class UnidadesMedidas{
 
         $sql = '
             select *
-            from pcp_unidades_medidas
+            from pcp_almoxarifado
             '.$where.'
             order by id;
         ';
@@ -30,7 +30,7 @@ class UnidadesMedidas{
         $responseData = array();
         while ($row = $stmt->fetch()) {
             $responseData[] = array(
-                'id' => (int)$row->id,
+                'id' => (int) $row->id,
                 'nome' => $row->nome,
                 'ativo' => $row->ativo,
             );
@@ -42,7 +42,7 @@ class UnidadesMedidas{
         ));
     }
 
-    public function createUpdateUnidadeMedidas($request){
+    public function createUpdateAlmoxarifado($request){
         try{
             // Validações
             if(!array_key_exists('nome', $request)
@@ -55,7 +55,7 @@ class UnidadesMedidas{
             if($request['id']){
                 // Edit
                 $sql = '
-                    update pcp_unidades_medidas
+                    update pcp_almoxarifado
                     set
                         nome = :nome,
                         ativo = :ativo
@@ -68,11 +68,11 @@ class UnidadesMedidas{
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();
 
-                $msg = 'Unidade de Medidas atualizada com sucesso.';
+                $msg = 'Almoxarifado atualizado com sucesso.';
             }
             else{
                 $sql = '
-                    insert into pcp_unidades_medidas
+                    insert into pcp_almoxarifado
                     set
                         nome = :nome,
                         ativo = :ativo
@@ -82,7 +82,7 @@ class UnidadesMedidas{
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();
 
-                $msg = 'Unidade de Medidas cadastrada com sucesso.';
+                $msg = 'Almoxarifado cadastrado com sucesso.';
             }
 
             // Reponse
@@ -98,10 +98,10 @@ class UnidadesMedidas{
         }
     }
 
-    public function deleteUnidadeMedidas($filters){
+    public function deleteAlmoxarifado($filters){
         try{
             $sql = '
-                delete from pcp_unidades_medidas
+                delete from pcp_almoxarifado
                 where id = :id
             ';
             $stmt = $this->pdo->prepare($sql);
@@ -110,7 +110,7 @@ class UnidadesMedidas{
 
             return json_encode(array(
                 'success' => true,
-                'msg' => 'Unidade de Medidas removida com sucesso.'
+                'msg' => 'Almoxarifado removido com sucesso.'
             ));
         }
         catch(PDOException $e){
