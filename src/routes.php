@@ -249,6 +249,11 @@ $app->get('/getPedidosCompra', function (Request $request, Response $response){
     return $response->write($classPedidosCompra->getPedidosCompra($request->getQueryParams()));
 });
 
+$app->get('/getPedidosCompraInsumos', function (Request $request, Response $response){
+    $classPedidosCompra = new PedidosCompra($this->db);
+    return $response->write($classPedidosCompra->getPedidosCompraInsumos($request->getQueryParams()));
+});
+
 $app->get('/deletePedidoCompra', function (Request $request, Response $response){
     $classPedidosCompra = new PedidosCompra($this->db);
     return $response->write($classPedidosCompra->deletePedidoCompra($request->getQueryParams()));

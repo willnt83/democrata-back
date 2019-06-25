@@ -23,6 +23,43 @@ class PedidosCompra{
             }
         }
 
+        $responseData = array();
+
+        $sql = 'select 	pc.id, pc.data_pedido, pc.hora_pedido, pc.status as statusPedido, count(*) as insumos
+                from	pcp_pedidos pc
+                        inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
+                '.$where.'
+                group by pc.id
+                order by pc.id, pci.id_insumo';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($filters);
+        while ($row = $stmt->fetch()) {
+            $responseData[] = array(
+                'id'            => (int) $row->id,
+                'data_pedido'   => $row->data_pedido,
+                'hora_pedido'   => $row->hora_pedido,
+                'insumos'       => array()
+            );
+        }
+
+        return json_encode(array(
+            'success' => true,
+            'payload' => $responseData
+        ));
+    }
+
+    public function getPedidosCompraInsumos($filters){
+        $where = '';
+        if(count($filters) > 0){
+            $where = 'where ';
+            $i = 0;
+            foreach($filters as $key => $value){
+                $and = $i > 0 ? ' and ' : '';
+                $where .= $and.'pc.'.$key.' = :'.$key;
+                $i++;
+            }
+        }
+
         $sql = 'select 	pc.id, pc.data_pedido, pc.hora_pedido, pc.status as statusPedido,
                         pci.id_insumo as idInsumo, ins.nome as nomeInsumo, pci.status as statusInsumo,
                         pci.chave_nf, pci.data_prevista_entrega, pci.local, pci.quantidade, pci.quantidade_conferida,
