@@ -18,7 +18,7 @@ class Insumos{
         }
 
         $sql = '
-            select  insumos.id, insumos.nome, insumos.ativo, insumos.categoria, 
+            select  insumos.id, insumos.nome, insumos.ins, insumos.ativo, insumos.categoria, 
                     unidadesMedida.id idUnidadeMedida, unidadesMedida.nome nomeUnidadeMedida,
                     unidade.id idUnidade, unidade.nome nomeUnidade
             from    pcp_insumos as insumos
@@ -49,6 +49,8 @@ class Insumos{
             // Validações
             if(!array_key_exists('nome', $request) or $request['nome'] === '' or $request['nome'] === null)
                 throw new \Exception('Campo Nome é obrigatório.');
+            if(!array_key_exists('ins', $request) or $request['ins'] === '' or $request['ins'] === null)
+                throw new \Exception('Campo INS é obrigatório.');                
             if(!array_key_exists('ativo', $request) or $request['ativo'] === '' or $request['ativo'] === null)
                 throw new \Exception('Campo Ativo é obrigatório.');
             if(!array_key_exists('categoria', $request) or $request['categoria'] === '' or $request['categoria'] === null)
@@ -64,6 +66,7 @@ class Insumos{
                     update pcp_insumos
                     set
                         nome = :nome,
+                        ins = :ins,
                         ativo = :ativo,
                         categoria =:categoria,
                         id_unidade_medida = :unidademedida,
@@ -76,6 +79,7 @@ class Insumos{
                     insert into pcp_insumos
                     set
                         nome = :nome,
+                        ins = :ins,
                         ativo = :ativo,
                         categoria = :categoria,
                         id_unidade_medida = :unidademedida,
@@ -86,6 +90,7 @@ class Insumos{
             // Executing the statement
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':nome', $request['nome']);
+            $stmt->bindParam(':ins', $request['ins']);
             $stmt->bindParam(':ativo', $request['ativo']);
             $stmt->bindParam(':categoria', $request['categoria']);   
             $stmt->bindParam(':unidade', $request['unidade']);         
