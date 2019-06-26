@@ -25,20 +25,28 @@ class PedidosCompra{
 
         $responseData = array();
 
-        $sql = 'select 	pc.id, pc.data_pedido, pc.hora_pedido, pc.status as statusPedido, count(*) as insumos
+        $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf, pc.status as statusPedido, 
+                        pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor, count(*) as insumos
                 from	pcp_pedidos pc
                         inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
+                        inner join pcp_fornecedores f on pc.id_fornecedor = f.id
                 '.$where.'
                 group by pc.id
                 order by pc.id, pci.id_insumo';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);
         while ($row = $stmt->fetch()) {
+            $dthr_pedido = split(' ', $row->dthr_pedido);            
             $responseData[] = array(
-                'id'            => (int) $row->id,
-                'data_pedido'   => $row->data_pedido,
-                'hora_pedido'   => $row->hora_pedido,
-                'insumos'       => array()
+                'id'                => (int) $row->id,
+                'data_pedido'       => $dthr_pedido[0] ? $dthr_pedido[0] : null,
+                'hora_pedido'       => $dthr_pedido[1] ? $dthr_pedido[1] : null,
+                'data_prevista'     => $row->dt_prevista,
+                'idFornecedor'      => $row->idFornecedor,
+                'nomeFornecedor'    => $row->nomeFornecedor,
+                'chave_nf'          => $row->chave_nf,
+                'status'            => $row->statusPedido,
+                'insumos'           => array()
             );
         }
 
@@ -60,14 +68,14 @@ class PedidosCompra{
             }
         }
 
-        $sql = 'select 	pc.id, pc.data_pedido, pc.hora_pedido, pc.status as statusPedido,
-                        pci.id_insumo as idInsumo, ins.nome as nomeInsumo, pci.status as statusInsumo,
-                        pci.chave_nf, pci.data_prevista_entrega, pci.local, pci.quantidade, pci.quantidade_conferida,
-                        pci.data_recebimento, pci.hora_recebimento, pci.id_fornecedor as idFornecedor, f.nome as nomeFornecedor
+        $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf, pc.status as statusPedido,
+                        pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor,
+                        pci.id_insumo as idInsumo, ins.nome as nomeInsumo, ins.ins, pci.status as statusInsumo,
+                        pci.quantidade, pci.quantidade_conferida, pci.dthr_recebimento, pci.local
                 from	pcp_pedidos pc
                         inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
                         inner join pcp_insumos ins on pci.id_insumo = ins.id
-                        inner join pcp_fornecedores f on pci.id_fornecedor = f.id
+                        inner join pcp_fornecedores f on pc.id_fornecedor = f.id
                 '.$where.'
                 order by pc.id, pci.id_insumo';
         $stmt = $this->pdo->prepare($sql);
@@ -79,29 +87,33 @@ class PedidosCompra{
         while ($row = $stmt->fetch()) {
             // Pedido
             if ($pedidoId != (int) $row->id) {
+                $dthr_pedido = split(' ', $row->dthr_pedido);
                 $responseData[] = array(
-                    'id'            => (int) $row->id,
-                    'data_pedido'   => $row->data_pedido,
-                    'hora_pedido'   => $row->hora_pedido,
-                    'insumos'       => array()
+                    'id'                => (int) $row->id,
+                    'data_pedido'       => $dthr_pedido[0] ? $dthr_pedido[0] : null,
+                    'hora_pedido'       => $dthr_pedido[1] ? $dthr_pedido[1] : null,
+                    'data_prevista'     => $row->dt_prevista,
+                    'idFornecedor'      => $row->idFornecedor,
+                    'nomeFornecedor'    => $row->nomeFornecedor,
+                    'chave_nf'          => $row->chave_nf,
+                    'status'            => $row->statusPedido,
+                    'insumos'           => array()
                 );
                 $i++;
             }
 
             // Insumos
+            $dthr_recebimento = split(' ', $row->dthr_recebimento);
             $responseData[($i-1)]['insumos'][] = array(
                 'id'                    => (int) $row->idInsumo,
                 'nome'                  => $row->nomeInsumo,
+                'ins'                   => $row->ins,
                 'quantidade'            => (float) $row->quantidade,
-                'quantidade_conferida'  => (float) $row->quantidade_conferida,
-                'idFornecedor'          => (int) $row->idFornecedor,
-                'nomeFornecedor'        => (int) $row->nomeFornecedor,
-                'chave_nf'              => $row->chave_nf,
-                'data_prevista_entrega' => $row->data_prevista_entrega,
-                'data_recebimento'      => $row->data_recebimento,
-                'hora_recebimento'      => $row->hora_recebimento,
+                'quantidade_conferida'  => (float) $row->quantidade_conferida,                                
+                'data_recebimento'      => $dthr_recebimento[0] ? $dthr_recebimento[0] : null,
+                'hora_recebimento'      => $dthr_recebimento[1] ? $dthr_recebimento[1] : null,
                 'local'                 => $row->local,
-                'status'                => $row->status
+                'status'                => $row->statusInsumo
             );
 
             $pedidoId = $row->id;
