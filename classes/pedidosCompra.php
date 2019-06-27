@@ -131,7 +131,19 @@ class PedidosCompra{
             if(!array_key_exists('data_pedido', $request) or $request['data_pedido'] === '' or $request['data_pedido'] === null)
                 throw new \Exception('Data do pedido é obrigatório.');
             if(!array_key_exists('hora_pedido', $request) or $request['hora_pedido'] === '' or $request['hora_pedido'] === null)
-                throw new \Exception('Hora do pedido é obrigatório.');             
+                throw new \Exception('Hora do pedido é obrigatória.');
+            if(!array_key_exists('chave_nf', $request) or $request['chave_nf'] === '' or $request['chave_nf'] === null)
+                throw new \Exception('Chave da Nota Fiscal é obrigatória.');
+            if(!array_key_exists('idFornecedor', $request) or $request['idFornecedor'] === '' or $request['idFornecedor'] === null)
+                throw new \Exception('Fornecedor é obrigatório.');
+            if(!array_key_exists('data_prevista', $request) or $request['data_prevista'] === '' or $request['data_prevista'] === null)
+                throw new \Exception('Data de previsão é obrigatória.');                              
+
+            // Valida os insumos
+            foreach($request['insumos'] as $key => $insumo){
+                if(!array_key_exists('id_insumo', $insumo) or $request['id_insumo'] === '' or $request['id_insumo'] === null)
+                    throw new \Exception('Insumo é obrigatório.');
+            }
 
             // Status do Pedido
             if(!array_key_exists('status', $request) or !in_array(trim(strtoupper($request['status'])),$this->statusPedidoArray))
@@ -141,14 +153,19 @@ class PedidosCompra{
             if($request['id']){
                 // Edit
                 $sql = 'update  pcp_pedidos
-                        set     data_pedido = :data_pedido,
-                                hora_pedido = :hora_pedido,
+                        set     dthr_pedido = CONCAT(:data_pedido," ",:hora_pedido),
+                                chave_nf = :chave_nf,
+                                id_fornecedor = :id_fornecedor,
+                                dt_prevista = :dt_prevista,
                                 status = :status
                         where   id = :id';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':id', $request['id']);
                 $stmt->bindParam(':data_pedido', $request['data_pedido']);
                 $stmt->bindParam(':hora_pedido', $request['hora_pedido']);
+                $stmt->bindParam(':chave_nf', $request['chave_nf']);
+                $stmt->bindParam(':id_fornecedor', $request['idFornecedor']);
+                $stmt->bindParam(':dt_prevista', $request['data_prevista']);
                 $stmt->bindParam(':status', trim(strtoupper($request['status'])));
                 $stmt->execute();
                 $pedidoId = $request['id'];
@@ -156,12 +173,17 @@ class PedidosCompra{
             }
             else{
                 $sql = 'insert into pcp_pedidos
-                        set data_pedido = :data_pedido,
-                            hora_pedido = :hora_pedido,
+                        set dthr_pedido = CONCAT(:data_pedido," ",:hora_pedido),
+                            chave_nf = :chave_nf,
+                            id_fornecedor = :id_fornecedor,
+                            dt_prevista = :dt_prevista,
                             status = :status';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':data_pedido', $request['data_pedido']);
                 $stmt->bindParam(':hora_pedido', $request['hora_pedido']);
+                $stmt->bindParam(':chave_nf', $request['chave_nf']);
+                $stmt->bindParam(':id_fornecedor', $request['idFornecedor']);
+                $stmt->bindParam(':dt_prevista', $request['data_prevista']);
                 $stmt->bindParam(':status', trim(strtoupper($request['status'])));
                 $stmt->execute();
                 $pedidoId = $this->pdo->lastInsertId();
@@ -183,21 +205,15 @@ class PedidosCompra{
                 $sql = 'insert into pcp_pedidos_insumos
                         set id_pedido = :id_pedido,
                             id_insumo = :id_insumo,
-                            id_fornecedor = :id_fornecedor,
                             quantidade = :quantidade,
-                            chave_nf = :chave_nf,
-                            data_prevista_entrega = :data_prevista_entrega,
                             data_recebimento = :data_recebimento,
-                            hora_recebimento = :hora_recebimento,
-                            local = :local,
+                            dthr_recebimento = CONCAT(:data_recebimento," ",:hora_recebimento),                            local = :local,
                             status = :status';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':id_pedido', $pedidoId);
                 $stmt->bindParam(':id_insumo', $insumo['id']);
-                $stmt->bindParam(':id_fornecedor', $insumo['id_fornecedor']);
                 $stmt->bindParam(':quantidade', $insumo['quantidade']);
-                $stmt->bindParam(':chave_nf', $insumo['chave_nf']);
-                $stmt->bindParam(':data_prevista_entrega', $insumo['data_prevista_entrega']);
+
                 $stmt->bindParam(':data_recebimento', $insumo['data_recebimento']);
                 $stmt->bindParam(':hora_recebimento', $insumo['hora_recebimento']);
                 $stmt->bindParam(':local', $insumo['local']);

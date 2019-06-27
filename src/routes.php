@@ -221,6 +221,17 @@ $app->get('/deleteUnidadeMedida', function (Request $request, Response $response
     return $response->write($classUnidadesMedida->deleteUnidadeMedida($request->getQueryParams()));
 });
 
+/* Fornecedores */
+$app->get('/getFornecedores', function (Request $request, Response $response){
+    $classFornecedores = new Fornecedores($this->db);
+    return $response->write($classFornecedores->getFornecedores($request->getQueryParams()));
+});
+
+$app->get('/deleteFornecedor', function (Request $request, Response $response){
+    $classFornecedores = new Fornecedores($this->db);
+    return $response->write($classFornecedores->deleteFornecedor($request->getQueryParams()));
+});
+
 /* Almoxarifados */
 $app->get('/getAlmoxarifados', function (Request $request, Response $response){
     $classAlmoxarifados = new Almoxarifados($this->db);
@@ -408,6 +419,12 @@ $app->post('/createUpdateInsumo', function ($request, $response){
 $app->post('/createUpdateUnidadeMedida', function ($request, $response){
     $classUnidadesMedida = new UnidadesMedida($this->db);
     return $response->write($classUnidadesMedida->createUpdateUnidadeMedida(json_decode($request->getBody(), true)));
+});
+
+/* Fornecedores */
+$app->post('/createUpdateFornecedor', function ($request, $response){
+    $classFornecedores = new Fornecedores($this->db);
+    return $response->write($classFornecedores->createUpdateFornecedor(json_decode($request->getBody(), true)));
 });
 
 /* Almoxarifados */
