@@ -9,6 +9,7 @@ require '../classes/subprodutos.php';
 require '../classes/insumos.php';
 require '../classes/unidadesmedida.php';
 require '../classes/almoxarifados.php';
+require '../classes/fornecedores.php';
 require '../classes/posicaoArmazem.php';
 require '../classes/pedidosCompra.php';
 require '../classes/cores.php';
