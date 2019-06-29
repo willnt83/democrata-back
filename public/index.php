@@ -28,7 +28,7 @@ $config['db']['dbname'] = 'debora35_pcp';
 
 $config['db']['host']   = 'localhost';
 $config['db']['user']   = 'root';
-$config['db']['pass']   = 'asdzxcc11';
+$config['db']['pass']   = '';//'asdzxcc11';
 $config['db']['dbname'] = 'pcp_prod';
 
 
