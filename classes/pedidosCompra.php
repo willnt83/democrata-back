@@ -62,8 +62,16 @@ class PedidosCompra{
             $where = 'where ';
             $i = 0;
             foreach($filters as $key => $value){
+                // Table's nickname
+                if($key === 'id' or $key === 'statusPedido' or $key === 'status')
+                    $nick = 'pc.';
+                else if($key === 'statusInsumo')
+                    $nick = 'pci.';
+                else
+                    $nick = '';
+
                 $and = $i > 0 ? ' and ' : '';
-                $where .= $and.'pc.'.$key.' = :'.$key;
+                $where .= $and.$nick.$key.' = :'.$key;
                 $i++;
             }
         }
@@ -78,7 +86,7 @@ class PedidosCompra{
                         inner join pcp_fornecedores f on pc.id_fornecedor = f.id
                         inner join pcp_unidades_medida um on um.id = ins.id_unidade_medida
                 '.$where.'
-                order by pc.id, pci.id';
+                order by pc.dthr_pedido, pc.id, pci.id';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);
 
@@ -257,5 +265,39 @@ class PedidosCompra{
                 'msg' => $e->getMessage()
             ));
         }
+    }
+
+    public function printPedidoCompra($filters){
+        require '../shared/PDF.php';
+        try{
+            $pdf = new PDF();
+
+            $pdf->SetAutoPagebreak(False);
+            $pdf->SetMargins(5,0,0);
+            $pdf->AliasNbPages();
+            $pdf->AddPage();
+            $pdf->Header('Teste');
+
+            $pdf->SetFont('Times','',12);
+            for($i=1;$i<=40;$i++){
+                $pdf->Cell(0,5,'Printing line number '.$i,0,1);
+            }
+            $path = 'public/barcodes/PDF/pdfteste.pdf';
+
+            $pdf->Output('D', $path, true);
+
+            return json_encode(array(
+                'success' => true,
+                'payload' => array(
+                    'url' => $path
+                )
+            ));            
+        }
+        catch(Exception $e){
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
+        }            
     }
 }
