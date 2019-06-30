@@ -68,7 +68,7 @@ class PedidosCompra{
                     $nick = 'pc.';
                     $equalBinding = ' = :'.$key;
                 } else if($key === 'status' or $key === 'statusPedido' or $key === 'statusInsumo'){
-                    $nick = ($key === 'statusInsumo') ? 'pci' : 'pc';
+                    $nick = ($key === 'statusInsumo') ? 'pci.' : 'pc.';
                     $statusesArray = explode(',', $value);
                     if(count($statusesArray) > 1) {
                         $equalBinding = '';
