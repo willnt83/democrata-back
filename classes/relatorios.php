@@ -221,4 +221,82 @@ class Relatorios{
             )
         ));
     }
+
+    public function reportGeralLancamentoProducao($filters){
+        $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
+
+        $sql = '
+            SELECT
+                cb.id_producao, p.nome nome_producao,
+                cb.id_produto, pro.nome nome_produto, pro.codigo codigo_produto,
+                cb.id_setor, s.nome nome_setor,
+                cb.id_subproduto, ss.nome nome_subproduto,
+                cb.codigo codigo_barras,
+                cb.id_funcionario, f.nome nome_funcionario,
+                cb.dt_lancamento data_lancamento,
+                cb.pontos
+            FROM pcp_codigo_de_barras cb
+            JOIN pcp_producoes p ON p.id = cb.id_producao
+            JOIN pcp_produtos pro ON pro.id = cb.id_produto
+            JOIN pcp_setores s ON s.id = cb.id_setor
+            JOIN pcp_subprodutos ss ON ss.id = cb.id_subproduto
+            JOIN pcp_funcionarios f ON f.id = cb.id_funcionario
+            WHERE
+                cb.lancado = "Y"
+                and cb.dt_lancamento >= "'.$filters['dataInicial'].'" and cb.dt_lancamento <= "'.$filters['dataFinal'].'"
+        ';
+
+        //echo "\nsql: ".$sql."\n";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $sheet->setCellValue('A1', 'ID Produção');
+        $sheet->setCellValue('B1', 'Produção');
+        $sheet->setCellValue('C1', 'ID Produto');
+        $sheet->setCellValue('D1', 'Cód. Produto');
+        $sheet->setCellValue('E1', 'Produto');
+        $sheet->setCellValue('F1', 'ID Setor');
+        $sheet->setCellValue('G1', 'Setor');
+        $sheet->setCellValue('H1', 'ID Subproduto');
+        $sheet->setCellValue('I1', 'Subproduto');
+        $sheet->setCellValue('J1', 'Código');
+        $sheet->setCellValue('K1', 'ID Funcionário');
+        $sheet->setCellValue('L1', 'Funcionário');
+        $sheet->setCellValue('M1', 'Data Lançamento');
+        $sheet->setCellValue('N1', 'Pontos');
+
+        $i = 2;
+        while ($row = $stmt->fetch()) {
+            $dataLancamentoDT = new DateTime($row->data_lancamento);
+            $dataLancamento = $dataLancamentoDT->format('d/m/Y');
+
+            $sheet->setCellValue('A'.$i, $row->id_producao);
+            $sheet->setCellValue('B'.$i, $row->nome_producao);
+            $sheet->setCellValue('C'.$i, $row->id_produto);
+            $sheet->setCellValue('D'.$i, $row->codigo_produto);
+            $sheet->setCellValue('E'.$i, $row->nome_produto);
+            $sheet->setCellValue('F'.$i, $row->id_setor);
+            $sheet->setCellValue('G'.$i, $row->nome_setor);
+            $sheet->setCellValue('H'.$i, $row->id_subproduto);
+            $sheet->setCellValue('I'.$i, $row->nome_subproduto);
+            $sheet->setCellValue('J'.$i, $row->codigo_barras);
+            $sheet->setCellValue('K'.$i, $row->id_funcionario);
+            $sheet->setCellValue('L'.$i, $row->nome_funcionario);
+            $sheet->setCellValue('M'.$i, $dataLancamento);
+            $sheet->setCellValue('N'.$i, $row->pontos);
+
+            $i++;
+        }
+        $currDateTimeObj = new DateTime();
+        $currDateTime = $currDateTimeObj->format('d-m-Y-H-i-s');
+        $this->writer->save('reports/geralLancamentoProducao-'.$currDateTime.'.xlsx');
+        
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Relatório gerado com sucesso.',
+            'payload' => array(
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/geralLancamentoProducao-'.$currDateTime.'.xlsx'
+            )
+        ));
+    }
 }

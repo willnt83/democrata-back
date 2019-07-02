@@ -7,6 +7,7 @@ require '../classes/subsetores.php';
 require '../classes/produtos.php';
 require '../classes/subprodutos.php';
 require '../classes/insumos.php';
+require '../classes/pedidosInsumos.php';
 require '../classes/unidadesmedida.php';
 require '../classes/almoxarifados.php';
 require '../classes/posicaoArmazem.php';
@@ -258,6 +259,10 @@ $app->get('/reportFuncionariosPontuacoes', function (Request $request, Response 
     return $response->write($classRelatorios->reportBonusPontuacao($request->getQueryParams()));
 });
 
+$app->get('/reportGeralLancamentoProducao', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportGeralLancamentoProducao($request->getQueryParams()));
+});
 /* Código de Barras */
 $app->get('/gerarCodigosDeBarrasCSV', function (Request $request, Response $response){
     $classCodigoDeBarras = new CodigoDeBarras($this->db);
@@ -282,6 +287,11 @@ $app->get('/getCodigosDeBarrasProducao', function (Request $request, Response $r
 $app->get('/getCodigosDeBarrasEstornados', function (Request $request, Response $response){
     $classCodigoDeBarras = new CodigoDeBarras($this->db);
     return $response->write($classCodigoDeBarras->getCodigosDeBarrasEstornados($request->getQueryParams()));
+});
+
+$app->get('/getPedidosInsumos', function (Request $request, Response $response){
+    $classPedidosInsumos = new PedidosInsumos($this->db);
+    return $response->write($classPedidosInsumos->getPedidosInsumos($request->getQueryParams()));
 });
 /*****************************************************/
 

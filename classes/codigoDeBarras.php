@@ -91,7 +91,7 @@ class CodigoDeBarras{
             while($row = $stmt->fetch()){
                 // Nome do setor
                 if($row->id_setor != $lastSetor){
-                    $output[] = array(utf8_decode($row->nome_setor), '');
+                    //$output[] = array(utf8_decode($row->nome_setor), '');
                     $output[] = array(utf8_decode($row->nome_setor), '');
                     $lastSetor = $row->id_setor;
                 }
@@ -101,7 +101,7 @@ class CodigoDeBarras{
                     $i = 1;
                     while($i <= $row->total_quantidade){
                         $barCode = $row->id_producao."-".$row->id_produto."-".$row->id_conjunto."-".$row->id_setor."-".$row->id_subproduto."-".$i;
-                        $output[] = array(utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
+                        //$output[] = array(utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
                         $output[] = array(utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
                         $insertData[] = '('.$row->id_producao.', '.$row->id_produto.', '.$row->id_conjunto.', '.$row->id_setor.', '.$row->id_subproduto.', '.$i.', "'.$barCode.'", "'.$currDate.'", '.$pontos.')';
                         $i++;
@@ -109,7 +109,7 @@ class CodigoDeBarras{
                 }
                 else{
                     $barCode = $row->id_producao."-".$row->id_produto."-".$row->id_conjunto."-".$row->id_setor."-".$row->id_subproduto."-1";
-                    $output[] = array(utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
+                    //$output[] = array(utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
                     $output[] = array(utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
 
                     $insertData[] = '('.$row->id_producao.', '.$row->id_produto.', '.$row->id_conjunto.', '.$row->id_setor.', '.$row->id_subproduto.', 1, "'.$barCode.'", "'.$currDate.'", '.$pontos.')';
@@ -229,7 +229,7 @@ class CodigoDeBarras{
                 JOIN pcp_produtos_linhas_setores_conjunto plsc ON plsc.id_produto = pa.id_produto AND plsc.id_linha_de_producao = p.id_linha_de_producao AND plsc.id_setor = pa.id_setor
                 JOIN pcp_conjuntos_subprodutos cs ON cs.id_conjunto = plsc.id_conjunto AND cs.id_subproduto = pa.id_subproduto
                 '.$where.'
-                order by lps.ordem, pa.id_setor, ss.nome, pa.id_produto;
+                order by lps.ordem, pa.id_setor, pa.id_subproduto, pa.id;
             ';
 
             $stmt = $this->pdo->prepare($sql);

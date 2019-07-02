@@ -128,7 +128,7 @@ class Producoes{
             join pcp_subprodutos ss on ss.id = pa.id_subproduto
             join pcp_cores cor on cor.id = p.id_cor
             '.$where.'
-            order by lps.ordem, pa.id_setor, pa.id_producao, pa.id_produto, pa.id_subproduto;
+            order by lps.ordem, pa.id_setor, pa.id_subproduto, pa.id;
         ';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);
