@@ -10,7 +10,9 @@ require '../classes/insumos.php';
 require '../classes/pedidosInsumos.php';
 require '../classes/unidadesmedida.php';
 require '../classes/almoxarifados.php';
+require '../classes/fornecedores.php';
 require '../classes/posicaoArmazem.php';
+require '../classes/pedidosCompra.php';
 require '../classes/cores.php';
 require '../classes/usuarios.php';
 require '../classes/conjuntos.php';
@@ -221,6 +223,17 @@ $app->get('/deleteUnidadeMedida', function (Request $request, Response $response
     return $response->write($classUnidadesMedida->deleteUnidadeMedida($request->getQueryParams()));
 });
 
+/* Fornecedores */
+$app->get('/getFornecedores', function (Request $request, Response $response){
+    $classFornecedores = new Fornecedores($this->db);
+    return $response->write($classFornecedores->getFornecedores($request->getQueryParams()));
+});
+
+$app->get('/deleteFornecedor', function (Request $request, Response $response){
+    $classFornecedores = new Fornecedores($this->db);
+    return $response->write($classFornecedores->deleteFornecedor($request->getQueryParams()));
+});
+
 /* Almoxarifados */
 $app->get('/getAlmoxarifados', function (Request $request, Response $response){
     $classAlmoxarifados = new Almoxarifados($this->db);
@@ -232,7 +245,7 @@ $app->get('/deleteAlmoxarifado', function (Request $request, Response $response)
     return $response->write($classAlmoxarifados->deleteAlmoxarifado($request->getQueryParams()));
 });
 
-/* Almoxarifados */
+/* Posição do Armazém */
 $app->get('/getPosicaoArmazens', function (Request $request, Response $response){
     $classPosicaoArmazem = new PosicaoArmazem($this->db);
     return $response->write($classPosicaoArmazem->getPosicaoArmazens($request->getQueryParams()));
@@ -241,6 +254,22 @@ $app->get('/getPosicaoArmazens', function (Request $request, Response $response)
 $app->get('/deletePosicaoArmazem', function (Request $request, Response $response){
     $classPosicaoArmazem = new PosicaoArmazem($this->db);
     return $response->write($classPosicaoArmazem->deletePosicaoArmazem($request->getQueryParams()));
+});
+
+/* Pedidos de Compra */
+$app->get('/getPedidosCompra', function (Request $request, Response $response){
+    $classPedidosCompra = new PedidosCompra($this->db);
+    return $response->write($classPedidosCompra->getPedidosCompra($request->getQueryParams()));
+});
+
+$app->get('/getPedidosCompraInsumos', function (Request $request, Response $response){
+    $classPedidosCompra = new PedidosCompra($this->db);
+    return $response->write($classPedidosCompra->getPedidosCompraInsumos($request->getQueryParams()));
+});
+
+$app->get('/deletePedidoCompra', function (Request $request, Response $response){
+    $classPedidosCompra = new PedidosCompra($this->db);
+    return $response->write($classPedidosCompra->deletePedidoCompra($request->getQueryParams()));
 });
 
 /* Relatórios */
@@ -403,17 +432,29 @@ $app->post('/createUpdateUnidadeMedida', function ($request, $response){
     return $response->write($classUnidadesMedida->createUpdateUnidadeMedida(json_decode($request->getBody(), true)));
 });
 
+/* Fornecedores */
+$app->post('/createUpdateFornecedor', function ($request, $response){
+    $classFornecedores = new Fornecedores($this->db);
+    return $response->write($classFornecedores->createUpdateFornecedor(json_decode($request->getBody(), true)));
+});
+
 /* Almoxarifados */
 $app->post('/createUpdateAlmoxarifado', function ($request, $response){
     $classAlmoxarifados = new Almoxarifados($this->db);
     return $response->write($classAlmoxarifados->createUpdateAlmoxarifado(json_decode($request->getBody(), true)));
 });
 
+/* Posição do Armazém */
 $app->post('/createUpdatePosicaoArmazem', function ($request, $response){
     $classPosicaoArmazem = new PosicaoArmazem($this->db);
     return $response->write($classPosicaoArmazem->createUpdatePosicaoArmazem(json_decode($request->getBody(), true)));
 });
 
+/* Pedidos de Compra */
+$app->post('/createUpdatePedidoCompra', function ($request, $response){
+    $classPedidosCompra = new PedidosCompra($this->db);
+    return $response->write($classPedidosCompra->createUpdatePedidoCompra(json_decode($request->getBody(), true)));
+});
 
 /* Código de Barras */
 $app->post('/lancamentoCodigoDeBarras', function ($request, $response){
