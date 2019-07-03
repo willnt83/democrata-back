@@ -31,7 +31,8 @@ class PedidosInsumos{
             FROM pcp_pedidos p
             JOIN pcp_pedidos_insumos pin ON pin.id_pedido = p.id
             JOIN pcp_insumos i ON i.id = pin.id_insumo
-            '.$where.';';
+            '.$where.'
+            order by p.id;';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);

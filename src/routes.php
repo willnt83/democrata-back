@@ -23,6 +23,7 @@ require '../classes/funcionarios.php';
 require '../classes/diasNaoUteis.php';
 require '../classes/relatorios.php';
 require '../classes/codigoDeBarras.php';
+require '../classes/insumosArmazenagem.php';
 
 
 // Routes
@@ -471,4 +472,11 @@ $app->post('/estornoCodigoDeBarras', function ($request, $response){
     $classCodigoDeBarras = new CodigoDeBarras($this->db);
     return $response->write($classCodigoDeBarras->estornoCodigoDeBarras(json_decode($request->getBody(), true)));
 });
+
+/* Armazenagem de Insumos */
+$app->post('/createUpdateInsumosArmazenagem', function ($request, $response){
+    $classInsumosArmazenagem = new InsumosArmazenagem($this->db);
+    return $response->write($classInsumosArmazenagem->createUpdateInsumosArmazenagem(json_decode($request->getBody(), true)));
+});
+
 /******************************************************/
