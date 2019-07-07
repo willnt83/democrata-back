@@ -178,8 +178,8 @@ class PedidosCompra{
             }
 
             // Status do Pedido
-            if(!array_key_exists('status', $request) or !in_array(trim(strtoupper($request['status'])),$this->statusPedidoArray))
-                $request['status'] = 'A';
+            // if(!array_key_exists('status', $request) or !in_array(trim(strtoupper($request['status'])),$this->statusPedidoArray))
+            //     $request['status'] = 'A';
 
             // Pedido de Compra
             if($request['id']){
@@ -188,8 +188,7 @@ class PedidosCompra{
                         set     dthr_pedido = CONCAT(:data_pedido," ",:hora_pedido),
                                 chave_nf = :chave_nf,
                                 id_fornecedor = :id_fornecedor,
-                                dt_prevista = :dt_prevista,
-                                status = :status
+                                dt_prevista = :dt_prevista
                         where   id = :id';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':id', $request['id']);
@@ -198,7 +197,6 @@ class PedidosCompra{
                 $stmt->bindParam(':chave_nf', $request['chave_nf']);
                 $stmt->bindParam(':id_fornecedor', $request['idFornecedor']);
                 $stmt->bindParam(':dt_prevista', $request['data_prevista']);
-                $stmt->bindParam(':status', trim(strtoupper($request['status'])));
                 $stmt->execute();
                 $pedidoId = $request['id'];
                 $msg = 'Pedido de compra atualizado com sucesso.';
@@ -208,44 +206,65 @@ class PedidosCompra{
                         set dthr_pedido = CONCAT(:data_pedido," ",:hora_pedido),
                             chave_nf = :chave_nf,
                             id_fornecedor = :id_fornecedor,
-                            dt_prevista = :dt_prevista,
-                            status = :status';
+                            dt_prevista = :dt_prevista';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':data_pedido', $request['data_pedido']);
                 $stmt->bindParam(':hora_pedido', $request['hora_pedido']);
                 $stmt->bindParam(':chave_nf', $request['chave_nf']);
                 $stmt->bindParam(':id_fornecedor', $request['idFornecedor']);
                 $stmt->bindParam(':dt_prevista', $request['data_prevista']);
-                $stmt->bindParam(':status', trim(strtoupper($request['status'])));
                 $stmt->execute();
                 $pedidoId = $this->pdo->lastInsertId();
                 $msg = 'Pedido de compra cadastrado com sucesso.';
             }
 
-            // Deletando os Insumos
-            $sql = 'delete from pcp_pedidos_insumos where id_pedido = :id';
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':id', $pedidoId);
-            $stmt->execute();
-
             // Inserindo os insumos
+            $id_pedido_insumos_array = array();
             foreach($request['insumos'] as $key => $insumo){
                 // Status do Insumo
-                if(!array_key_exists('status', $insumo) or !in_array(trim(strtoupper($insumo['status'])),$this->statusInsumoArray))
+                if(!array_key_exists('statusInsumo', $insumo) or !in_array(trim(strtoupper($insumo['statusInsumo'])),$this->statusInsumoArray))
                     $insumo['status'] = 'S';
 
-                $sql = 'insert into pcp_pedidos_insumos
-                        set id_pedido = :id_pedido,
-                            id_insumo = :id_insumo,
-                            quantidade = :quantidade,
-                            status = :status';
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->bindParam(':id_pedido', $pedidoId);
-                $stmt->bindParam(':id_insumo', $insumo['idInsumo']);
-                $stmt->bindParam(':quantidade', $insumo['quantidade']);
-                $stmt->bindParam(':status', $insumo['status']);
-                $stmt->execute();
+                // Verifica se existe o insumo para inserir/atualizar
+                if($insumo['item']){
+                    $id_pedido_insumos_array[] = $insumo['item'];
+                    $sql = 'update  pcp_pedidos_insumos
+                            set     id_pedido = :id_pedido,
+                                    id_insumo = :id_insumo,
+                                    quantidade = :quantidade,
+                                    status = :status
+                            where   id = :item ';
+                    $stmt = $this->pdo->prepare($sql);
+                    $stmt->bindParam(':id_pedido', $pedidoId);
+                    $stmt->bindParam(':id_insumo', $insumo['idInsumo']);
+                    $stmt->bindParam(':quantidade', $insumo['quantidade']);
+                    $stmt->bindParam(':status', $insumo['status']);
+                    $stmt->bindParam(':item', $insumo['item']);
+                    $stmt->execute();
+                } else {
+                    $sql = 'insert into pcp_pedidos_insumos
+                            set id_pedido = :id_pedido,
+                                id_insumo = :id_insumo,
+                                quantidade = :quantidade,
+                                dthr_recebimento = now(),
+                                status = :status';
+                    $stmt = $this->pdo->prepare($sql);
+                    $stmt->bindParam(':id_pedido', $pedidoId);
+                    $stmt->bindParam(':id_insumo', $insumo['idInsumo']);
+                    $stmt->bindParam(':quantidade', $insumo['quantidade']);
+                    $stmt->bindParam(':status', $insumo['status']);
+                    $stmt->execute();
+                    $idItem = $this->pdo->lastInsertId();
+                    if($idItem) $id_pedido_insumos_array[] = $insumo['item'];
+                }
+                
             }
+
+            // Deletando os Insumos não existentes
+            $sql = 'delete from pcp_pedidos_insumos where id_pedido = :id and not id in ('.implode(',',$id_pedido_insumos_array).')';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':id', $pedidoId);
+            $stmt->execute();            
 
             // Reponse
             return json_encode(array(
@@ -287,31 +306,91 @@ class PedidosCompra{
         }
     }
 
-    public function printPedidoCompra($filters){
-        require '../shared/PDF.php';
+    public function printPedidoCompra($filters){        
         try{
-            $pdf = new PDF();
+            $response = json_decode($this->getPedidosCompraInsumos(['id'=>$filters['id']]));
+            if($response->success and count($response->payload) == 1){
+                require('../vendor/fpdf/fpdf.php');
 
-            $pdf->SetAutoPagebreak(False);
-            $pdf->SetMargins(5,0,0);
-            $pdf->AliasNbPages();
-            $pdf->AddPage();
-            $pdf->Header('Teste');
+                $pedidoCompra = $response->payload[0];
 
-            $pdf->SetFont('Times','',12);
-            for($i=1;$i<=40;$i++){
-                $pdf->Cell(0,5,'Printing line number '.$i,0,1);
-            }
-            $path = 'public/barcodes/PDF/pdfteste.pdf';
+                $pdf = new FPDF('P','mm','A4');
 
-            $pdf->Output('D', $path, true);
+                $pdf->SetAutoPagebreak(true);            
+                $pdf->AliasNbPages();            
+                $pdf->AddPage();
 
-            return json_encode(array(
-                'success' => true,
-                'payload' => array(
-                    'url' => $path
-                )
-            ));            
+                $width = $pdf->GetPageWidth();            
+
+                $pdf->SetFont('Times','B',16);
+                $pdf->Cell(0, 22,utf8_decode('REQUISIÇÃO DE PEDIDO DE COMPRA'),0,1,'C');
+                $pdf->Line(10,$pdf->GetY(),$width-10,$pdf->GetY());
+                $pdf->Ln(1);
+
+                $pdf->SetFont('Times','B',11);
+                $pdf->Cell(16, 7,utf8_decode('#Pedido:'), 0, 0, 'L');
+                $pdf->SetFont('Times','',12);
+                $pdf->Cell(($width/2)-16, 7,$pedidoCompra->id, 0, 0, 'L');
+                $pdf->SetX(($width/2)+1);
+                $pdf->SetFont('Times','B',11);
+                $pdf->Cell(50, 7,'Data do Pedido:', 0, 0, 'R');
+                $pdf->SetFont('Times','',12);
+                $pdf->Cell(45, 7,utf8_decode($pedidoCompra->data_pedido.' às '.$pedidoCompra->hora_pedido), 0, 1, 'R');
+
+                $pdf->SetFont('Times','B',11);
+                $pdf->Cell(40, 7,'Chave da Nota Fiscal:', 0, 0, 'L');
+                $pdf->SetFont('Times','',12);
+                $pdf->Cell(50, 7, $pedidoCompra->chave_nf, 0, 1, 'L');
+
+                $pdf->SetFont('Times','B',11);
+                $pdf->Cell(40, 7,'Fornecedor: ', 0, 0, 'L');
+                $pdf->SetFont('Times','',12);
+                $pdf->Cell(50, 7,$pedidoCompra->idFornecedor.' - '.utf8_decode($pedidoCompra->nomeFornecedor), 0, 1, 'L');
+
+                $pdf->Ln(10);
+                $pdf->SetFont('Times','B',11);
+                $pdf->Cell(20, 7,'INSUMOS', 0, 0, 'L');
+                $pdf->SetFont('Times','',12);
+                $pdf->Cell(($width/2)-20, 7,'(Itens: 12 | Total: 34)', 0, 0, 'L');
+                $pdf->SetX(($width/2)+1);
+                $pdf->SetFont('Times','B',11);
+                $pdf->Cell(65, 7,utf8_decode('Previsão de Entrega:'), 0, 0, 'R');
+                $pdf->SetFont('Times','',12);
+                $pdf->Cell(28, 7,$pedidoCompra->data_prevista, 0, 1, 'R');         
+                $pdf->Line(10,$pdf->GetY(),$width-10,$pdf->GetY());
+                
+                foreach($pedidoCompra->insumos as $key=>$insumo){
+                    $pdf->Ln(2);
+                    $pdf->SetFont('Times','B',12);
+                    $pdf->Cell(5, 7,($key+1).')', 0, 0, 'L');
+                    $pdf->SetFont('Times','',12);
+                    $pdf->Cell(($width/2)-5, 7,$insumo->id.' - '.$insumo->nome, 0, 1, 'L');
+                }
+                $pdf->SetFont('Times','',12);
+                for($i=1;$i<=42;$i++){
+                    $pdf->Cell(0,5,'Printing line number '.$i,0,1);
+                }
+
+                $pdf->AddPage();
+                for($i=1;$i<=55;$i++){
+                    $pdf->Cell(0,5,'Printing line number '.$i,0,1);
+                }
+
+                $path = 'public/barcodes/PDF/pdfteste.pdf';
+                $pdf->Output('D', $path, true);
+
+                return json_encode(array(
+                    'success' => true,
+                    'payload' => array(
+                        'url' => ''
+                    )
+                ));            
+            } else {
+                return json_encode(array(
+                    'success' => false,
+                    'msg' -> utf8_decode('Não há dados para imprimir')
+                ));     
+            }       
         }
         catch(Exception $e){
             return json_encode(array(

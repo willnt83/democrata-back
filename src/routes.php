@@ -273,6 +273,11 @@ $app->get('/deletePedidoCompra', function (Request $request, Response $response)
     return $response->write($classPedidosCompra->deletePedidoCompra($request->getQueryParams()));
 });
 
+$app->get('/printPedidoCompra', function (Request $request, Response $response){
+    $classPedidosCompra = new PedidosCompra($this->db);
+    return $response->write($classPedidosCompra->printPedidoCompra($request->getQueryParams()));
+});
+
 /* Relatórios */
 $app->get('/reportProdutosCadastrados', function (Request $request, Response $response){
     $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
