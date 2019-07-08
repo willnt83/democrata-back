@@ -75,7 +75,7 @@ class PedidosCompra{
                         unset($filters[$key]);
                         foreach($statusesArray as $key_status=>$value_status){
                             if($key_status > 0) $equalBinding .= ' or ';
-                            $equalBinding .= $nick.'.status = :'.$key.$key_status;
+                            $equalBinding .= $nick.'status = :'.$key.$key_status;
                             $filters[$key.$key_status] = $value_status;
                         }
                         $key = '';                        
@@ -153,7 +153,7 @@ class PedidosCompra{
             'success' => true,
             'payload' => $responseData
         ));
-    }  
+    }
 
     public function createUpdatePedidoCompra($request){
         try{
@@ -323,7 +323,7 @@ class PedidosCompra{
                 $width = $pdf->GetPageWidth();            
 
                 $pdf->SetFont('Times','B',16);
-                $pdf->Cell(0, 22,utf8_decode('REQUISIÇÃO DE PEDIDO DE COMPRA'),0,1,'C');
+                $pdf->Cell(0, 25,utf8_decode('REQUISIÇÃO DE PEDIDO DE COMPRA'),0,1,'C');
                 $pdf->Line(10,$pdf->GetY(),$width-10,$pdf->GetY());
                 $pdf->Ln(1);
 
@@ -351,32 +351,53 @@ class PedidosCompra{
                 $pdf->SetFont('Times','B',11);
                 $pdf->Cell(20, 7,'INSUMOS', 0, 0, 'L');
                 $pdf->SetFont('Times','',12);
-                $pdf->Cell(($width/2)-20, 7,'(Itens: 12 | Total: 34)', 0, 0, 'L');
+                $pdf->Cell(($width/2)-20, 7,'(Itens: '.count($pedidoCompra->insumos).')', 0, 0, 'L');
                 $pdf->SetX(($width/2)+1);
                 $pdf->SetFont('Times','B',11);
                 $pdf->Cell(65, 7,utf8_decode('Previsão de Entrega:'), 0, 0, 'R');
                 $pdf->SetFont('Times','',12);
                 $pdf->Cell(28, 7,$pedidoCompra->data_prevista, 0, 1, 'R');         
                 $pdf->Line(10,$pdf->GetY(),$width-10,$pdf->GetY());
-                
+                $pdf->Ln(2);
+
+                // Itens do pedido de compras
+                $item = 0;
+                $page = 1;
+                $total = count($pedidoCompra->insumos);
                 foreach($pedidoCompra->insumos as $key=>$insumo){
-                    $pdf->Ln(2);
-                    $pdf->SetFont('Times','B',12);
-                    $pdf->Cell(5, 7,($key+1).')', 0, 0, 'L');
+                    $item++;
+
+                    // Insumo + INS                    
+                    $pdf->SetFont('Times','B',11);
+                    $pdf->Cell(7, 7,($key+1).')', 0, 0, 'L');
                     $pdf->SetFont('Times','',12);
-                    $pdf->Cell(($width/2)-5, 7,$insumo->id.' - '.$insumo->nome, 0, 1, 'L');
-                }
-                $pdf->SetFont('Times','',12);
-                for($i=1;$i<=42;$i++){
-                    $pdf->Cell(0,5,'Printing line number '.$i,0,1);
+                    $pdf->Cell(($width-7), 7,$insumo->id.' '.$insumo->nome.' (INS: '.$insumo->ins.')', 0, 1, 'L');
+                    
+                    // Quantidade
+                    $pdf->SetX(17);
+                    $pdf->SetFont('Times','B',10);
+                    $pdf->Cell(20, 5,'Quantidade: ', 0, 0, 'L');
+                    $pdf->SetFont('Times','',12);
+                    $pdf->Cell(20, 5,$insumo->quantidade, 0, 0, 'L');
+
+                    // Unidade de Medida
+                    $pdf->SetFont('Times','B',10);
+                    $pdf->Cell(35, 5,'Unidade de Medida: ', 0, 0, 'L');
+                    $pdf->SetFont('Times','',12);
+                    $pdf->Cell(0, 5,$insumo->unidademedida, 0, 1, 'L');
+
+                    $pdf->Ln(5);
+
+                    // Pular página (se não for ainda o último item)
+                    if((($page == 1 and $item == 12) or ($page > 1 and $item == 16)) and ($key+1) < $total){
+                        $page++;
+                        $item = 0 ;
+                        $pdf->AddPage();
+                        if($page > 1) $pdf->Ln(8);
+                    }
                 }
 
-                $pdf->AddPage();
-                for($i=1;$i<=55;$i++){
-                    $pdf->Cell(0,5,'Printing line number '.$i,0,1);
-                }
-
-                $path = 'public/barcodes/PDF/pdfteste.pdf';
+                $path = 'public/pedidoscompras/PDF/pedido'.$pedidoCompra->id.'.pdf';
                 $pdf->Output('D', $path, true);
 
                 return json_encode(array(

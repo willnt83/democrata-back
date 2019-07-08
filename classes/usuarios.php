@@ -66,21 +66,19 @@ class Usuarios{
             }
             $responseData['setores'] = $setores;
 
-            header('token: '.session_id());
-            return json_encode(array(
-                'success' => true,
-                'msg' => 'Usuário logado com sucesso.',
-                'payload' => $responseData
-            ));
-
-            /*
-            else{
+            if($prevId > 0){
+                header('token: '.session_id());
+                return json_encode(array(
+                    'success' => true,
+                    'msg' => 'Usuário logado com sucesso.',
+                    'payload' => $responseData
+                ));
+            } else{
                 return json_encode(array(
                     'success' => false,
                     'msg' => 'Endereço de e-mail ou senha incorretos.'
                 ));
             }
-            */
 
         }catch(\Exception $e){
             return json_encode(array(
