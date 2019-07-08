@@ -13,6 +13,7 @@ require '../classes/almoxarifados.php';
 require '../classes/fornecedores.php';
 require '../classes/posicaoArmazem.php';
 require '../classes/pedidosCompra.php';
+require '../classes/pedidoInsumoEntradas.php';
 require '../classes/cores.php';
 require '../classes/usuarios.php';
 require '../classes/conjuntos.php';
@@ -327,6 +328,12 @@ $app->get('/getCodigosDeBarrasEstornados', function (Request $request, Response 
 $app->get('/getPedidosInsumos', function (Request $request, Response $response){
     $classPedidosInsumos = new PedidosInsumos($this->db);
     return $response->write($classPedidosInsumos->getPedidosInsumos($request->getQueryParams()));
+});
+
+/* Pedidos de Compra Insumos Entradas */
+$app->get('/getPedidoInsumoEntradas', function (Request $request, Response $response){
+    $classPedidoInsumoEntradas = new PedidoInsumoEntradas($this->db);
+    return $response->write($classPedidoInsumoEntradas->getPedidoInsumoEntradas($request->getQueryParams()));
 });
 /*****************************************************/
 
