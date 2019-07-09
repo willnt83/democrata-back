@@ -98,7 +98,7 @@ class PedidosCompra{
         $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf, pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor,
                         pci.id as item, pci.id_insumo as idInsumo, ins.nome as nomeInsumo, ins.ins, 
                         um.nome as nomeUnidadeMedida, pci.status as statusInsumo, pci.dthr_recebimento, 
-                        pci.quantidade, ifnull(sum(entrada.entrada_quantidade),0) as quantidade_conferida
+                        pci.quantidade, ifnull(sum(entrada.quantidade),0) as quantidade_conferida
                 from	pcp_pedidos pc
                         inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
                         inner join pcp_insumos ins on pci.id_insumo = ins.id
@@ -261,10 +261,12 @@ class PedidosCompra{
             }
 
             // Deletando os Insumos não existentes
-            $sql = 'delete from pcp_pedidos_insumos where id_pedido = :id and not id in ('.implode(',',$id_pedido_insumos_array).')';
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':id', $pedidoId);
-            $stmt->execute();            
+            if(count($id_pedido_insumos_array) > 0) {
+                $sql = 'delete from pcp_pedidos_insumos where id_pedido = :id and not id in ('.implode(',',$id_pedido_insumos_array).')';
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->bindParam(':id', $pedidoId);
+                $stmt->execute();
+            }  
 
             // Reponse
             return json_encode(array(
