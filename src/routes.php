@@ -330,10 +330,16 @@ $app->get('/getPedidosInsumos', function (Request $request, Response $response){
     return $response->write($classPedidosInsumos->getPedidosInsumos($request->getQueryParams()));
 });
 
-/* Pedidos de Compra Insumos Entradas */
+/* Entrada de insumos */
 $app->get('/getPedidoInsumoEntradas', function (Request $request, Response $response){
     $classPedidoInsumoEntradas = new PedidoInsumoEntradas($this->db);
     return $response->write($classPedidoInsumoEntradas->getPedidoInsumoEntradas($request->getQueryParams()));
+});
+
+/* Armazenagem de Insumos */
+$app->get('/getInsumosArmazenagem', function (Request $request, Response $response){
+    $classInsumosArmazenagem = new InsumosArmazenagem($this->db);
+    return $response->write($classInsumosArmazenagem->getInsumosArmazenagem($request->getQueryParams()));
 });
 /*****************************************************/
 
@@ -461,6 +467,11 @@ $app->post('/createUpdateAlmoxarifado', function ($request, $response){
 $app->post('/createUpdatePosicaoArmazem', function ($request, $response){
     $classPosicaoArmazem = new PosicaoArmazem($this->db);
     return $response->write($classPosicaoArmazem->createUpdatePosicaoArmazem(json_decode($request->getBody(), true)));
+});
+
+$app->post('/getMultiplasPosicoeArmazens', function ($request, $response){
+    $classPosicaoArmazem = new PosicaoArmazem($this->db);
+    return $response->write($classPosicaoArmazem->getMultiplasPosicoeArmazens(json_decode($request->getBody(), true)));
 });
 
 /* Pedidos de Compra */

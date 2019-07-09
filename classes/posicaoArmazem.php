@@ -41,6 +41,54 @@ class PosicaoArmazem{
         ));
     }
 
+    public function getMultiplasPosicoeArmazens($request){
+        try{
+            if(!array_key_exists('almoxarifados', $request) or count($request['almoxarifados']) == 0)
+                throw new \Exception('Nenhum almoxarifado informado.');
+
+            $first = true;
+            $in = '(';
+            foreach($request['almoxarifados'] as $key => $value){
+                $comma = $first ? '' : ', ';
+                $first = false;
+                $in .= $comma.$value;
+            }
+            $in .= ')';
+
+            $sql = '
+                SELECT *
+                FROM pcp_posicao_armazem pa
+                WHERE
+                    pa.id_almoxarifado in '.$in.'
+                    and pa.ativo = "Y"
+                ORDER BY pa.id_almoxarifado;
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+
+            $responseData = array();
+            while($row = $stmt->fetch()){
+                $responseData[] = array(
+                    'almoxarifado' => (int)$row->id_almoxarifado,
+                    'posicao' => array(
+                        'id' => (int)$row->id,
+                        'nome' => $row->posicao
+                    )
+                );
+            }
+
+            return json_encode(array(
+                'success' => true,
+                'payload' => $responseData
+            ));
+        }catch(\Exception $e){
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
+        }
+    }
+
     public function createUpdatePosicaoArmazem($request){
         try{
             // Validações

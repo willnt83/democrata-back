@@ -229,7 +229,7 @@ class CodigoDeBarras{
                 JOIN pcp_produtos_linhas_setores_conjunto plsc ON plsc.id_produto = pa.id_produto AND plsc.id_linha_de_producao = p.id_linha_de_producao AND plsc.id_setor = pa.id_setor
                 JOIN pcp_conjuntos_subprodutos cs ON cs.id_conjunto = plsc.id_conjunto AND cs.id_subproduto = pa.id_subproduto
                 '.$where.'
-                order by lps.ordem, pa.id_setor, pa.id_subproduto, pa.id;
+                order by lps.ordem, pa.id_setor, ss.nome, pa.id_produto;
             ';
 
             $stmt = $this->pdo->prepare($sql);
@@ -304,13 +304,15 @@ class CodigoDeBarras{
             $stmt2 = $this->pdo->prepare($sql2);
             $stmt2->execute();
 
-
             // Geração do PDF
             $i = 0;
             $pdf = new FPDF();
             $lastSetor = null;
             while($i < count($barCodes)){
+                if($i === 0)
+                    $pdf->AddPage();
                 // Título do Setor
+                /*
                 if($barCodes[$i]['setor'] != $lastSetor){
                     $pdf->AddPage();
                     $pdf->SetFont('Arial','B',12);
@@ -318,54 +320,78 @@ class CodigoDeBarras{
                     $pdf->SetFont('Arial','B',8);
                     $pdf->Ln();
                     $lastSetor = $barCodes[$i]['setor'];
+                }*/
+
+                $pdf->SetFont('Arial', '', 5);
+                $sectorChange = 99;
+                $sumSector = 0;
+                $aux = 0;
+                while($aux < 4){
+                    if($barCodes[$i+$aux]['setor'] != $lastSetor){
+                        //$pdf->Cell(47, 4, utf8_decode($barCodes[$i+$aux]['setor']), 0, 0, 'C');
+                        $lastSetor = $barCodes[$i+$aux]['setor'];
+                        $sectorChange = $aux;
+                        $sumSector = 1;
+                        break;
+                    }
+                    $aux++;
                 }
 
-                // Impar
-                if($i % 2 == 0){
-                    // Armazena os dados em vetor auxiliar
-                    $aux = $barCodes[$i];
+                $c = 0;
+                $aux = 0;
+                //echo "\n";
+                //echo "\ni: ".$i;
+                while($aux < 4){
+                    //echo "\naux: ".$aux;
+                    if($aux == $sectorChange){
+                        //echo "\nsectorChange!!!";
+                        $pdf->Cell(47, 2, '', 0, 0, 'C');
+                    }
+                    else{
+                        //echo "\nimpressao normal...";
+                        $pdf->Cell(47, 2, utf8_decode($barCodes[$i+$c]['nomeProduto']).'('.utf8_decode($barCodes[$i+$c]['corProduto']).')-'.utf8_decode($barCodes[$i+$c]['nomeSubproduto']), 0, 0, 'C');
+                        $c++;
+                    }
+                    $aux++;
                 }
-                // Par
-                else{
-                    // Impressao
-                    // Gerando a string base64 da imagem
-                    $strBase64Aux = 'data:image/png;base64,'.base64_encode($generator->getBarcode($aux['strBase64'], $generator::TYPE_CODE_128));
-                    $strBase64 = 'data:image/png;base64,'.base64_encode($generator->getBarcode($barCodes[$i]['strBase64'], $generator::TYPE_CODE_128));
-                    // Gerando o arquivo de imagem
-                    $imgAux = $this->generateImage($strBase64Aux, $aux['file']);
-                    $img = $this->generateImage($strBase64, $barCodes[$i]['file']);
 
-                    $pdf->SetFont('Arial', '', 5);
-                    $pdf->Cell(47, 4, utf8_decode($aux['nomeProduto']).' ('.utf8_decode($aux['corProduto']).')', 'LTR', 0, 'C');
-                    $pdf->Cell(47, 4, utf8_decode($aux['nomeProduto']).' ('.utf8_decode($aux['corProduto']).')', 'LTR', 0, 'C');
+                $pdf->Ln();
+                $pdf->SetFont('Arial','', 7);
 
-                    $pdf->Cell(47, 4, utf8_decode($barCodes[$i]['nomeProduto']).' ('.utf8_decode($aux['corProduto']).')', 'LTR', 0, 'C');
-                    $pdf->Cell(47, 4, utf8_decode($barCodes[$i]['nomeProduto']).' ('.utf8_decode($aux['corProduto']).')', 'LTR', 0, 'C');
-                    $pdf->Ln();
-
-                    $pdf->Cell(47, 4, utf8_decode($aux['nomeSubproduto']), 'LRB', 0, 'C');
-                    $pdf->Cell(47, 4, utf8_decode($aux['nomeSubproduto']), 'LRB', 0, 'C');
-                    $pdf->Cell(47, 4, utf8_decode($aux['nomeSubproduto']), 'LRB', 0, 'C');
-                    $pdf->Cell(47, 4, utf8_decode($aux['nomeSubproduto']), 'LRB', 0, 'C');
-                    
-                    $pdf->SetFont('Arial','', 7);
-                    $pdf->Ln();
-                    $pdf->Cell(47, 12, $pdf->Image($imgAux, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTR', 0, 'C', false);
-                    $pdf->Cell(47, 12, $pdf->Image($imgAux, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTR', 0, 'C', false);
-                    $pdf->Cell(47, 12, $pdf->Image($img, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTR', 0, 'C', false);
-                    $pdf->Cell(47, 12, $pdf->Image($img, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTR', 0, 'C', false);
-                    $pdf->Ln();
-
-                    $pdf->Cell(47, 3, $aux['strBase64'], 'LRB', 0, 'C', false);
-                    $pdf->Cell(47, 3, $aux['strBase64'], 'LRB', 0, 'C', false);
-                    $pdf->Cell(47, 3, $barCodes[$i]['strBase64'], 'LRB', 0, 'C', false);
-                    $pdf->Cell(47, 3, $barCodes[$i]['strBase64'], 'LRB', 0, 'C', false);
-                    $pdf->Ln();
-
-                    $pdf->Cell(188, 6, '', 0, 0, 'C', false);
-                    $pdf->Ln();
+                $c = 0;
+                $aux = 0;
+                while($aux < 4){
+                    if($aux == $sectorChange)
+                        $pdf->Cell(47, 10, utf8_decode($barCodes[$i+$c]['setor']), 0, 0, 'C', false);    
+                    else{
+                        // Gerando a string base64 da imagem
+                        $strBase64 = 'data:image/png;base64,'.base64_encode($generator->getBarcode($barCodes[$i+$c]['strBase64'], $generator::TYPE_CODE_128));
+                        // Gerando o arquivo de imagem
+                        $img = $this->generateImage($strBase64, $barCodes[$i+$c]['file']);
+                        $pdf->Cell(47, 10, $pdf->Image($img, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 0, 0, 'C', false);
+                        $c++;
+                    }
+                    $aux++;
                 }
-                $i++;
+
+                $pdf->Ln();
+                
+                $c = 0;
+                $aux = 0;
+                while($aux < 4){
+                    if($aux == $sectorChange)
+                        $pdf->Cell(47, 3.7, '', 0, 0, 'C', false);
+                    else{
+                        $pdf->Cell(47, 3.7, $barCodes[$i+$c]['strBase64'], 0, 0, 'C', false);
+                        $c++;
+                    }
+                    $aux++;
+                }
+
+                $pdf->Ln();
+                $pdf->Cell(188, 2, '', 0, 0, 'C', false);
+                $pdf->Ln();
+                $i += (4 - $sumSector);
             }
             
             $path = 'barcodes/'.$filters['id_producao'].'/producao-'.$filters['id_producao'].'.pdf';
