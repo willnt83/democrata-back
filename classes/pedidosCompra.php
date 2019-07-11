@@ -174,7 +174,10 @@ class PedidosCompra{
                 if(!array_key_exists('idInsumo', $insumo) or $insumo['idInsumo'] === '' or $insumo['idInsumo'] === null)
                     throw new \Exception('Insumo é obrigatório.');
                 if(!array_key_exists('quantidade', $insumo) or $insumo['quantidade'] === '' or $insumo['quantidade'] === null)
-                    throw new \Exception('Quantidade é obrigatória.');                    
+                    throw new \Exception('Quantidade é obrigatória.');  
+                    
+                // Verifica se possui entrada com quantidade maior que o insumo
+                
             }
 
             // Status do Pedido

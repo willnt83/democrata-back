@@ -496,6 +496,12 @@ $app->post('/estornoCodigoDeBarras', function ($request, $response){
     return $response->write($classCodigoDeBarras->estornoCodigoDeBarras(json_decode($request->getBody(), true)));
 });
 
+/* Entrada de Insumo */
+$app->post('/createUpdatePedidoInsumoEntradas', function ($request, $response){
+    $classPedidoInsumoEntradas = new PedidoInsumoEntradas($this->db);
+    return $response->write($classPedidoInsumoEntradas->createUpdatePedidoInsumoEntradas(json_decode($request->getBody(), true)));
+});
+
 /* Armazenagem de Insumos */
 $app->post('/createUpdateInsumosArmazenagem', function ($request, $response){
     $classInsumosArmazenagem = new InsumosArmazenagem($this->db);

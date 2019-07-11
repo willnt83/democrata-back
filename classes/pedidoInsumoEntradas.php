@@ -75,12 +75,16 @@ class PedidoInsumoEntradas{
         try{
             $quantidadeTotal = 0;
 
-            // Validações
+            // Código do pedido insumo
             if(!array_key_exists('idPedidoInsumo', $request) or $request['idPedidoInsumo'] === '' or $request['idPedidoInsumo'] === null)
                 throw new \Exception('Insumo do pedido de compra não informado.');
-            if(!array_key_exists('entradas', $request) or $request['entradas'] === '' or $request['entradas'] === null)
-                throw new \Exception('É obrigatório informar pelo menos uma entrada');
-                
+            else
+                $idPedidoInsumo = $request['idPedidoInsumo'];
+
+            // Valida se possui entrada
+            if(!array_key_exists('entradas', $request) or $request['entradas'] === '' or $request['entradas'] === null or count($request['entradas']) === 0)
+                throw new \Exception('É necessário informar pelo menos uma entrada');
+
             // Valida as entradas
             foreach($request['entradas'] as $key => $entrada){
                 if(!array_key_exists('data_entrada', $entrada) or $entrada['data_entrada'] === '' or $entrada['data_entrada'] === null)
@@ -90,15 +94,12 @@ class PedidoInsumoEntradas{
                 if(!array_key_exists('quantidade', $entrada) or $entrada['quantidade'] === '' or $entrada['quantidade'] === null)
                     throw new \Exception('Quantidade da entrada obrigatória.');
             }
-            
-            // Código do pedido insumo
-            $idPedidoInsumo = $request['idPedidoInsumo'];
 
-            // Valida a quantidade do insumo e de armazenagem
+            // Valida a quantidade do insumo
 
             // Insere/atualiza os dados
             $id_entradas_array = array();
-            foreach($request['entradas'] as $key => $entrada){
+            foreach($request['entradas']  as $key => $entrada){
                 if($entrada['id']){
                     $sql = 'update  pcp_insumos_entrada
                             set     id_pedido_insumo = :id_pedido_insumo,
@@ -119,14 +120,19 @@ class PedidoInsumoEntradas{
                     $stmt->execute();
                 }
             }
-
+            
             // Deleta os ids de entrada que não estão no JSON (se caso possuir)
             if(count($id_entradas_array) > 0) {
                 $sql = 'delete from pcp_insumos_entrada where id_pedido_insumo = :id_pedido_insumo and not id in ('.implode(',',$id_entradas_array).')';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':id_pedido_insumo', $idPedidoInsumo);
                 $stmt->execute();
-            }             
+            }
+            
+            return json_encode(array(
+                'success' => true,
+                'msg' => 'Dados atualizados com sucesso.'
+            ));            
 
         } catch(\Exception $e) {
             return json_encode(array(
