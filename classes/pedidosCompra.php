@@ -312,7 +312,7 @@ class PedidosCompra{
                 $stmtVerify = $this->pdo->prepare($sqlVerify);
                 $stmtVerify->bindParam(':id', $filters['id']);
                 $stmtVerify->execute();
-                $rowVerify = $stmt->fetch();
+                $rowVerify = $stmtVerify->fetch();
                 if($rowVerify and $rowVerify->total > 0){
                     throw new \Exception('Não é permitido excluir Pedido de Compra com insumo já Entregue/Armazenado.');
                 }
