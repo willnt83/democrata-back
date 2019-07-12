@@ -273,7 +273,7 @@ class PedidosCompra{
                     $stmt->bindParam(':status', $insumo['statusInsumo']);
                     $stmt->execute();
                     $idItem = $this->pdo->lastInsertId();
-                    if($idItem) $id_pedido_insumos_array[] = $insumo['item'];
+                    if($idItem) $id_pedido_insumos_array[] = $idItem;
                 }
                 
             }
@@ -434,7 +434,7 @@ class PedidosCompra{
                     }
                 }
 
-                $path = 'pedidoscompra/'.$pedidoCompra->id.'/pedido-'.$pedidoCompra->id.'.pdf';
+                $path = 'pedidoscompra/pedido-'.$pedidoCompra->id.'.pdf';
                 $pdf->Output('F', $path, true);
 
                 return json_encode(array(

@@ -1,4 +1,19 @@
+
 /vendor/
 /reports/
 /logs/*
 !/logs/README.md
+
+# Composer
+vendor/*
+
+# Files
+composer.json
+composer.lock
+
+# Prints
+public/pedidoscompra*
+public/barcodes*
+public/reports*
+public/pedidoscompra
+public/barcodes
