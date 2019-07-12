@@ -67,6 +67,19 @@ class PedidosCompra{
                 if($key === 'id') {
                     $nick = 'pc.';
                     $equalBinding = ' = :'.$key;
+                } else if($key === 'idPedidoInsumo') {
+                    $nick = 'pci.';                    
+                    $equalBinding = ' = :'.$key;
+                    $key = 'id';
+                } else if($key === 'idInsumo') {
+                    $nick = 'ins.';                    
+                    $equalBinding = ' = :'.$key;
+                    $key = 'id';                
+                } else if($key === 'nomeInsumo') {
+                    $nick = 'ins.';                    
+                    $equalBinding = ' like :'.$key;
+                    $filters[$key] = '%'.$value.'%';
+                    $key = 'nome';
                 } else if($key === 'status' or $key === 'statusInsumo'){
                     $nick = 'pci.';
                     $statusesArray = explode(',', $value);
@@ -180,6 +193,8 @@ class PedidosCompra{
                 
             }
 
+            // Verifica se alguns dos insumos que serão excluídos então conferidos/armazenados
+
             // Status do Pedido
             // if(!array_key_exists('status', $request) or !in_array(trim(strtoupper($request['status'])),$this->statusPedidoArray))
             //     $request['status'] = 'A';
@@ -286,17 +301,34 @@ class PedidosCompra{
 
     public function deletePedidoCompra($filters){
         try{
-            // Deletando os Insumos
-            $sql = 'delete from pcp_pedidos_insumos where id_pedido = :id';
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':id', $filters['id']);
-            $stmt->execute();
-            
-            // Deletando o Pedido de Compras
-            $sql = 'delete from pcp_pedidos where id = :id';
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':id', $filters['id']); 
-            $stmt->execute();
+            if(isset($filters['id']) and $filters['id']){                
+                // Verifica se já possui entrada, armazenamento e/ou saída para os insumosdo pedido de compra
+                $sqlVerify = '  select 	count(*) as total
+                                from	pcp_pedidos p
+                                        inner join pcp_pedidos_insumos pi on pi.id_pedido = p.id
+                                where	p.id = :id and
+                                        ((select e.id from pcp_insumos_entrada e where e.id_pedido_insumo = pi.id limit 1) > 0 or
+                                        (select e.id from pcp_insumos_armazenagem e where e.id_pedido_insumo = pi.id limit 1) > 0)';
+                $stmtVerify = $this->pdo->prepare($sqlVerify);
+                $stmtVerify->bindParam(':id', $filters['id']);
+                $stmtVerify->execute();
+                $rowVerify = $stmt->fetch();
+                if($rowVerify and $rowVerify->total > 0){
+                    throw new \Exception('Não é permitido excluir Pedido de Compra com insumo já Entregue/Armazenado.');
+                }
+                
+                // Deletando os Insumos
+                $sql = 'delete from pcp_pedidos_insumos where id_pedido = :id';
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->bindParam(':id', $filters['id']);
+                $stmt->execute();
+                
+                // Deletando o Pedido de Compras
+                $sql = 'delete from pcp_pedidos where id = :id';
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->bindParam(':id', $filters['id']); 
+                $stmt->execute();
+            }
 
             return json_encode(array(
                 'success' => true,
@@ -402,13 +434,13 @@ class PedidosCompra{
                     }
                 }
 
-                $path = 'public/pedidoscompras/PDF/pedido'.$pedidoCompra->id.'.pdf';
-                $pdf->Output('D', $path, true);
+                $path = 'pedidoscompra/'.$pedidoCompra->id.'/pedido-'.$pedidoCompra->id.'.pdf';
+                $pdf->Output('F', $path, true);
 
                 return json_encode(array(
                     'success' => true,
                     'payload' => array(
-                        'url' => ''
+                        'url' => $path
                     )
                 ));            
             } else {

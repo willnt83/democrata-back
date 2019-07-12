@@ -496,6 +496,11 @@ $app->post('/estornoCodigoDeBarras', function ($request, $response){
     return $response->write($classCodigoDeBarras->estornoCodigoDeBarras(json_decode($request->getBody(), true)));
 });
 
+$app->post('/changeStatusInsumo', function (Request $request, Response $response){
+    $classPedidosInsumos = new PedidosInsumos($this->db);
+    return $response->write($classPedidosInsumos->changeStatusInsumo($request->getQueryParams()));
+});
+
 /* Entrada de Insumo */
 $app->post('/createUpdatePedidoInsumoEntradas', function ($request, $response){
     $classPedidoInsumoEntradas = new PedidoInsumoEntradas($this->db);

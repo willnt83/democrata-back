@@ -24,9 +24,8 @@ class PedidosInsumos{
                 p.chave_nf chaveNF,
                 i.nome nomeInsumo,
                 i.ins insInsumo,
-                pin.quantidade_conferida quantidadeConferida,
+                pin.quantidade quantidadeConferida,
                 pin.dthr_recebimento dthrRecebimento,
-                pin.`local`,
                 pin.`status`
             FROM pcp_pedidos p
             JOIN pcp_pedidos_insumos pin ON pin.id_pedido = p.id
@@ -50,5 +49,43 @@ class PedidosInsumos{
             'success' => true,
             'payload' => $responseData
         ));
+    }
+
+    public function changeStatusInsumo($request){
+        try{
+            // Código do pedido insumo
+            if(!array_key_exists('idPedidoInsumo', $request) or $request['idPedidoInsumo'] === '' or $request['idPedidoInsumo'] === null)
+                throw new \Exception('Insumo do pedido de compra não informado.');
+            else
+                $idPedidoInsumo = $request['idPedidoInsumo'];
+
+            // Status do pedido insumo
+            if(!array_key_exists('status', $request) or $request['status'] === '' or $request['status'] === null)
+                throw new \Exception('Insumo do pedido de compra não informado.');
+            else
+                $status = $request['status'];
+
+            // Alterando o status
+            $this->changeStatus($idPedidoInsumo, $status);
+
+            return json_encode(array(
+                'success' => true
+            ));
+        } catch(\Exception $e) {
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
+        }
+    }
+
+    protected function changeStatus($idPedidoInsumo, $status){
+        $sql = 'update  pcp_pedidos_insumos
+        set     status = :status
+        where   id = :idPedidoInsumo';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':idPedidoInsumo', $idPedidoInsumo);
+        $stmt->bindParam(':status', $status);
+        $stmt->execute();
     }
 }

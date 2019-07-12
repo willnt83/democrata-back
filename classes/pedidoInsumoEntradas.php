@@ -1,7 +1,8 @@
 <?php
 
-class PedidoInsumoEntradas{
+class PedidoInsumoEntradas extends PedidosInsumos{
     public function __construct($db){
+        parent::__construct($db);
         $this->pdo = $db;
     }
 
@@ -73,7 +74,7 @@ class PedidoInsumoEntradas{
 
     public function createUpdatePedidoInsumoEntradas($request){
         try{
-            $quantidadeTotal = 0;
+            $quantidadeTotalEntrada = 0;
 
             // Código do pedido insumo
             if(!array_key_exists('idPedidoInsumo', $request) or $request['idPedidoInsumo'] === '' or $request['idPedidoInsumo'] === null)
@@ -93,9 +94,23 @@ class PedidoInsumoEntradas{
                     throw new \Exception('Hora da entrada obrigatória.'); 
                 if(!array_key_exists('quantidade', $entrada) or $entrada['quantidade'] === '' or $entrada['quantidade'] === null)
                     throw new \Exception('Quantidade da entrada obrigatória.');
+
+                $quantidadeTotalEntrada += $entrada['quantidade'];
             }
 
-            // Valida a quantidade do insumo
+            // Retora o status e quantidades do insumo
+            $dadosReturn = $this->getDadosInsumo($idPedidoInsumo);
+            if(!$dadosReturn['success']) {
+                throw new \Exception('Erro ao inserir as entradas! Tente novamente.');
+            }
+
+            // Valida as quantidades
+            if($quantidadeTotalEntrada <= 0)
+                throw new \Exception('Informe pelo menos uma quantidade para a(s) entrada(s)');
+            if($quantidadeTotalEntrada > $dadosReturn['quantidade'])
+                throw new \Exception('Não é permitida quantidade superior a do Pedido de Compra');
+            else if($quantidadeTotalEntrada < $dadosReturn['quantidadeArmazenada'])
+                throw new \Exception('Não é permitida quantidade inferior à Armazenada');
 
             // Insere/atualiza os dados
             $id_entradas_array = array();
@@ -129,6 +144,13 @@ class PedidoInsumoEntradas{
                 $stmt->execute();
             }
             
+            // Altera o status do insumo do pedido de compra
+            if(in_array($dadosReturn['status'],array('S','E')) and $quantidadeTotalEntrada === $dadosReturn['quantidade']){
+                $this->changeStatus($idPedidoInsumo, 'C');
+            } else if($dadosReturn['status'] === 'S'){
+                $this->changeStatus($idPedidoInsumo, 'E');
+            }
+
             return json_encode(array(
                 'success' => true,
                 'msg' => 'Dados atualizados com sucesso.'
@@ -140,5 +162,29 @@ class PedidoInsumoEntradas{
                 'msg' => $e->getMessage()
             ));
         }
+    }
+
+    private function getDadosInsumo($idPedidoInsumo = 0){
+        $sql = 'select		pci.status, pci.quantidade,
+                            ifnull(sum(armazenagem.quantidade),0) as quantidadeArmazenada
+                from 		pcp_pedidos_insumos pci
+                            left join pcp_insumos_entrada entrada on entrada.id_pedido_insumo = pci.id
+                            left join pcp_insumos_armazenagem armazenagem on armazenagem.id_pedido_insumo = pci.id
+                where       pci.id=:idPedidoInsumo
+                group by	pci.id';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':idPedidoInsumo', $idPedidoInsumo);
+        $stmt->execute();
+        $row = $stmt->fetch();
+        if($row){
+            return array(
+                'success' => true,
+                'status' => $row->status,
+                'quantidade' => (int) $row->quantidade,
+                'quantidadeArmazenada' => (int) $row->quantidadeArmazenada
+            ); 
+        } else {
+            return array('success' => false); 
+        }          
     }
 }
