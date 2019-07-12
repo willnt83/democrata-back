@@ -25,10 +25,9 @@ class PedidoInsumoEntradas extends PedidosInsumos{
         // Insumo(s) + Quantidades
         $sql = 'select		pci.id, pci.id_pedido, pci.quantidade,	
                             ifnull(sum(entrada.quantidade),0) as quantidadeConferida,
-                            ifnull(sum(armazenagem.quantidade),0) as quantidadeArmazenada
+                            ifnull((select sum(arm.quantidade) from pcp_insumos_armazenagem arm where arm.id_pedido_insumo = pci.id),0) as quantidadeArmazenada
                 from 		pcp_pedidos_insumos pci
                             left join pcp_insumos_entrada entrada on entrada.id_pedido_insumo = pci.id
-                            left join pcp_insumos_armazenagem armazenagem on armazenagem.id_pedido_insumo = pci.id
                 '.$where.'
                 group by	pci.id';
         $stmt = $this->pdo->prepare($sql);
@@ -118,19 +117,25 @@ class PedidoInsumoEntradas extends PedidosInsumos{
                 if($entrada['id']){
                     $sql = 'update  pcp_insumos_entrada
                             set     id_pedido_insumo = :id_pedido_insumo,
+                                    dthr_entrada = CONCAT(:data_entrada," ",:hora_entrada),
                                     quantidade = :quantidade
                             where   id = :id ';
                     $stmt = $this->pdo->prepare($sql);
                     $stmt->bindParam(':id_pedido_insumo', $idPedidoInsumo);
+                    $stmt->bindParam(':data_entrada', $entrada['data_entrada']);
+                    $stmt->bindParam(':hora_entrada', $entrada['hora_entrada']);
                     $stmt->bindParam(':quantidade', $entrada['quantidade']);
                     $stmt->bindParam(':id', $entrada['id']);
                     $stmt->execute();
                 } else {
                     $sql = 'insert  into pcp_insumos_entrada
                             set     id_pedido_insumo = :id_pedido_insumo,
+                                    dthr_entrada = CONCAT(:data_entrada," ",:hora_entrada),                            
                                     quantidade = :quantidade';
                     $stmt = $this->pdo->prepare($sql);
                     $stmt->bindParam(':id_pedido_insumo', $idPedidoInsumo);
+                    $stmt->bindParam(':data_entrada', $entrada['data_entrada']);
+                    $stmt->bindParam(':hora_entrada', $entrada['hora_entrada']);                    
                     $stmt->bindParam(':quantidade', $entrada['quantidade']);
                     $stmt->execute();
                 }

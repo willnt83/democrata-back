@@ -241,7 +241,7 @@ class PedidosCompra{
             foreach($request['insumos'] as $key => $insumo){
                 // Status do Insumo
                 if(!array_key_exists('statusInsumo', $insumo) or !in_array(trim(strtoupper($insumo['statusInsumo'])),$this->statusInsumoArray))
-                    $insumo['status'] = 'S';
+                    $insumo['statusInsumo'] = 'S';
 
                 // Verifica se existe o insumo para inserir/atualizar
                 if($insumo['item']){
@@ -256,7 +256,7 @@ class PedidosCompra{
                     $stmt->bindParam(':id_pedido', $pedidoId);
                     $stmt->bindParam(':id_insumo', $insumo['idInsumo']);
                     $stmt->bindParam(':quantidade', $insumo['quantidade']);
-                    $stmt->bindParam(':status', $insumo['status']);
+                    $stmt->bindParam(':status', $insumo['statusInsumo']);
                     $stmt->bindParam(':item', $insumo['item']);
                     $stmt->execute();
                 } else {
@@ -270,7 +270,7 @@ class PedidosCompra{
                     $stmt->bindParam(':id_pedido', $pedidoId);
                     $stmt->bindParam(':id_insumo', $insumo['idInsumo']);
                     $stmt->bindParam(':quantidade', $insumo['quantidade']);
-                    $stmt->bindParam(':status', $insumo['status']);
+                    $stmt->bindParam(':status', $insumo['statusInsumo']);
                     $stmt->execute();
                     $idItem = $this->pdo->lastInsertId();
                     if($idItem) $id_pedido_insumos_array[] = $insumo['item'];
