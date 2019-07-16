@@ -33,3 +33,5 @@ $container['writer'] = function($c) {
     $writer = new PhpOffice\PhpSpreadsheet\Writer\Xlsx($c['spreadsheet']);
     return $writer;
 };
+
+$container['upload_directory'] = __DIR__ . '/../public/uploads';

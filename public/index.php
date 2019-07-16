@@ -26,18 +26,16 @@ $config['db']['pass']   = 'PCPSenha123';
 $config['db']['dbname'] = 'debora35_pcp';
 */
 
-// Desenvolvimento local
-$config['db']['host']   = 'localhost';
-$config['db']['user']   = 'root';
-$config['db']['pass']   = 'asdzxcc11';
-$config['db']['dbname'] = 'pcp_prod';
-
-
-/*// Homolog
 $config['db']['host']   = 'br982.hostgator.com.br';
 $config['db']['user']   = 'debora35_pcp';
 $config['db']['pass']   = 'PCPSenha123';
 $config['db']['dbname'] = 'debora35_homologdemocrata';
+
+/*
+$config['db']['host']   = 'localhost';
+$config['db']['user']   = 'gabriel';
+$config['db']['pass']   = 'gabriel';
+$config['db']['dbname'] = 'pcp_prod';
 */
 
 

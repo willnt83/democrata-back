@@ -26,7 +26,6 @@ require '../classes/relatorios.php';
 require '../classes/codigoDeBarras.php';
 require '../classes/insumosArmazenagem.php';
 
-
 // Routes
 /************************ GET ************************/
 /* Unidades */
@@ -443,6 +442,11 @@ $app->post('/createUpdateDiaNaoUtil', function ($request, $response){
 $app->post('/createUpdateInsumo', function ($request, $response){
     $classInsumos = new Insumos($this->db);
     return $response->write($classInsumos->createUpdateInsumo(json_decode($request->getBody(), true)));
+});
+
+$app->post('/importInsumos', function(Request $request, Response $response) {
+    $classInsumos = new Insumos($this->db);
+    return $response->write($classInsumos->importInsumos($this->get('upload_directory'), $request->getUploadedFiles()));
 });
 
 /* Unidades de Medida */

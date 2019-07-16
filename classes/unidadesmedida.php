@@ -30,9 +30,10 @@ class UnidadesMedida{
         $responseData = array();
         while ($row = $stmt->fetch()) {
             $responseData[] = array(
-                'id' => (int)$row->id,
-                'nome' => $row->nome,
-                'ativo' => $row->ativo,
+                'id'        => (int)$row->id,
+                'nome'      => $row->nome,
+                'unidade'   => $row->unidade,
+                'ativo'     => $row->ativo,
             );
         }
 
@@ -45,10 +46,10 @@ class UnidadesMedida{
     public function createUpdateUnidadeMedida($request){
         try{
             // Validações
-            if(!array_key_exists('nome', $request)
-                or $request['nome'] === ''
-                or $request['nome'] === null)
+            if(!array_key_exists('nome', $request) or $request['nome'] === '' or $request['nome'] === null)
                 throw new \Exception('Campo Nome é obrigatório.');
+            if(!array_key_exists('unidade', $request) or $request['unidade'] === '' or $request['unidade'] === null)
+                throw new \Exception('Campo Unidade é obrigatória.');
             if(!array_key_exists('ativo', $request) or $request['ativo'] === '' or $request['ativo'] === null)
                 throw new \Exception('Campo Ativo é obrigatório.');
 
@@ -58,6 +59,7 @@ class UnidadesMedida{
                     update pcp_unidades_medida
                     set
                         nome = :nome,
+                        unidade = :unidade,
                         ativo = :ativo
                     where id = :id;
                 ';
@@ -65,6 +67,7 @@ class UnidadesMedida{
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':id', $request['id']);
                 $stmt->bindParam(':nome', $request['nome']);
+                $stmt->bindParam(':unidade', $request['unidade']);
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();
 
@@ -75,10 +78,12 @@ class UnidadesMedida{
                     insert into pcp_unidades_medida
                     set
                         nome = :nome,
+                        unidade = :unidade,
                         ativo = :ativo
                 ';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':nome', $request['nome']);
+                $stmt->bindParam(':unidade', $request['unidade']);
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();
 

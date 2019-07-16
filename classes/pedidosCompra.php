@@ -110,7 +110,7 @@ class PedidosCompra{
 
         $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf, pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor,
                         pci.id as item, pci.id_insumo as idInsumo, ins.nome as nomeInsumo, ins.ins, 
-                        um.nome as nomeUnidadeMedida, pci.status as statusInsumo, pci.dthr_recebimento, 
+                        um.unidade as unidadeUnidadeMedida, pci.status as statusInsumo, pci.dthr_recebimento, 
                         pci.quantidade, ifnull(sum(entrada.quantidade),0) as quantidade_conferida
                 from	pcp_pedidos pc
                         inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
