@@ -149,7 +149,7 @@ class Insumos{
                             $fileArray = fgetcsv($file);
                             foreach($fileArray as $key=>$value){
                                 $content = explode(';', $value);
-                                if($content and count($content) >= 7){
+                                if($content and count($content) >= 4){
                                     // Retorna a unidade de medida
                                     if($content[3] and $content[3] !== null){
                                         $sqlUnidade = 'select id from pcp_unidades_medida where LOWER(unidade) = :unidade order by id desc limit 1';
@@ -197,17 +197,17 @@ class Insumos{
                                         else
                                             $stmt->bindParam(':unidademedida', $content[3]);
 
-                                        if($content[4] === '' or $content[4] === null or !is_numeric($content[4]))
+                                        if(!array_key_exists(4, $content) or !isset($content[4]) or $content[4] === '' or $content[4] === null or !is_numeric($content[4]))
                                             $stmt->bindParam(':comprimento', $n = null, PDO::PARAM_INT);
                                         else
                                             $stmt->bindParam(':comprimento', number_format($content[4],2,'.',''));
 
-                                        if($content[5] === '' or $content[5] === null or !is_numeric($content[5]))
+                                        if(!array_key_exists(5, $content) or !isset($content[5]) or $content[5] === '' or $content[5] === null or !is_numeric($content[5]))
                                             $stmt->bindParam(':largura', $n = null, PDO::PARAM_INT);
                                         else
                                             $stmt->bindParam(':largura', number_format($content[5],2,'.',''));
 
-                                        if($content[6] === '' or $content[6] === null or !is_numeric($content[6]))
+                                        if(!array_key_exists(6, $content) or !isset($content[6]) or $content[6] === '' or $content[6] === null or !is_numeric($content[6]))
                                             $stmt->bindParam(':altura', $n = null, PDO::PARAM_INT);
                                         else
                                             $stmt->bindParam(':altura', number_format($content[6],2,'.',''));                                            
