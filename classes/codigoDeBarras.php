@@ -309,26 +309,14 @@ class CodigoDeBarras{
             $pdf = new FPDF();
             $lastSetor = null;
             while($i < count($barCodes)){
-                if($i === 0)
-                    $pdf->AddPage();
-                // Título do Setor
-                /*
-                if($barCodes[$i]['setor'] != $lastSetor){
-                    $pdf->AddPage();
-                    $pdf->SetFont('Arial','B',12);
-                    $pdf->Cell( 188, 7, utf8_decode($barCodes[$i]['setor']).' - '.$this->sql2date($barCodes[$i]['dataInicial']), 1, 0, 'C', false);
-                    $pdf->SetFont('Arial','B',8);
-                    $pdf->Ln();
-                    $lastSetor = $barCodes[$i]['setor'];
-                }*/
+                if($i === 0) $pdf->AddPage();
 
                 $pdf->SetFont('Arial', '', 5);
                 $sectorChange = 99;
                 $sumSector = 0;
                 $aux = 0;
                 while($aux < 4){
-                    if($barCodes[$i+$aux]['setor'] != $lastSetor){
-                        //$pdf->Cell(47, 4, utf8_decode($barCodes[$i+$aux]['setor']), 0, 0, 'C');
+                    if(($i+$aux) < count($barCodes) and $barCodes[$i+$aux]['setor'] != $lastSetor){
                         $lastSetor = $barCodes[$i+$aux]['setor'];
                         $sectorChange = $aux;
                         $sumSector = 1;
@@ -347,7 +335,7 @@ class CodigoDeBarras{
                         //echo "\nsectorChange!!!";
                         $pdf->Cell(47, 2, '', 0, 0, 'C');
                     }
-                    else{
+                    else if(($i+$c) < count($barCodes)){
                         //echo "\nimpressao normal...";
                         $pdf->Cell(47, 2, utf8_decode($barCodes[$i+$c]['nomeProduto']).'('.utf8_decode($barCodes[$i+$c]['corProduto']).')-'.utf8_decode($barCodes[$i+$c]['nomeSubproduto']), 0, 0, 'C');
                         $c++;
@@ -363,7 +351,7 @@ class CodigoDeBarras{
                 while($aux < 4){
                     if($aux == $sectorChange)
                         $pdf->Cell(47, 10, utf8_decode($barCodes[$i+$c]['setor']), 0, 0, 'C', false);    
-                    else{
+                    else if(($i+$c) < count($barCodes)){
                         // Gerando a string base64 da imagem
                         $strBase64 = 'data:image/png;base64,'.base64_encode($generator->getBarcode($barCodes[$i+$c]['strBase64'], $generator::TYPE_CODE_128));
                         // Gerando o arquivo de imagem
@@ -381,7 +369,7 @@ class CodigoDeBarras{
                 while($aux < 4){
                     if($aux == $sectorChange)
                         $pdf->Cell(47, 3.7, '', 0, 0, 'C', false);
-                    else{
+                    else if(($i+$c) < count($barCodes)){
                         $pdf->Cell(47, 3.7, $barCodes[$i+$c]['strBase64'], 0, 0, 'C', false);
                         $c++;
                     }

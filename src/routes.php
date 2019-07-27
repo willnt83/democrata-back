@@ -24,7 +24,7 @@ require '../classes/funcionarios.php';
 require '../classes/diasNaoUteis.php';
 require '../classes/relatorios.php';
 require '../classes/codigoDeBarras.php';
-require '../classes/insumosArmazenagem.php';
+require '../classes/armazenagemInsumos.php';
 
 // Routes
 /************************ GET ************************/
@@ -278,6 +278,26 @@ $app->get('/printPedidoCompra', function (Request $request, Response $response){
     return $response->write($classPedidosCompra->printPedidoCompra($request->getQueryParams()));
 });
 
+/* Entrada de insumos */
+$app->get('/getPedidoInsumoEntradas', function (Request $request, Response $response){
+    $classPedidoInsumoEntradas = new PedidoInsumoEntradas($this->db);
+    return $response->write($classPedidoInsumoEntradas->getPedidoInsumoEntradas($request->getQueryParams()));
+});
+
+/* Armazenagem de Insumos */
+$app->get('/getInsumosArmazenar', function (Request $request, Response $response){
+    $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
+    return $response->write($classArmazenagemInsumos->getInsumosArmazenar($request->getQueryParams()));
+});
+
+$app->get('/getInsumosArmazenagem', function (Request $request, Response $response){
+    $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
+    return $response->write($classArmazenagemInsumos->getInsumosArmazenagem($request->getQueryParams()));
+});
+
+/* Saída de Insumos */
+
+
 /* Relatórios */
 $app->get('/reportProdutosCadastrados', function (Request $request, Response $response){
     $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
@@ -327,18 +347,6 @@ $app->get('/getCodigosDeBarrasEstornados', function (Request $request, Response 
 $app->get('/getPedidosInsumos', function (Request $request, Response $response){
     $classPedidosInsumos = new PedidosInsumos($this->db);
     return $response->write($classPedidosInsumos->getPedidosInsumos($request->getQueryParams()));
-});
-
-/* Entrada de insumos */
-$app->get('/getPedidoInsumoEntradas', function (Request $request, Response $response){
-    $classPedidoInsumoEntradas = new PedidoInsumoEntradas($this->db);
-    return $response->write($classPedidoInsumoEntradas->getPedidoInsumoEntradas($request->getQueryParams()));
-});
-
-/* Armazenagem de Insumos */
-$app->get('/getInsumosArmazenagem', function (Request $request, Response $response){
-    $classInsumosArmazenagem = new InsumosArmazenagem($this->db);
-    return $response->write($classInsumosArmazenagem->getInsumosArmazenagem($request->getQueryParams()));
 });
 /*****************************************************/
 
@@ -513,8 +521,7 @@ $app->post('/createUpdatePedidoInsumoEntradas', function ($request, $response){
 
 /* Armazenagem de Insumos */
 $app->post('/createUpdateInsumosArmazenagem', function ($request, $response){
-    $classInsumosArmazenagem = new InsumosArmazenagem($this->db);
-    return $response->write($classInsumosArmazenagem->createUpdateInsumosArmazenagem(json_decode($request->getBody(), true)));
+    $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
+    return $response->write($classArmazenagemInsumos->createUpdateInsumosArmazenagem(json_decode($request->getBody(), true)));
 });
-
 /******************************************************/

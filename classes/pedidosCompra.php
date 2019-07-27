@@ -1,6 +1,5 @@
 <?php
 class PedidosCompra{
-
     private $statusPedidoArray;
     private $statusInsumoArray;
 
