@@ -348,6 +348,11 @@ $app->get('/getPedidosInsumos', function (Request $request, Response $response){
     $classPedidosInsumos = new PedidosInsumos($this->db);
     return $response->write($classPedidosInsumos->getPedidosInsumos($request->getQueryParams()));
 });
+
+$app->get('/getInsumosAvailabesToEnter', function (Request $request, Response $response){
+    $classPedidosInsumos = new PedidosInsumos($this->db);
+    return $response->write($classPedidosInsumos->getInsumosAvailabesToEnter($request->getQueryParams()));
+});
 /*****************************************************/
 
 

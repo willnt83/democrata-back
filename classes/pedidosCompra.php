@@ -24,13 +24,11 @@ class PedidosCompra{
 
         $responseData = array();
 
-        $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf, pc.status as statusPedido, 
-                        pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor, count(*) as insumos
+        $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf, pc.status, 
+                        pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor
                 from	pcp_pedidos pc
-                        inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
                         inner join pcp_fornecedores f on pc.id_fornecedor = f.id
                 '.$where.'
-                group by pc.id
                 order by pc.id';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);
@@ -44,8 +42,7 @@ class PedidosCompra{
                 'idFornecedor'      => (int) $row->idFornecedor,
                 'nomeFornecedor'    => $row->nomeFornecedor,
                 'chave_nf'          => $row->chave_nf,
-                'status'            => $row->statusPedido,
-                'insumos'           => $row->insumos
+                'status'            => $row->status
             );
         }
 
@@ -80,7 +77,7 @@ class PedidosCompra{
                     $filters[$key] = '%'.$value.'%';
                     $key = 'nome';
                 } else if($key === 'status' or $key === 'statusInsumo'){
-                    $nick = 'pci.';
+                    $nick = ($key === 'status') ? 'pc.' : 'pci.';
                     $statusesArray = explode(',', $value);
                     if(count($statusesArray) > 1) {
                         $equalBinding = '';
@@ -92,6 +89,7 @@ class PedidosCompra{
                         }
                         $key = '';                        
                         $nick = '';
+                        if(trim($equalBinding) != '') $equalBinding = '('.$equalBinding.')';
                     } else {
                         $equalBinding = ' = :'.$key;
                         $key = 'status';
@@ -107,16 +105,16 @@ class PedidosCompra{
             }
         }
 
-        $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf, pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor,
+        $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.status, pc.chave_nf, 
+                        pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor,
                         pci.id as item, pci.id_insumo as idInsumo, ins.nome as nomeInsumo, ins.ins, 
-                        um.unidade as unidadeUnidadeMedida, pci.status as statusInsumo, pci.dthr_recebimento, 
-                        pci.quantidade, ifnull(sum(entrada.quantidade),0) as quantidade_conferida
+                        um.unidade as unidadeUnidadeMedida, pci.status as statusInsumo, pci.quantidade,
+                        ifnull((select sum(quantidade) from pcp_entrada_insumos e where e.id_pedido_insumo = pci.id),0) as quantidade_conferida
                 from	pcp_pedidos pc
                         inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
                         inner join pcp_insumos ins on pci.id_insumo = ins.id
                         inner join pcp_fornecedores f on pc.id_fornecedor = f.id
                         left join pcp_unidades_medida um on um.id = ins.id_unidade_medida
-                        left join pcp_insumos_entrada entrada on pci.id = entrada.id_pedido_insumo
                 '.$where.'
                 group by pci.id
                 order by pc.id, pci.id';
@@ -138,13 +136,13 @@ class PedidosCompra{
                     'idFornecedor'      => (int) $row->idFornecedor,
                     'nomeFornecedor'    => $row->nomeFornecedor,
                     'chave_nf'          => $row->chave_nf,
+                    'status'            => $row->status,
                     'insumos'           => array()
                 );
                 $i++;
             }
 
             // Insumos
-            $dthr_recebimento = explode(' ', $row->dthr_recebimento);
             $responseData[($i-1)]['insumos'][] = array(
                 'item'                  => (int) $row->item,
                 'id'                    => (int) $row->idInsumo,
@@ -152,9 +150,7 @@ class PedidosCompra{
                 'ins'                   => $row->ins,
                 'unidademedida'         => $row->nomeUnidadeMedida,
                 'quantidade'            => (float) $row->quantidade,
-                'quantidade_conferida'  => (float) $row->quantidade_conferida,                                
-                'data_recebimento'      => (isset($dthr_recebimento[0]) and $dthr_recebimento[0]) ? $dthr_recebimento[0] : null,
-                'hora_recebimento'      => (isset($dthr_recebimento[1]) and $dthr_recebimento[1]) ? $dthr_recebimento[1] : null,
+                'quantidade_conferida'  => (float) $row->quantidade_conferida,
                 'statusInsumo'          => $row->statusInsumo
             );
 
@@ -195,8 +191,8 @@ class PedidosCompra{
             // Verifica se alguns dos insumos que serão excluídos então conferidos/armazenados
 
             // Status do Pedido
-            // if(!array_key_exists('status', $request) or !in_array(trim(strtoupper($request['status'])),$this->statusPedidoArray))
-            //     $request['status'] = 'A';
+            if(!array_key_exists('status', $request) or !in_array(trim(strtoupper($request['status'])),$this->statusPedidoArray))
+                $request['status'] = 'A';
 
             // Pedido de Compra
             if($request['id']){
@@ -205,7 +201,8 @@ class PedidosCompra{
                         set     dthr_pedido = CONCAT(:data_pedido," ",:hora_pedido),
                                 chave_nf = :chave_nf,
                                 id_fornecedor = :id_fornecedor,
-                                dt_prevista = :dt_prevista
+                                dt_prevista = :dt_prevista,
+                                status = :status
                         where   id = :id';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':id', $request['id']);
@@ -214,6 +211,7 @@ class PedidosCompra{
                 $stmt->bindParam(':chave_nf', $request['chave_nf']);
                 $stmt->bindParam(':id_fornecedor', $request['idFornecedor']);
                 $stmt->bindParam(':dt_prevista', $request['data_prevista']);
+                $stmt->bindParam(':status', $request['status']);
                 $stmt->execute();
                 $pedidoId = $request['id'];
                 $msg = 'Pedido de compra atualizado com sucesso.';
@@ -223,13 +221,15 @@ class PedidosCompra{
                         set dthr_pedido = CONCAT(:data_pedido," ",:hora_pedido),
                             chave_nf = :chave_nf,
                             id_fornecedor = :id_fornecedor,
-                            dt_prevista = :dt_prevista';
+                            dt_prevista = :dt_prevista,
+                            status = :status';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':data_pedido', $request['data_pedido']);
                 $stmt->bindParam(':hora_pedido', $request['hora_pedido']);
                 $stmt->bindParam(':chave_nf', $request['chave_nf']);
                 $stmt->bindParam(':id_fornecedor', $request['idFornecedor']);
                 $stmt->bindParam(':dt_prevista', $request['data_prevista']);
+                $stmt->bindParam(':status', $request['status']);
                 $stmt->execute();
                 $pedidoId = $this->pdo->lastInsertId();
                 $msg = 'Pedido de compra cadastrado com sucesso.';
@@ -263,7 +263,6 @@ class PedidosCompra{
                             set id_pedido = :id_pedido,
                                 id_insumo = :id_insumo,
                                 quantidade = :quantidade,
-                                dthr_recebimento = now(),
                                 status = :status';
                     $stmt = $this->pdo->prepare($sql);
                     $stmt->bindParam(':id_pedido', $pedidoId);
