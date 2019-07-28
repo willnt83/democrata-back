@@ -75,43 +75,76 @@ class PedidoInsumoEntradas extends PedidosInsumos{
         try{
             $quantidadeTotalEntrada = 0;
 
-            // Código do pedido insumo
-            if(!array_key_exists('idPedidoInsumo', $request) or $request['idPedidoInsumo'] === '' or $request['idPedidoInsumo'] === null)
-                throw new \Exception('Insumo do pedido de compra não informado.');
-            else
-                $idPedidoInsumo = $request['idPedidoInsumo'];
+            // Valida a entrada
+            if(!array_key_exists('data_entrada', $request) or $request['data_entrada'] === '' or $request['data_entrada'] === null)
+                throw new \Exception('Data da entrada é obrigatória');
+            if(!array_key_exists('hora_entrada', $request) or $request['hora_entrada'] === '' or $request['hora_entrada'] === null)
+                throw new \Exception('Hora da entrada é obrigatória'); 
+            if(!array_key_exists('usuario', $request) or $request['usuario'] === '' or $request['usuario'] === null)
+                throw new \Exception('Usuário da entrada é obrigatório'); 
 
             // Valida se possui entrada
             if(!array_key_exists('entradas', $request) or $request['entradas'] === '' or $request['entradas'] === null or count($request['entradas']) === 0)
                 throw new \Exception('É necessário informar pelo menos uma entrada');
 
-            // Valida as entradas
+            // Valida as entradas, retornao idPedidoInsumo e soma as quantidades
             foreach($request['entradas'] as $key => $entrada){
-                if(!array_key_exists('data_entrada', $entrada) or $entrada['data_entrada'] === '' or $entrada['data_entrada'] === null)
-                    throw new \Exception('Data da entrada é obrigatória.');
-                if(!array_key_exists('hora_entrada', $entrada) or $entrada['hora_entrada'] === '' or $entrada['hora_entrada'] === null)
-                    throw new \Exception('Hora da entrada obrigatória.'); 
+                if(!array_key_exists('idPedido', $entrada) or $entrada['idPedido'] === '' or $entrada['idPedido'] === null)
+                    throw new \Exception('Código do Pedido é obrigatório nas entradas');
+                if(!array_key_exists('idInsumo', $entrada) or $entrada['idInsumo'] === '' or $entrada['idInsumo'] === null)
+                    throw new \Exception('Código do Insumo é obrigatório nas entradas'); 
                 if(!array_key_exists('quantidade', $entrada) or $entrada['quantidade'] === '' or $entrada['quantidade'] === null)
-                    throw new \Exception('Quantidade da entrada obrigatória.');
+                    throw new \Exception('Quantidade da entrada é obrigatória.');
+                else
+                    $entrada['quantidade'] = (float) $entrada['quantidade'];
 
-                $quantidadeTotalEntrada += $entrada['quantidade'];
+                // Retora o id, status e quantidades do pedido insumo
+                $dadosReturn = $this->getDadosPedidoInsumo($entrada['idPedido'],$entrada['idInsumo']);
+                if(!$dadosReturn['success']) {
+                    throw new \Exception('Erro ao inserir as entradas! Tente novamente.');
+                }
+
+                // id do pedido insumo
+                $entrada['idPedidoInsumo'] = $dadosReturn['id'];
+
+                // Status do insumo
+                if($dadosReturn['quantidade'] >= ($dadosReturn['quantidadeConferida'] + $entrada['quantidade'])){
+                    $entrada['status'] = 'C';
+                } else {
+                    $entrada['status'] = 'E';
+                }
             }
 
-            // Retora o status e quantidades do insumo
-            $dadosReturn = $this->getDadosInsumo($idPedidoInsumo);
-            if(!$dadosReturn['success']) {
-                throw new \Exception('Erro ao inserir as entradas! Tente novamente.');
+            // Entrada
+            if($request['id']){
+                // Edit
+                $sql = 'update  pcp_entradas
+                        set     dthr_entrada = CONCAT(:data_entrada," ",:hora_entrada),
+                                id_usuario = :usuario
+                        where   id = :id';
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->bindParam(':id', $request['id']);
+                $stmt->bindParam(':data_entrada', $request['data_entrada']);
+                $stmt->bindParam(':hora_entrada', $request['hora_entrada']);
+                $stmt->bindParam(':usuario', $request['usuario']);
+                $stmt->execute();
+                $entradaId = $request['id'];
+                $msg = 'Entrada atualizada com sucesso.';
             }
+            else{
+                $sql = 'insert  into pcp_entradas
+                        set     dthr_entrada = CONCAT(:data_entrada," ",:hora_entrada),
+                                id_usuario = :usuario';
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->bindParam(':data_entrada', $request['data_entrada']);
+                $stmt->bindParam(':hora_entrada', $request['hora_entrada']);
+                $stmt->bindParam(':usuario', $request['usuario']);
+                $stmt->execute();
+                $entradaId = $this->pdo->lastInsertId();
+                $msg = 'Pedido de compra cadastrado com sucesso.';
+            }            
 
-            // Valida as quantidades
-            if($quantidadeTotalEntrada <= 0)
-                throw new \Exception('Informe pelo menos uma quantidade para a(s) entrada(s)');
-            if($quantidadeTotalEntrada > $dadosReturn['quantidade'])
-                throw new \Exception('Não é permitida quantidade superior a do Pedido de Compra');
-            else if($quantidadeTotalEntrada < $dadosReturn['quantidadeArmazenada'])
-                throw new \Exception('Não é permitida quantidade inferior à Armazenada');
-
-            // Insere/atualiza os dados
+            // Insere/atualiza as entrada insumos
             $id_entradas_array = array();
             foreach($request['entradas']  as $key => $entrada){
                 if($entrada['id']){
@@ -141,13 +174,13 @@ class PedidoInsumoEntradas extends PedidosInsumos{
                 }
             }
             
-            // Deleta os ids de entrada que não estão no JSON (se caso possuir)
-            if(count($id_entradas_array) > 0) {
-                $sql = 'delete from pcp_insumos_entrada where id_pedido_insumo = :id_pedido_insumo and not id in ('.implode(',',$id_entradas_array).')';
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->bindParam(':id_pedido_insumo', $idPedidoInsumo);
-                $stmt->execute();
-            }
+            // // Deleta os ids de entrada que não estão no JSON (se caso possuir)
+            // if(count($id_entradas_array) > 0) {
+            //     $sql = 'delete from pcp_insumos_entrada where id_pedido_insumo = :id_pedido_insumo and not id in ('.implode(',',$id_entradas_array).')';
+            //     $stmt = $this->pdo->prepare($sql);
+            //     $stmt->bindParam(':id_pedido_insumo', $idPedidoInsumo);
+            //     $stmt->execute();
+            // }
             
             // Altera o status do insumo do pedido de compra
             if(in_array($dadosReturn['status'],array('S','E')) and $quantidadeTotalEntrada === $dadosReturn['quantidade']){
@@ -169,24 +202,25 @@ class PedidoInsumoEntradas extends PedidosInsumos{
         }
     }
 
-    private function getDadosInsumo($idPedidoInsumo = 0){
-        $sql = 'select		pci.status, pci.quantidade,
-                            ifnull(sum(armazenagem.quantidade),0) as quantidadeArmazenada
+    private function getDadosPedidoInsumo($idPedido = 0, $idInsumo = 0){
+        $sql = 'select		pci.id, pci.status, pci.quantidade,
+                            ifnull(sum(entrada.quantidade),0) as quantidadeConferida
                 from 		pcp_pedidos_insumos pci
-                            left join pcp_insumos_entrada entrada on entrada.id_pedido_insumo = pci.id
-                            left join pcp_insumos_armazenagem armazenagem on armazenagem.id_pedido_insumo = pci.id
-                where       pci.id=:idPedidoInsumo
+                            left join pcp_entrada_insumos as entrada on entrada.id_pedido_insumo = pci.id
+                where       pci.id_pedido = :id_pedido and pci.id_insumo = :id_insumo
                 group by	pci.id';
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindParam(':idPedidoInsumo', $idPedidoInsumo);
+        $stmt->bindParam(':id_pedido', $idPedido);
+        $stmt->bindParam(':id_insumo', $idInsumo);
         $stmt->execute();
         $row = $stmt->fetch();
         if($row){
             return array(
-                'success' => true,
-                'status' => $row->status,
-                'quantidade' => (int) $row->quantidade,
-                'quantidadeArmazenada' => (int) $row->quantidadeArmazenada
+                'success'             => true,
+                'id'                  => (int) $row->id,
+                'status'              => $row->status,
+                'quantidade'          => (float) $row->quantidade,
+                'quantidadeConferida' => (float) $row->quantidadeConferida
             ); 
         } else {
             return array('success' => false); 
