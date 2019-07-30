@@ -13,7 +13,7 @@ require '../classes/almoxarifados.php';
 require '../classes/fornecedores.php';
 require '../classes/posicaoArmazem.php';
 require '../classes/pedidosCompra.php';
-require '../classes/pedidoInsumoEntradas.php';
+require '../classes/entradaInsumos.php';
 require '../classes/cores.php';
 require '../classes/usuarios.php';
 require '../classes/conjuntos.php';
@@ -279,9 +279,9 @@ $app->get('/printPedidoCompra', function (Request $request, Response $response){
 });
 
 /* Entrada de insumos */
-$app->get('/getPedidoInsumoEntradas', function (Request $request, Response $response){
-    $classPedidoInsumoEntradas = new PedidoInsumoEntradas($this->db);
-    return $response->write($classPedidoInsumoEntradas->getPedidoInsumoEntradas($request->getQueryParams()));
+$app->get('/getEntradaInsumos', function (Request $request, Response $response){
+    $classEntradaInsumos = new EntradaInsumos($this->db);
+    return $response->write($classEntradaInsumos->getEntradaInsumos($request->getQueryParams()));
 });
 
 /* Armazenagem de Insumos */
@@ -519,9 +519,9 @@ $app->post('/changeStatusInsumo', function (Request $request, Response $response
 });
 
 /* Entrada de Insumo */
-$app->post('/createUpdatePedidoInsumoEntradas', function ($request, $response){
-    $classPedidoInsumoEntradas = new PedidoInsumoEntradas($this->db);
-    return $response->write($classPedidoInsumoEntradas->createUpdatePedidoInsumoEntradas(json_decode($request->getBody(), true)));
+$app->post('/createUpdateEntradaInsumos', function ($request, $response){
+    $classEntradaInsumos = new EntradaInsumos($this->db);
+    return $response->write($classEntradaInsumos->createUpdateEntradaInsumos(json_decode($request->getBody(), true)));
 });
 
 /* Armazenagem de Insumos */

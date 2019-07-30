@@ -33,7 +33,7 @@ class PedidosCompra{
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);
         while ($row = $stmt->fetch()) {
-            $dthr_pedido = explode(' ', $row->dthr_pedido);            
+            $dthr_pedido = explode(' ', $row->dthr_pedido);
             $responseData[] = array(
                 'id'                => (int) $row->id,
                 'data_pedido'       => (isset($dthr_pedido[0]) and $dthr_pedido[0]) ? $dthr_pedido[0] : null,
@@ -295,6 +295,16 @@ class PedidosCompra{
                 'msg' => $e->getMessage()
             ));
         }
+    }
+
+    public function changeStatus($idPedido, $status){
+        $sql = 'update  pcp_pedidos
+                set     status = :status
+                where   id = :idPedido';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':idPedido', $idPedido);
+        $stmt->bindParam(':status', $status);
+        $stmt->execute();
     }
 
     public function deletePedidoCompra($filters){

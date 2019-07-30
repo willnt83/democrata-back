@@ -148,7 +148,7 @@ class PedidosInsumos{
         }
     }
 
-    protected function changeStatus($idPedidoInsumo, $status){
+    public function changeStatus($idPedidoInsumo, $status){
         $sql = 'update  pcp_pedidos_insumos
                 set     status = :status
                 where   id = :idPedidoInsumo';

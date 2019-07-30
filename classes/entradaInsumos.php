@@ -1,68 +1,87 @@
 <?php
 
-class PedidoInsumoEntradas extends PedidosInsumos{
+class EntradaInsumos extends PedidosInsumos{
     public function __construct($db){
         parent::__construct($db);
         $this->pdo = $db;
     }
 
-    public function getPedidoInsumoEntradas($filters){
+    public function getEntradaInsumos($filters){
         $where = '';
+        
         if(count($filters) > 0){
             $where = 'where ';
             $i = 0;
             foreach($filters as $key => $value){
-                $nick = ($key == 'id_pedido' or $key == 'id') ? 'pci.' : 'entrada.';
-                $key_where = ($key == 'id_entrada') ? 'id' : $key;
+                $nick = ($key == 'idEntradaInsumo') ? 'pei.' : 'pe.';
+                $key_where = ($key == 'idEntradaInsumo') ? 'id' : $key;
                 $and = $i > 0 ? ' and ' : '';
                 $where .= $and.$nick.$key_where.' = :'.$key;
                 $i++;                
             }
         }
 
+        // Auxiliares
+        $i = 0;
+        $entradaId = 0;
         $responseData = array();
 
         // Insumo(s) + Quantidades
-        $sql = 'select		pci.id, pci.id_pedido, pci.quantidade,	
-                            ifnull(sum(entrada.quantidade),0) as quantidadeConferida,
-                            ifnull((select sum(arm.quantidade) from pcp_insumos_armazenagem arm where arm.id_pedido_insumo = pci.id),0) as quantidadeArmazenada
-                from 		pcp_pedidos_insumos pci
-                            left join pcp_insumos_entrada entrada on entrada.id_pedido_insumo = pci.id
+        $sql = 'select      pe.id, pe.dthr_entrada, u.id as idUsuario, 
+                            u.id as idUsuario, u.nome as nomeUsuario, 
+                            pei.id as item, pei.id_pedido_insumo as idPedidoInsumo, pei.quantidade,
+                            pc.id as idPedido, pc.chave_nf as chaveNF,
+                            f.id as idFornecedor, f.nome as nomeFornecedor,
+                            ins.id as idInsumo, ins.nome as nomeInsumo, ins.ins as insInsumo,
+                            ifnull((
+                                select 	sum(ent.quantidade) 
+                                from 	pcp_entrada_insumos ent 
+                                where 	ent.id_pedido_insumo = pci.id and 
+                                        ent.id != pei.id
+                            ),0) as quantidadeConferida
+                from	    pcp_entradas pe
+                            inner join pcp_usuarios u on pe.id_usuario = u.id
+                            inner join pcp_entrada_insumos pei on pe.id = pei.id_entrada
+                            inner join pcp_pedidos_insumos pci on pci.id = pei.id_pedido_insumo
+                            inner join pcp_pedidos pc on pc.id = pci.id_pedido
+                            inner join pcp_fornecedores f on f.id = pc.id_fornecedor
+                            inner join pcp_insumos ins on ins.id = pci.id_insumo               
                 '.$where.'
-                group by	pci.id';
+                order by    pe.id';
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($filters);        
-        while ($row = $stmt->fetch()) {
-            $row->id = (int) $row->id;
-            $row->id_pedido = (int) $row->id_pedido;
-            $row->quantidade = (float) $row->quantidade;
-            $row->quantidadeConferida = (float) $row->quantidadeConferida;
-            $row->quantidadeArmazenada = (float) $row->quantidadeArmazenada;
-
-            $dataInsumo = $row;
-            $dataInsumo->entradas = array();
-
-            // Itens
-            $sqlItem = 'select		entrada.id, entrada.dthr_entrada, entrada.quantidade
-                        from 		pcp_insumos_entrada entrada                                
-                        where       entrada.id_pedido_insumo = :id_pedido_insumo
-                        order by	entrada.id';
-            $stmtItem = $this->pdo->prepare($sqlItem);
-            $stmtItem->bindParam(':id_pedido_insumo', $row->id);
-            $stmtItem->execute();
-            while ($rowItem = $stmtItem->fetch()) {
-                $dthr_entrada = explode(' ', $rowItem->dthr_entrada);
+        $stmt->execute($filters);  
+        while ($row = $stmt->fetch()) {            
+            // Entrada
+            if ($entradaId != (int) $row->id) {
+                $dthr_entrada = explode(' ', $row->dthr_entrada);
                 unset($row->dthr_entrada);
 
-                $rowItem->id = (int) $rowItem->id;            
-                $rowItem->data_entrada = (isset($dthr_entrada[0]) and $dthr_entrada[0])  ? $dthr_entrada[0] : null;
-                $rowItem->hora_entrada = (isset($dthr_entrada[0]) and $dthr_entrada[0])  ? $dthr_entrada[0] : null;
-                $rowItem->quantidade = (float) $rowItem->quantidade;
-
-                $dataInsumo->entradas[] = $rowItem;                
+                $i++;
+                $responseData[] = (array) array(
+                    'id' => (int) $row->id,
+                    'data_entrada' => (isset($dthr_entrada[0]) and $dthr_entrada[0]) ? $dthr_entrada[0] : null,
+                    'hora_entrada' => (isset($dthr_entrada[1]) and $dthr_entrada[1]) ? $dthr_entrada[1] : null,
+                    'idUsuario' => (int) $row->idUsuario,
+                    'nomeUsuario' => $row->nomeUsuario,
+                );
             }
 
-            $responseData[] = $dataInsumo;
+            // Insumos (Itens)
+            $responseData[($i-1)]['insumos'][] = array(
+                'id'                  => (int) $row->item,
+                'idInsumo'            => (int) $row->idInsumo,
+                'nomeInsumo'          => $row->nomeInsumo,
+                'insInsumo'           => $row->insInsumo,
+                'quantidade'          => (float) $row->quantidade,
+                'idPedido'            => (int) $row->idPedido,
+                'idPedidoInsumo'      => (int) $row->idPedidoInsumo,
+                'idFornecedor'        => (int) $row->idFornecedor,
+                'nomeFornecedor'      => $row->nomeFornecedor,
+                'chaveNF'             => $row->chaveNF,
+                'quantidadeConferida' => (float) $row->quantidadeConferida
+            );
+
+            $entradaId = $row->id;
         }
 
         return json_encode(array(
@@ -71,7 +90,7 @@ class PedidoInsumoEntradas extends PedidosInsumos{
         ));
     }
 
-    public function createUpdatePedidoInsumoEntradas($request){
+    public function createUpdateEntradaInsumos($request){
         try{
             // Valida a entrada
             if(!array_key_exists('data_entrada', $request) or $request['data_entrada'] === '' or $request['data_entrada'] === null)
@@ -123,6 +142,13 @@ class PedidoInsumoEntradas extends PedidosInsumos{
                 $request['entradas'][$key] = $entrada;
             }
 
+            // Auxiliares
+            $id_pedido_compra           = array();
+            $id_entrada_insumos_array   = array();
+
+            // Pedido Insumos
+            $pedidoInsumos = new PedidosInsumos($this->pdo);
+
             // Insere/atualiza a Entrada
             if($request['id']){
                 $sql = 'update  pcp_entradas
@@ -150,8 +176,7 @@ class PedidoInsumoEntradas extends PedidosInsumos{
             }            
 
             // Insere/atualiza as entrada insumos
-            $id_entrada_insumos_array = array();
-            foreach($request['entradas']  as $key => $entrada){
+            foreach($request['entradas']  as $key => $entrada){ 
                 if($entrada['id']){
                     $sql = 'update  pcp_entrada_insumos
                             set     id_pedido_insumo = :id_pedido_insumo,
@@ -165,10 +190,10 @@ class PedidoInsumoEntradas extends PedidosInsumos{
                     $id_entrada_insumos_array[] = $entrada['id'];
                 } else {
                     $sql = 'insert  into pcp_entrada_insumos
-                            set     id_entrada =: id_entrada,
+                            set     id_entrada = :id_entrada,
                                     id_pedido_insumo = :id_pedido_insumo,
                                     quantidade = :quantidade,
-                                    id_usuario =: id_usuario,
+                                    id_usuario = :usuario,
                                     dthr_entrada = CONCAT(:data_entrada," ",:hora_entrada)';
                     $stmt = $this->pdo->prepare($sql);
                     $stmt->bindParam(':id_entrada', $entradaId);
@@ -182,18 +207,27 @@ class PedidoInsumoEntradas extends PedidosInsumos{
                     if($idItem) $id_entrada_insumos_array[] = $idItem;
                 }
 
+                // Salva o pedido para verificar o status posteriormentes
+                if(!in_array($entrada['idPedido'],$id_pedido_compra))
+                    $id_pedido_compra[] = $entrada['idPedido'];
+
                 // Altera o status do insumo do pedido de compra
-                if($entrada['idPedidoInsumo'] and trim($entrada['status']) != ''){
-                    $this->changeStatus($entrada['idPedidoInsumo'], trim($entrada['status']));
-                }                
+                if($entrada['idPedidoInsumo'] and trim($entrada['status']) != ''){                    
+                    $pedidoInsumos->changeStatus($entrada['idPedidoInsumo'], trim($entrada['status']));
+                }
             }
             
             // Deleta os ids de entrada que não estão no JSON (se caso possuir)
             if(count($id_entrada_insumos_array) > 0) {
-                $sql = 'delete from pcp_entrada_insumos where id_entrada = :id_entrada and not id in ('.implode(',',$id_entradas_array).')';
+                $sql = 'delete from pcp_entrada_insumos where id_entrada = :id_entrada and not id in ('.implode(',',$id_entrada_insumos_array).')';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':id_entrada', $entradaId);
                 $stmt->execute();
+            }
+
+            // Verifica e altera o status dos pedidos
+            if(count($id_pedido_compra) > 0) {
+
             }
 
             return json_encode(array(
