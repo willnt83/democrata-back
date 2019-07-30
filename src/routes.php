@@ -285,14 +285,19 @@ $app->get('/getPedidoInsumoEntradas', function (Request $request, Response $resp
 });
 
 /* Armazenagem de Insumos */
+$app->get('/getArmazenagens', function (Request $request, Response $response){
+    $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
+    return $response->write($classArmazenagemInsumos->getArmazenagens($request->getQueryParams()));
+});
+
 $app->get('/getInsumosArmazenar', function (Request $request, Response $response){
     $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
     return $response->write($classArmazenagemInsumos->getInsumosArmazenar($request->getQueryParams()));
 });
 
-$app->get('/getInsumosArmazenagem', function (Request $request, Response $response){
+$app->get('/getInsumosArmazenados', function (Request $request, Response $response){
     $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
-    return $response->write($classArmazenagemInsumos->getInsumosArmazenagem($request->getQueryParams()));
+    return $response->write($classArmazenagemInsumos->getInsumosArmazenados($request->getQueryParams()));
 });
 
 /* Saída de Insumos */
@@ -520,8 +525,8 @@ $app->post('/createUpdatePedidoInsumoEntradas', function ($request, $response){
 });
 
 /* Armazenagem de Insumos */
-$app->post('/createUpdateInsumosArmazenagem', function ($request, $response){
+$app->post('/createUpdateArmazenagem', function ($request, $response){
     $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
-    return $response->write($classArmazenagemInsumos->createUpdateInsumosArmazenagem(json_decode($request->getBody(), true)));
+    return $response->write($classArmazenagemInsumos->createUpdateArmazenagem(json_decode($request->getBody(), true)));
 });
 /******************************************************/
