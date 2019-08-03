@@ -296,9 +296,9 @@ class CodigoDeBarras{
             
             $sql2 = '
                 insert into pcp_codigo_de_barras
-                (id_producao, id_produto, id_conjunto, id_setor, id_subproduto, sequencial, codigo, dt_geracao, pontos)
-                values
-                '.$valuesStr.';
+                    (id_producao, id_produto, id_conjunto, id_setor, id_subproduto, sequencial, codigo, dt_geracao, pontos)
+                    values
+                    '.$valuesStr.';
             ';
             
             $stmt2 = $this->pdo->prepare($sql2);

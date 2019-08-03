@@ -150,7 +150,7 @@ class EntradaInsumos extends PedidosInsumos{
             $pedidoInsumos = new PedidosInsumos($this->pdo);
 
             // Insere/atualiza a Entrada
-            if($request['id']){
+            if(isset($request['id']) and $request['id']){
                 $sql = 'update  pcp_entradas
                         set     dthr_entrada = CONCAT(:data_entrada," ",:hora_entrada)
                         where   id = :id';

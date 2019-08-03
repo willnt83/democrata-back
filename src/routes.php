@@ -25,6 +25,7 @@ require '../classes/diasNaoUteis.php';
 require '../classes/relatorios.php';
 require '../classes/codigoDeBarras.php';
 require '../classes/armazenagemInsumos.php';
+require '../classes/saidaInsumos.php';
 
 // Routes
 /************************ GET ************************/
@@ -301,6 +302,10 @@ $app->get('/getInsumosArmazenados', function (Request $request, Response $respon
 });
 
 /* Saída de Insumos */
+$app->get('/getInsumosDisponiveisParaSaida', function (Request $request, Response $response){
+    $classSaidaInsumos = new SaidaInsumos($this->db);
+    return $response->write($classSaidaInsumos->getInsumosDisponiveisParaSaida($request->getQueryParams()));
+});
 
 
 /* Relatórios */
@@ -533,5 +538,10 @@ $app->post('/createUpdateEntradaInsumos', function ($request, $response){
 $app->post('/createUpdateArmazenagem', function ($request, $response){
     $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
     return $response->write($classArmazenagemInsumos->createUpdateArmazenagem(json_decode($request->getBody(), true)));
+});
+
+$app->post('/geracaoEtiquetasArmazenagem', function ($request, $response){
+    $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
+    return $response->write($classArmazenagemInsumos->geracaoEtiquetasArmazenagem(json_decode($request->getBody(), true)));
 });
 /******************************************************/

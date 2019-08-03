@@ -1,6 +1,6 @@
 <?php
 
-class ArmazenagemInsumos{
+class SaidaInsumos{
     public function __construct($db){
         $this->pdo = $db;
     }
@@ -18,7 +18,7 @@ class ArmazenagemInsumos{
         }
 
         $sql = '
-            SELECT a.id id_armazenagem, a.id_usuario, u.nome nome_usuario, a.dthr_armazenagem
+            SELECT a.id id_saida, a.id_usuario, u.nome nome_usuario, a.dthr_armazenagem
             FROM pcp_armazenagens a
             JOIN pcp_usuarios u ON u.id = a.id_usuario
             '.$where.'
@@ -45,70 +45,8 @@ class ArmazenagemInsumos{
         ));
     }
 
-    // Recupera todos os insumos entrados mas ainda não armazenados
-    public function getInsumosArmazenar($filters){
-        $where = '';
-        if(count($filters) > 0){
-            $where = 'where ';
-            $i = 0;
-            foreach($filters as $key => $value){
-                $and = $i > 0 ? ' and ' : '';
-                $where .= $and.'ia.'.$key.' = :'.$key;
-                $i++;
-            }
-        }
-
-        $sql = '
-            SELECT
-                p.id id_pedido,
-                eins.id_pedido_insumo,
-                ins.id id_insumo,
-                ins.nome nome_insumo,
-                ins.ins ins_insumo,
-                eins.quantidade quantidade_entrada,
-                sum(ai.quantidade) quantidade_armazenada,
-                ent.dthr_entrada
-            FROM pcp_entrada_insumos eins
-            JOIN pcp_entradas ent ON ent.id = eins.id_entrada
-            JOIN pcp_pedidos_insumos pins ON pins.id = eins.id_pedido_insumo
-            JOIN pcp_pedidos p ON p.id = pins.id_pedido
-            JOIN pcp_insumos ins ON ins.id = pins.id_insumo
-            LEFT JOIN pcp_armazenagem_insumos ai ON ai.id_pedido_insumo = eins.id_pedido_insumo
-            '.$where.'
-            GROUP BY eins.id_pedido_insumo
-            ORDER BY eins.id;
-        ';
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($filters);
-
-        $responseData = array();
-        while($row = $stmt->fetch()){
-            $quantidadeArmazenada = $row->quantidade_armazenada !== null ? (int)$row->quantidade_armazenada : 0;
-            $quantidadeArmazenar = (int)$row->quantidade_entrada - $quantidadeArmazenada;
-
-            $responseData[] = array(
-                'idPedido' => (int)$row->id_pedido,
-                'idPedidoInsumo' => (int)$row->id_pedido_insumo,
-                'insumo' => array(
-                    'id' => (int)$row->id_insumo,
-                    'nome' => $row->nome_insumo,
-                    'ins' => $row->ins_insumo,
-                    'quantidadeEntrada' => (int)$row->quantidade_entrada,
-                    'quantidadeArmazenar' => $quantidadeArmazenar,
-                    'dataEntrada' => $row->dthr_entrada
-                )
-            );
-        }
-
-        return json_encode(array(
-            'success' => true,
-            'payload' => $responseData
-        ));
-    }
-
     // Recupera as informações de entrada
-    public function getInsumosArmazenados($filters){
+    public function getInsumosDisponiveisParaSaida($filters){
         $where = '';
         if(count($filters) > 0){
             $where = 'where ';
@@ -123,32 +61,25 @@ class ArmazenagemInsumos{
         $sql = '
             SELECT
                 ai.id_pedido_insumo,
-                pins.id_insumo,
-                ins.nome nome_insumo,
+                ins.id id_insumo,
                 ins.ins ins_insumo,
-                um.unidade unidadeMedida,
+                ins.nome nome_insumo,
                 ai.id_almoxarifado,
-                a.nome nomeAlmoxarifado,
+                al.nome nome_almoxarifado,
                 ai.id_posicao,
-                pa.posicao nomePosicao,
+                pa.posicao nome_posicao,
                 ai.quantidade,
-                ei.quantidade quantidade_entrada,
-                totais.totalQuantidadeArmazenada quantidade_total_armazenada,
-                ei.dthr_entrada
+                e.dthr_entrada
             FROM pcp_armazenagem_insumos ai
-            JOIN pcp_almoxarifado a ON a.id = ai.id_almoxarifado
-            JOIN pcp_posicao_armazem pa ON pa.id = ai.id_posicao AND pa.id_almoxarifado = ai.id_almoxarifado
-            JOIN pcp_entrada_insumos ei ON ei.id_pedido_insumo = ai.id_pedido_insumo
-            JOIN (
-                SELECT ai2.id_pedido_insumo, SUM(ai2.quantidade) totalQuantidadeArmazenada
-                FROM pcp_armazenagem_insumos ai2
-                GROUP BY ai2.id_pedido_insumo
-            ) AS totais ON totais.id_pedido_insumo = ai.id_pedido_insumo
+            JOIN pcp_armazenagens a ON a.id = ai.id_armazenagem
+            JOIN pcp_almoxarifado al ON al.id = ai.id_almoxarifado
+            JOIN pcp_posicao_armazem pa ON pa.id = ai.id_posicao
             JOIN pcp_pedidos_insumos pins ON pins.id = ai.id_pedido_insumo
             JOIN pcp_insumos ins ON ins.id = pins.id_insumo
-            JOIN pcp_unidades_medida um ON um.id = ins.id_unidade_medida
+            JOIN pcp_entrada_insumos eins ON eins.id_pedido_insumo = ai.id_pedido_insumo
+            JOIN pcp_entradas e ON e.id = eins.id_entrada
             '.$where.'
-            ORDER BY ei.id
+            ORDER BY e.dthr_entrada ASC
         ';
 
         $stmt = $this->pdo->prepare($sql);
@@ -156,25 +87,22 @@ class ArmazenagemInsumos{
 
         $responseData = array();
         while($row = $stmt->fetch()){
+            /*
             $quantidadeArmazenada = $row->quantidade_total_armazenada !== null ? (int)$row->quantidade_total_armazenada : 0;
             $quantidadeArmazenar = (int)$row->quantidade_entrada - $quantidadeArmazenada;
+            */
 
             $responseData[] = array(
                 'idPedidoInsumo' => (int)$row->id_pedido_insumo,
-                'insumo' => array(
-                    'id' => (int)$row->id_insumo,
-                    'nome' => $row->nome_insumo,
-                    'ins' => $row->ins_insumo,
-                    'unidadeMedida' => $row->unidadeMedida,
-                    'idAlmoxarifado' => (int)$row->id_almoxarifado,
-                    'nomeAlmoxarifado' => $row->nomeAlmoxarifado,
-                    'idPosicao' => (int)$row->id_posicao,
-                    'nomePosicao' => $row->nomePosicao,
-                    'quantidade' => (int)$row->quantidade,
-                    'quantidadeEntrada' => (int)$row->quantidade_entrada,
-                    'quantidadeArmazenar' => $quantidadeArmazenar,
-                    'dataRecebimento' => $row->dthr_entrada
-                )
+                'idInsumo' => (int)$row->id_insumo,
+                'insInsumo' => $row->ins_insumo,
+                'nomeInsumo' => $row->nome_insumo,
+                'idAlmoxarifado' => (int)$row->id_almoxarifado,
+                'nomeAlmoxarifado' => $row->nome_almoxarifado,
+                'idPosicao' => (int)$row->id_posicao,
+                'nomePosicao' => $row->nome_posicao,
+                'quantidadeDisponivel' => (int)$row->quantidade,
+                'dataRecebimento' => $row->dthr_entrada
             );
         }
 

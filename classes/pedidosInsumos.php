@@ -109,7 +109,7 @@ class PedidosInsumos{
                 group by    ins.id
                 order by    pci.id';
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($filters);
+        $stmt->execute();
         while ($row = $stmt->fetch()) {
             $row->id = (int)$row->id;
             $responseData[] = $row;

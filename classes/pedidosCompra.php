@@ -148,7 +148,7 @@ class PedidosCompra{
                 'id'                    => (int) $row->idInsumo,
                 'nome'                  => $row->nomeInsumo,
                 'ins'                   => $row->ins,
-                'unidademedida'         => $row->nomeUnidadeMedida,
+                'unidademedida'         => $row->unidadeUnidadeMedida,
                 'quantidade'            => (float) $row->quantidade,
                 'quantidade_conferida'  => (float) $row->quantidade_conferida,
                 'statusInsumo'          => $row->statusInsumo

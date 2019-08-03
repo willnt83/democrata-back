@@ -26,19 +26,17 @@ $config['db']['pass']   = 'PCPSenha123';
 $config['db']['dbname'] = 'debora35_pcp';
 */
 
+/*// Homolog
 $config['db']['host']   = 'br982.hostgator.com.br';
 $config['db']['user']   = 'debora35_pcp';
 $config['db']['pass']   = 'PCPSenha123';
 $config['db']['dbname'] = 'debora35_homologdemocrata';
+*/
 
-
-/*
 $config['db']['host']   = 'localhost';
 $config['db']['user']   = 'root';
 $config['db']['pass']   = 'asdzxcc11';
 $config['db']['dbname'] = 'pcp_prod';
-*/
-
 
 // Instantiate the app
 $settings = require __DIR__ . '/../src/settings.php';
