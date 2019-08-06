@@ -148,6 +148,7 @@ class ArmazenagemInsumos{
             JOIN pcp_insumos ins ON ins.id = pins.id_insumo
             JOIN pcp_unidades_medida um ON um.id = ins.id_unidade_medida
             '.$where.'
+            GROUP BY ai.id
             ORDER BY ei.id
         ';
 

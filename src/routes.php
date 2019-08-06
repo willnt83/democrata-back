@@ -302,9 +302,19 @@ $app->get('/getInsumosArmazenados', function (Request $request, Response $respon
 });
 
 /* Saída de Insumos */
+$app->get('/getSaidas', function (Request $request, Response $response){
+    $classSaidaInsumos = new SaidaInsumos($this->db);
+    return $response->write($classSaidaInsumos->getSaidas($request->getQueryParams()));
+});
+
 $app->get('/getInsumosDisponiveisParaSaida', function (Request $request, Response $response){
     $classSaidaInsumos = new SaidaInsumos($this->db);
     return $response->write($classSaidaInsumos->getInsumosDisponiveisParaSaida($request->getQueryParams()));
+});
+
+$app->get('/getInsumosRetirados', function (Request $request, Response $response){
+    $classSaidaInsumos = new SaidaInsumos($this->db);
+    return $response->write($classSaidaInsumos->getInsumosRetirados($request->getQueryParams()));
 });
 
 
@@ -544,4 +554,11 @@ $app->post('/geracaoEtiquetasArmazenagem', function ($request, $response){
     $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
     return $response->write($classArmazenagemInsumos->geracaoEtiquetasArmazenagem(json_decode($request->getBody(), true)));
 });
+
+/* Saída de Insumos */
+$app->post('/createUpdateSaida', function ($request, $response){
+    $classSaidaInsumos = new SaidaInsumos($this->db);
+    return $response->write($classSaidaInsumos->createUpdateSaida(json_decode($request->getBody(), true)));
+});
+
 /******************************************************/
