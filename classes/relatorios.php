@@ -1,6 +1,7 @@
 <?php
 class Relatorios{
     public function __construct($db, $spreadsheet, $writer){
+        ini_set('memory_limit', '-1');
         $this->pdo = $db;
         $this->spreadsheet = $spreadsheet;
         $this->writer = $writer;
@@ -234,6 +235,7 @@ class Relatorios{
                 cb.codigo codigo_barras,
                 cb.id_funcionario, f.nome nome_funcionario,
                 cb.dt_lancamento data_lancamento,
+                if(cb.dt_conferencia <> "0000-00-00", cb.dt_conferencia, NULL) data_conferencia,
                 cb.pontos
             FROM pcp_codigo_de_barras cb
             JOIN pcp_producoes p ON p.id = cb.id_producao
@@ -263,12 +265,21 @@ class Relatorios{
         $sheet->setCellValue('K1', 'ID Funcionário');
         $sheet->setCellValue('L1', 'Funcionário');
         $sheet->setCellValue('M1', 'Data Lançamento');
-        $sheet->setCellValue('N1', 'Pontos');
+        $sheet->setCellValue('N1', 'Data Conferencia');
+        $sheet->setCellValue('O1', 'Pontos');
 
         $i = 2;
         while ($row = $stmt->fetch()) {
             $dataLancamentoDT = new DateTime($row->data_lancamento);
             $dataLancamento = $dataLancamentoDT->format('d/m/Y');
+
+            if($row->data_conferencia){
+                $dataConferenciaDT = new DateTime($row->data_conferencia);
+                $dataConferencia = $dataConferenciaDT->format('d/m/Y');
+            }
+            else
+                $dataConferencia = '';
+
 
             $sheet->setCellValue('A'.$i, $row->id_producao);
             $sheet->setCellValue('B'.$i, $row->nome_producao);
@@ -283,7 +294,8 @@ class Relatorios{
             $sheet->setCellValue('K'.$i, $row->id_funcionario);
             $sheet->setCellValue('L'.$i, $row->nome_funcionario);
             $sheet->setCellValue('M'.$i, $dataLancamento);
-            $sheet->setCellValue('N'.$i, $row->pontos);
+            $sheet->setCellValue('N'.$i, $dataConferencia);
+            $sheet->setCellValue('O'.$i, $row->pontos);
 
             $i++;
         }

@@ -2,6 +2,7 @@
 class CodigoDeBarras{
     public function __construct($db){
         $this->pdo = $db;
+        $this->debug = false;
         //$this->spreadsheet = $spreadsheet;
         //$this->writer = $writer;
     }
@@ -308,35 +309,42 @@ class CodigoDeBarras{
             $i = 0;
             $pdf = new FPDF();
             $lastSetor = null;
+
             while($i < count($barCodes)){
+                if($this->debug)echo "\n";
+                if($this->debug)echo "\ni: ".$i;
                 if($i === 0) $pdf->AddPage();
 
                 $pdf->SetFont('Arial', '', 5);
-                $sectorChange = 99;
+                $sectorChange = array();
                 $sumSector = 0;
                 $aux = 0;
+
                 while($aux < 4){
                     if(($i+$aux) < count($barCodes) and $barCodes[$i+$aux]['setor'] != $lastSetor){
                         $lastSetor = $barCodes[$i+$aux]['setor'];
-                        $sectorChange = $aux;
-                        $sumSector = 1;
-                        break;
+                        $sectorChange[] = $aux;
+                        //break;
                     }
                     $aux++;
                 }
+                if($this->debug)echo "\nsectorChange\n";
+                if($this->debug)print_r($sectorChange);
 
                 $c = 0;
                 $aux = 0;
-                //echo "\n";
-                //echo "\ni: ".$i;
+
+                $lastChanged = false;
                 while($aux < 4){
-                    //echo "\naux: ".$aux;
-                    if($aux == $sectorChange){
-                        //echo "\nsectorChange!!!";
+                    if(in_array($c, $sectorChange) && $lastChanged == false){
+                        if($this->debug)echo "\nsectorChange[".$aux."]: (vazio)";
                         $pdf->Cell(47, 2, '', 0, 0, 'C');
+                        $lastChanged = true;
+                        $sumSector++;
                     }
                     else if(($i+$c) < count($barCodes)){
-                        //echo "\nimpressao normal...";
+                        $lastChanged = false;
+                        if($this->debug)echo "\nimpressao normal: ".utf8_decode($barCodes[$i+$c]['nomeProduto']).'('.utf8_decode($barCodes[$i+$c]['corProduto']).')-'.utf8_decode($barCodes[$i+$c]['nomeSubproduto']);
                         $pdf->Cell(47, 2, utf8_decode($barCodes[$i+$c]['nomeProduto']).'('.utf8_decode($barCodes[$i+$c]['corProduto']).')-'.utf8_decode($barCodes[$i+$c]['nomeSubproduto']), 0, 0, 'C');
                         $c++;
                     }
@@ -348,10 +356,16 @@ class CodigoDeBarras{
 
                 $c = 0;
                 $aux = 0;
+                $lastChanged = false;
                 while($aux < 4){
-                    if($aux == $sectorChange)
-                        $pdf->Cell(47, 10, utf8_decode($barCodes[$i+$c]['setor']), 0, 0, 'C', false);    
+                    if(in_array($c, $sectorChange) && $lastChanged == false){
+                        if($this->debug) echo "\nsectorChange[".$aux."]: ".utf8_decode($barCodes[$i+$c]['setor']);
+                        $pdf->Cell(47, 10, utf8_decode($barCodes[$i+$c]['setor']), 0, 0, 'C', false);
+                        $lastChanged = true;
+                    }
                     else if(($i+$c) < count($barCodes)){
+                        $lastChanged = false;
+                        if($this->debug)echo "\nimpressao normal: (codigo de barras)";
                         // Gerando a string base64 da imagem
                         $strBase64 = 'data:image/png;base64,'.base64_encode($generator->getBarcode($barCodes[$i+$c]['strBase64'], $generator::TYPE_CODE_128));
                         // Gerando o arquivo de imagem
@@ -363,24 +377,33 @@ class CodigoDeBarras{
                 }
 
                 $pdf->Ln();
-                
+
                 $c = 0;
                 $aux = 0;
+                if($this->debug)echo "\n--------while4";
+                $lastChanged = false;
                 while($aux < 4){
-                    if($aux == $sectorChange)
+                    if(in_array($c, $sectorChange) && $lastChanged == false){
+                        if($this->debug)echo "\nsectorChange[".$c."]: (vazio)";
                         $pdf->Cell(47, 3.7, '', 0, 0, 'C', false);
+                        $lastChanged = true;
+                    }
                     else if(($i+$c) < count($barCodes)){
+                        $lastChanged = false;
+                        if($this->debug)echo "\nimpressao normal: ".$barCodes[$i+$c]['strBase64'];
                         $pdf->Cell(47, 3.7, $barCodes[$i+$c]['strBase64'], 0, 0, 'C', false);
                         $c++;
                     }
                     $aux++;
                 }
 
+
                 $pdf->Ln();
                 $pdf->Cell(188, 2, '', 0, 0, 'C', false);
                 $pdf->Ln();
                 $i += (4 - $sumSector);
             }
+            
             
             $path = 'barcodes/'.$filters['id_producao'].'/producao-'.$filters['id_producao'].'.pdf';
             $pdf->Output('F', $path, true);
