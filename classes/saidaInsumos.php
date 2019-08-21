@@ -130,7 +130,7 @@ class SaidaInsumos{
         $sql = '
             SELECT
                 ai.id id_armazenagem_insumo,
-                ai.id_pedido_insumo,
+                ai.id_entrada_insumo,
                 ins.id id_insumo,
                 ins.ins ins_insumo,
                 ins.nome nome_insumo,
@@ -140,15 +140,15 @@ class SaidaInsumos{
                 pa.posicao nome_posicao,
                 ai.quantidade quantidade_armazenada,
                 totais.quantidade_retirada,
-                (ai.quantidade - totais.quantidade_retirada) quantidade_disponivel,
+                (ai.quantidade - if(totais.quantidade_retirada IS NOT NULL, totais.quantidade_retirada, 0)) quantidade_disponivel,
                 e.dthr_entrada
             FROM pcp_armazenagem_insumos ai
             JOIN pcp_armazenagens a ON a.id = ai.id_armazenagem
             JOIN pcp_almoxarifado al ON al.id = ai.id_almoxarifado
             JOIN pcp_posicao_armazem pa ON pa.id = ai.id_posicao
-            JOIN pcp_pedidos_insumos pins ON pins.id = ai.id_pedido_insumo
+            JOIN pcp_entrada_insumos eins ON eins.id = ai.id_entrada_insumo
+            JOIN pcp_pedidos_insumos pins ON pins.id = eins.id_pedido_insumo
             JOIN pcp_insumos ins ON ins.id = pins.id_insumo
-            JOIN pcp_entrada_insumos eins ON eins.id_pedido_insumo = ai.id_pedido_insumo
             JOIN pcp_entradas e ON e.id = eins.id_entrada
             left JOIN (
                 SELECT si.id_armazenagem_insumos, SUM(si.quantidade) quantidade_retirada
@@ -172,8 +172,7 @@ class SaidaInsumos{
 
             $responseData[] = array(
                 'idArmazenagemInsumo' => (int)$row->id_armazenagem_insumo,
-
-                'idPedidoInsumo' => (int)$row->id_pedido_insumo,
+                'idEntradaInsumo' => (int)$row->id_entrada_insumo,
                 'idInsumo' => (int)$row->id_insumo,
                 'insInsumo' => $row->ins_insumo,
                 'nomeInsumo' => $row->nome_insumo,
