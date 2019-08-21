@@ -36,8 +36,7 @@ class EntradaInsumos extends PedidosInsumos{
                             ifnull((
                                 select 	sum(ent.quantidade) 
                                 from 	pcp_entrada_insumos ent 
-                                where 	ent.id_pedido_insumo = pci.id and 
-                                        ent.id != pei.id
+                                where 	ent.id_pedido_insumo = pci.id
                             ),0) as quantidadeConferida
                 from	    pcp_entradas pe
                             inner join pcp_usuarios u on pe.id_usuario = u.id
