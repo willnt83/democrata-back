@@ -394,7 +394,7 @@ class ArmazenagemInsumos{
             $pdf->Ln();
 
             // Código de Barras
-            $cod = $etiquetas[$i]['idPedidoInsumo'].'-'.$etiquetas[$i]['idAlmoxarifado'].'-'.$etiquetas[$i]['idPosicao'];
+            $cod = $etiquetas[$i]['idInsumo'].'-'.$etiquetas[$i]['idAlmoxarifado'].'-'.$etiquetas[$i]['idPosicao'];
             $strBase64 = 'data:image/png;base64,'.base64_encode($generator->getBarcode($cod, $generator::TYPE_CODE_128));
             $img = $this->generateImage($strBase64, 'etiquetasArmazenagem/images/'.$cod.'.png');
           
@@ -403,7 +403,7 @@ class ArmazenagemInsumos{
             if($proximo){
                 $pdf->Cell(2, 12, '', 0, 0, 'C');
                 
-                $cod = $etiquetas[$i]['idPedidoInsumo'].'-'.$etiquetas[$i+1]['idAlmoxarifado'].'-'.$etiquetas[$i+1]['idPosicao'];
+                $cod = $etiquetas[$i]['idInsumo'].'-'.$etiquetas[$i+1]['idAlmoxarifado'].'-'.$etiquetas[$i+1]['idPosicao'];
                 $strBase64 = 'data:image/png;base64,'.base64_encode($generator->getBarcode($cod, $generator::TYPE_CODE_128));
                 $img = $this->generateImage($strBase64, 'etiquetasArmazenagem/images/'.$cod.'.png');
                 $pdf->Cell(45, 12, utf8_decode('Código: '.$cod), 'LTRB', 0, 'L');

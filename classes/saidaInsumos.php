@@ -122,7 +122,8 @@ class SaidaInsumos{
             $i = 0;
             foreach($filters as $key => $value){
                 $and = $i > 0 ? ' and ' : '';
-                $where .= $and.'ai.'.$key.' = :'.$key;
+                $alias = ($key === 'id_insumo') ? 'pins.' : 'ai.';
+                $where .= $and.$alias.$key.' = :'.$key;
                 $i++;
             }
         }

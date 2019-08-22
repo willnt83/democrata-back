@@ -37,7 +37,12 @@ class EntradaInsumos extends PedidosInsumos{
                                 select 	sum(ent.quantidade) 
                                 from 	pcp_entrada_insumos ent 
                                 where 	ent.id_pedido_insumo = pci.id
-                            ),0) as quantidadeConferida
+                            ),0) as quantidadeConferida,
+                            ifnull((
+                                select 	sum(pi.quantidade) 
+                                from 	pcp_pedidos_insumos pi 
+                                where 	pi.id = pci.id
+                            ),0) as quantidadePedido                           
                 from	    pcp_entradas pe
                             inner join pcp_usuarios u on pe.id_usuario = u.id
                             inner join pcp_entrada_insumos pei on pe.id = pei.id_entrada
@@ -77,7 +82,8 @@ class EntradaInsumos extends PedidosInsumos{
                 'idFornecedor'        => (int) $row->idFornecedor,
                 'nomeFornecedor'      => $row->nomeFornecedor,
                 'chaveNF'             => $row->chaveNF,
-                'quantidadeConferida' => (float) $row->quantidadeConferida
+                'quantidadeConferida' => (float) $row->quantidadeConferida,
+                'quantidadePedido'    => (float) $row->quantidadePedido
             );
 
             $entradaId = $row->id;
