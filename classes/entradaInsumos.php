@@ -121,7 +121,7 @@ class EntradaInsumos extends PedidosInsumos{
                     $entrada['quantidade'] = (float) $entrada['quantidade'];
 
                 // Retora o id, status e quantidades do pedido insumo
-                $dadosReturn = $this->getDadosPedidoInsumo($entrada['idPedido'],$entrada['idInsumo']);
+                $dadosReturn = $this->getDadosPedidoInsumo($entrada['idPedido'], $entrada['idInsumo'], $entrada['id']);
                 if(!$dadosReturn['success']) {
                     throw new \Exception('Erro ao inserir as entradas! Tente novamente.');
                 }
@@ -130,7 +130,7 @@ class EntradaInsumos extends PedidosInsumos{
                 $entrada['idPedidoInsumo'] = $dadosReturn['id'];
 
                 // Status que será aplicado ao pedido insumo
-                if($dadosReturn['quantidade'] >= ($dadosReturn['quantidadeConferida'] + $entrada['quantidade'])){
+                if(($entrada['quantidade'] + $dadosReturn['quantidadeConferida']) >= $dadosReturn['quantidade']){
                     $statusInsumo = 'C';
                 } else {
                     $statusInsumo = 'E';
@@ -230,9 +230,32 @@ class EntradaInsumos extends PedidosInsumos{
                 $stmt->execute();
             }
 
-            // Verifica e altera o status dos pedidos
+            // Verifica e altera o status dos pedidos que tiveram entradas
+            //
+            // Se todo os insumos estiverem Conferidos, alterar o status para Finalizado
             if(count($id_pedido_compra) > 0) {
-
+                foreach($id_pedido_compra as $key => $value){
+                    $sql = 'select 		case
+                                            when count(*) = sum(case when pi.status = "C" then 1 else 0 end) then "F"
+                                            else "A"
+                                        end as "status"
+                            from		pcp_pedidos p
+                                        inner join pcp_pedidos_insumos pi on p.id = pi.id_pedido
+                            where		p.id = :id
+                            group by 	p.id';
+                    $stmt = $this->pdo->prepare($sql);                            
+                    $stmt->bindParam(':id', $value);
+                    $stmt->execute();
+                    $row = $stmt->fetch();
+                    if($row){
+                        $statusPedido = isset($row->status) ? $row->status : 'A' ;
+                        $sqlUpdate = 'update pcp_pedidos set status = :status where id = :id';
+                        $stmt = $this->pdo->prepare($sqlUpdate);
+                        $stmt->bindParam(':status', $statusPedido);
+                        $stmt->bindParam(':id', $value);
+                        $stmt->execute();                        
+                    }
+                }
             }
 
             return json_encode(array(
@@ -248,11 +271,15 @@ class EntradaInsumos extends PedidosInsumos{
         }
     }
 
-    private function getDadosPedidoInsumo($idPedido = 0, $idInsumo = 0){
+    private function getDadosPedidoInsumo($idPedido = 0, $idInsumo = 0, $idEntradaInsumo = 0){
         $sql = 'select		pci.id, pci.status, pci.quantidade,
-                            ifnull(sum(entrada.quantidade),0) as quantidadeConferida
+                            ifnull((
+                                select 	sum(ent.quantidade) 
+                                from 	pcp_entrada_insumos ent 
+                                where 	ent.id_pedido_insumo = pci.id
+                                        '.($idEntradaInsumo > 0 ? 'and ent.id != '.$idEntradaInsumo : '').'
+                            ),0) as quantidadeConferida
                 from 		pcp_pedidos_insumos pci
-                            left join pcp_entrada_insumos as entrada on entrada.id_pedido_insumo = pci.id
                 where       pci.id_pedido = :id_pedido and pci.id_insumo = :id_insumo
                 group by	pci.id';
         $stmt = $this->pdo->prepare($sql);
