@@ -85,7 +85,7 @@ class ArmazenagemInsumos{
         $responseData = array();
         while($row = $stmt->fetch()){
             $quantidadeArmazenada = $row->quantidade_armazenada !== null ? (int)$row->quantidade_armazenada : 0;
-            $quantidadeArmazenar = (int)$row->quantidade_entrada - $quantidadeArmazenada;
+            $quantidadeArmazenar = (float)$row->quantidade_entrada - $quantidadeArmazenada;
 
             $responseData[] = array(
                 'idPedido' => (int)$row->id_pedido,
@@ -94,7 +94,7 @@ class ArmazenagemInsumos{
                     'id' => (int)$row->id_insumo,
                     'nome' => $row->nome_insumo,
                     'ins' => $row->ins_insumo,
-                    'quantidadeEntrada' => (int)$row->quantidade_entrada,
+                    'quantidadeEntrada' => (float)$row->quantidade_entrada,
                     'quantidadeArmazenar' => $quantidadeArmazenar,
                     'dataEntrada' => $row->dthr_entrada
                 )
@@ -158,7 +158,7 @@ class ArmazenagemInsumos{
         $responseData = array();
         while($row = $stmt->fetch()){
             $quantidadeArmazenada = $row->quantidade_total_armazenada !== null ? (int)$row->quantidade_total_armazenada : 0;
-            $quantidadeArmazenar = (int)$row->quantidade_entrada - $quantidadeArmazenada;
+            $quantidadeArmazenar = (float)$row->quantidade_entrada - $quantidadeArmazenada;
 
             $responseData[] = array(
                 'idEntradaInsumo' => (int)$row->id_entrada_insumo,
@@ -171,8 +171,8 @@ class ArmazenagemInsumos{
                     'nomeAlmoxarifado' => $row->nomeAlmoxarifado,
                     'idPosicao' => (int)$row->id_posicao,
                     'nomePosicao' => $row->nomePosicao,
-                    'quantidade' => (int)$row->quantidade,
-                    'quantidadeEntrada' => (int)$row->quantidade_entrada,
+                    'quantidade' => (float)$row->quantidade,
+                    'quantidadeEntrada' => (float)$row->quantidade_entrada,
                     'quantidadeArmazenar' => $quantidadeArmazenar,
                     'dataRecebimento' => $row->dthr_entrada
                 )

@@ -315,14 +315,13 @@ class PedidosCompra{
                                 from	pcp_pedidos p
                                         inner join pcp_pedidos_insumos pi on pi.id_pedido = p.id
                                 where	p.id = :id and
-                                        ((select e.id from pcp_insumos_entrada e where e.id_pedido_insumo = pi.id limit 1) > 0 or
-                                        (select e.id from pcp_insumos_armazenagem e where e.id_pedido_insumo = pi.id limit 1) > 0)';
+                                        (select e.id from pcp_entrada_insumos e where e.id_pedido_insumo = pi.id limit 1) > 0';
                 $stmtVerify = $this->pdo->prepare($sqlVerify);
                 $stmtVerify->bindParam(':id', $filters['id']);
                 $stmtVerify->execute();
                 $rowVerify = $stmtVerify->fetch();
                 if($rowVerify and $rowVerify->total > 0){
-                    throw new \Exception('Não é permitido excluir Pedido de Compra com insumo já Entregue/Armazenado.');
+                    throw new \Exception('Não é permitido excluir pedido de compra com insumo já entregue ou armazenado.');
                 }
                 
                 // Deletando os Insumos
@@ -343,7 +342,7 @@ class PedidosCompra{
                 'msg' => 'Pedido de compra removido com sucesso.'
             ));
         }
-        catch(PDOException $e){
+        catch(\Exception $e){
             return json_encode(array(
                 'success' => false,
                 'msg' => $e->getMessage()

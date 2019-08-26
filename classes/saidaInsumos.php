@@ -103,7 +103,7 @@ class SaidaInsumos{
                     'nomeAlmoxarifado' => $row->nome_almoxarifado,
                     'idPosicao' => (int)$row->id_posicao,
                     'nomePosicao' => $row->nome_posicao,
-                    'quantidadeRetirada' => (int)$row->quantidade_retirada
+                    'quantidadeRetirada' => (float)$row->quantidade_retirada
                 )
             );
         }
@@ -181,7 +181,7 @@ class SaidaInsumos{
                 'nomeAlmoxarifado' => $row->nome_almoxarifado,
                 'idPosicao' => (int)$row->id_posicao,
                 'nomePosicao' => $row->nome_posicao,
-                'quantidadeDisponivel' => (int)$row->quantidade_disponivel,
+                'quantidadeDisponivel' => (float)$row->quantidade_disponivel,
                 'dataRecebimento' => $row->dthr_entrada
             );
         }
