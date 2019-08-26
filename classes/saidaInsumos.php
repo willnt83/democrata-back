@@ -75,7 +75,8 @@ class SaidaInsumos{
             JOIN pcp_almoxarifado a ON a.id = si.id_almoxarifado
             JOIN pcp_posicao_armazem pa ON pa.id = si.id_posicao
             JOIN pcp_armazenagem_insumos ai ON ai.id = si.id_armazenagem_insumos
-            JOIN pcp_pedidos_insumos pins ON pins.id = ai.id_pedido_insumo
+            JOIN pcp_entrada_insumos pens ON pens.id = ai.id_entrada_insumo
+            JOIN pcp_pedidos_insumos pins ON pins.id = pens.id_pedido_insumo
             JOIN pcp_insumos ins ON ins.id = pins.id_insumo
             '.$where.'
             ORDER BY si.id asc
