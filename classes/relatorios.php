@@ -99,19 +99,21 @@ class Relatorios{
         }
         $sql = '
             select
-                -- pa.id_producao,
+                pa.id_producao idProducao,
                 pro.nome nomeProducao,
+                pa.id_produto idProduto,
                 p.nome nomeProduto,
                 cor.nome nomeCor,
-                -- pa.id id_acompanhamento,
-                -- pa.id_setor,
+                pa.id id_acompanhamento,
+                pa.id_setor idSetor,
                 s.nome nomeSetor,
                 lps.ordem,
                 pa.data_inicial dataInicial,
+                plsc.id_conjunto idConjunto,
                 c.nome nomeConjunto,
-                -- pa.id_produto,
+                pa.id_produto,
                 -- p.id_cor,
-                -- pa.id_subproduto,
+                pa.id_subproduto idSubproduto,
                 ss.nome nomeSubproduto,
                 pa.realizado_quantidade realizadoQuantidade,
                 pa.total_quantidade totalQuantidade
@@ -130,30 +132,33 @@ class Relatorios{
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);
 
-        $sheet->setCellValue('A1', 'Produção');
-        $sheet->setCellValue('B1', 'Produto');
-        $sheet->setCellValue('C1', 'Cor');
-        $sheet->setCellValue('D1', 'Setor');
-        $sheet->setCellValue('E1', 'Ordem');
-        $sheet->setCellValue('F1', 'Data Início');
-        $sheet->setCellValue('G1', 'Conjunto');
-        $sheet->setCellValue('H1', 'Subproduto');
-        $sheet->setCellValue('I1', 'Quantidade Realizado');
-        $sheet->setCellValue('J1', 'Quantidade Total');
+        $sheet->setCellValue('A1', 'Código');
+        $sheet->setCellValue('B1', 'Produção');
+        $sheet->setCellValue('C1', 'Produto');
+        $sheet->setCellValue('D1', 'Cor');
+        $sheet->setCellValue('E1', 'Setor');
+        $sheet->setCellValue('F1', 'Ordem');
+        $sheet->setCellValue('G1', 'Data Início');
+        $sheet->setCellValue('H1', 'Conjunto');
+        $sheet->setCellValue('I1', 'Subproduto');
+        $sheet->setCellValue('J1', 'Quantidade Realizado');
+        $sheet->setCellValue('K1', 'Quantidade Total');
         
 
         $i = 2;
         while ($row = $stmt->fetch()) {
-            $sheet->setCellValue('A'.$i, $row->nomeProducao);
-            $sheet->setCellValue('B'.$i, $row->nomeProduto);
-            $sheet->setCellValue('C'.$i, $row->nomeCor);
-            $sheet->setCellValue('D'.$i, $row->nomeSetor);
-            $sheet->setCellValue('E'.$i, $row->ordem);
-            $sheet->setCellValue('F'.$i, $row->dataInicial);
-            $sheet->setCellValue('G'.$i, $row->nomeConjunto);
-            $sheet->setCellValue('H'.$i, $row->nomeSubproduto);
-            $sheet->setCellValue('I'.$i, $row->realizadoQuantidade);
-            $sheet->setCellValue('J'.$i, $row->totalQuantidade);
+            $sheet->setCellValue('A'.$i, $row->idProducao.'-'.$row->idProduto.'-'.$row->idConjunto.'-'.$row->idSetor.'-'.$row->idSubproduto);
+            $sheet->setCellValue('B'.$i, $row->nomeProducao);
+            $sheet->setCellValue('C'.$i, $row->nomeProduto);
+            $sheet->setCellValue('D'.$i, $row->nomeCor);
+            $sheet->setCellValue('E'.$i, $row->nomeSetor);
+            $sheet->setCellValue('F'.$i, $row->ordem);
+            $sheet->setCellValue('G'.$i, $row->dataInicial);
+            $sheet->setCellValue('H'.$i, $row->nomeConjunto);
+            $sheet->setCellValue('I'.$i, $row->nomeSubproduto);
+            $sheet->setCellValue('J'.$i, $row->realizadoQuantidade);
+            $sheet->setCellValue('K'.$i, $row->totalQuantidade);
+            $sheet->setCellValue('L'.$i, $row->totalQuantidade);
             $i++;
         }
         $currDateTimeObj = new DateTime();
@@ -171,20 +176,9 @@ class Relatorios{
 
     public function reportBonusPontuacao($filters){
         $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
-        /*print_r($filters);
-
-        $where = '';
-        if(count($filters) > 0){
-            $where = 'where ';
-            $i = 0;
-            foreach($filters as $key => $value){
-                $and = $i > 0 ? ' and ' : '';
-                $where .= $and.$key.' = :'.$key;
-                $i++;
-            }
-        }*/
+  
         $sql = '
-            SELECT cb.id_funcionario, f.nome, f.matricula, sum(cb.pontos) pontos
+            SELECT cb.id_funcionario, f.nome, f.matricula, COUNT(cb.id) quantidade, sum(cb.pontos) pontos
             FROM pcp_codigo_de_barras cb
             JOIN pcp_funcionarios f ON f.id = cb.id_funcionario
             where cb.dt_lancamento >= "'.$filters['dataInicial'].'" and cb.dt_lancamento <= "'.$filters['dataFinal'].'"
@@ -199,7 +193,8 @@ class Relatorios{
         $sheet->setCellValue('A1', 'ID');
         $sheet->setCellValue('B1', 'Funcionário');
         $sheet->setCellValue('C1', 'Matrícula');
-        $sheet->setCellValue('D1', 'Pontos');
+        $sheet->setCellValue('D1', 'Quantidade');
+        $sheet->setCellValue('E1', 'Pontos');
 
         $i = 2;
         while ($row = $stmt->fetch()) {
@@ -207,7 +202,8 @@ class Relatorios{
             $sheet->setCellValue('A'.$i, $row->id_funcionario);
             $sheet->setCellValue('B'.$i, $row->nome);
             $sheet->setCellValue('C'.$i, $row->matricula);
-            $sheet->setCellValue('D'.$i, $row->pontos);
+            $sheet->setCellValue('D'.$i, $row->quantidade);
+            $sheet->setCellValue('E'.$i, $row->pontos);
             $i++;
         }
         $currDateTimeObj = new DateTime();
@@ -224,12 +220,13 @@ class Relatorios{
     }
 
     public function reportGeralLancamentoProducao($filters){
+        set_time_limit(0);
         $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
 
         $sql = '
             SELECT
                 cb.id_producao, p.nome nome_producao,
-                cb.id_produto, pro.nome nome_produto, pro.codigo codigo_produto,
+                cb.id_produto, pro.nome nome_produto, pro.codigo codigo_produto, cor.nome cor_produto,
                 cb.id_setor, s.nome nome_setor,
                 cb.id_subproduto, ss.nome nome_subproduto,
                 cb.codigo codigo_barras,
@@ -240,6 +237,7 @@ class Relatorios{
             FROM pcp_codigo_de_barras cb
             JOIN pcp_producoes p ON p.id = cb.id_producao
             JOIN pcp_produtos pro ON pro.id = cb.id_produto
+            JOIN pcp_cores cor on cor.id = pro.id_cor
             JOIN pcp_setores s ON s.id = cb.id_setor
             JOIN pcp_subprodutos ss ON ss.id = cb.id_subproduto
             JOIN pcp_funcionarios f ON f.id = cb.id_funcionario
@@ -269,7 +267,7 @@ class Relatorios{
         $sheet->setCellValue('O1', 'Pontos');
 
         $i = 2;
-        while ($row = $stmt->fetch()) {
+        while($row = $stmt->fetch()) {
             $dataLancamentoDT = new DateTime($row->data_lancamento);
             $dataLancamento = $dataLancamentoDT->format('d/m/Y');
 
@@ -280,12 +278,11 @@ class Relatorios{
             else
                 $dataConferencia = '';
 
-
             $sheet->setCellValue('A'.$i, $row->id_producao);
             $sheet->setCellValue('B'.$i, $row->nome_producao);
             $sheet->setCellValue('C'.$i, $row->id_produto);
             $sheet->setCellValue('D'.$i, $row->codigo_produto);
-            $sheet->setCellValue('E'.$i, $row->nome_produto);
+            $sheet->setCellValue('E'.$i, $row->nome_produto.' ('.$row->cor_produto.')');
             $sheet->setCellValue('F'.$i, $row->id_setor);
             $sheet->setCellValue('G'.$i, $row->nome_setor);
             $sheet->setCellValue('H'.$i, $row->id_subproduto);
@@ -308,6 +305,296 @@ class Relatorios{
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
                 'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/geralLancamentoProducao-'.$currDateTime.'.xlsx'
+            )
+        ));
+    }
+
+    public function reportNaoProduzidos($filters){
+        set_time_limit(0);
+        $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
+
+        $sql = '
+            SELECT
+                cb.id_producao, p.nome nome_producao,
+                cb.id_produto, pro.nome nome_produto, pro.codigo codigo_produto, cor.nome cor_produto,
+                cb.id_setor, s.nome nome_setor,
+                cb.id_subproduto, ss.nome nome_subproduto,
+                cb.codigo codigo_barras,
+                cb.pontos
+            FROM pcp_codigo_de_barras cb
+            JOIN pcp_producoes p ON p.id = cb.id_producao
+            JOIN pcp_produtos pro ON pro.id = cb.id_produto
+            JOIN pcp_cores cor on cor.id = pro.id_cor
+            JOIN pcp_setores s ON s.id = cb.id_setor
+            JOIN pcp_subprodutos ss ON ss.id = cb.id_subproduto
+            WHERE
+                cb.id_producao = :idProducao
+                AND cb.lancado = "N"
+        ';
+
+        //echo "\nsql: ".$sql."\n";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':idProducao', $filters['idProducao']);
+        $stmt->execute();
+
+        $sheet->setCellValue('A1', 'ID Produção');
+        $sheet->setCellValue('B1', 'Produção');
+        $sheet->setCellValue('C1', 'ID Produto');
+        $sheet->setCellValue('D1', 'Cód. Produto');
+        $sheet->setCellValue('E1', 'Produto');
+        $sheet->setCellValue('F1', 'Cor');
+        $sheet->setCellValue('G1', 'ID Setor');
+        $sheet->setCellValue('H1', 'Setor');
+        $sheet->setCellValue('I1', 'ID Subproduto');
+        $sheet->setCellValue('J1', 'Subproduto');
+        $sheet->setCellValue('K1', 'Código');
+        $sheet->setCellValue('L1', 'Pontos');
+
+        $i = 2;
+        while($row = $stmt->fetch()) {
+            $sheet->setCellValue('A'.$i, $row->id_producao);
+            $sheet->setCellValue('B'.$i, $row->nome_producao);
+            $sheet->setCellValue('C'.$i, $row->id_produto);
+            $sheet->setCellValue('D'.$i, $row->codigo_produto);
+            $sheet->setCellValue('E'.$i, $row->nome_produto);
+            $sheet->setCellValue('F'.$i, $row->cor_produto);
+            $sheet->setCellValue('G'.$i, $row->id_setor);
+            $sheet->setCellValue('H'.$i, $row->nome_setor);
+            $sheet->setCellValue('I'.$i, $row->id_subproduto);
+            $sheet->setCellValue('J'.$i, $row->nome_subproduto);
+            $sheet->setCellValue('K'.$i, $row->codigo_barras);
+            $sheet->setCellValue('L'.$i, $row->pontos);
+            $i++;
+        }
+        $currDateTimeObj = new DateTime();
+        $currDateTime = $currDateTimeObj->format('d-m-Y-H-i-s');
+        $this->writer->save('reports/reportNaoProduzidos-'.$currDateTime.'.xlsx');
+        
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Relatório gerado com sucesso.',
+            'payload' => array(
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportNaoProduzidos-'.$currDateTime.'.xlsx'
+            )
+        ));
+    }
+
+    public function reportEntradaInsumos($filters){
+        $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
+        $sql = '
+            SELECT
+                e.id id_entrada,
+                e.dthr_entrada,
+                e.id_usuario,
+                u.nome nome_usuario,
+                pins.id_pedido,
+                pins.id_insumo,
+                ins.nome nome_insumo,
+                ei.quantidade
+            FROM pcp_entradas e
+            JOIN pcp_entrada_insumos ei ON ei.id_entrada = e.id
+            JOIN pcp_usuarios u ON u.id = e.id_usuario
+            JOIN pcp_pedidos_insumos pins ON pins.id = ei.id_pedido_insumo
+            JOIN pcp_insumos ins ON ins.id = pins.id_insumo
+            WHERE e.dthr_entrada >= "'.$filters['dataInicial'].' 00:00:00" and e.dthr_entrada <= "'.$filters['dataFinal'].' 23:59:59"
+            ORDER BY e.id, ins.nome
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $sheet->setCellValue('A1', 'ID');
+        $sheet->setCellValue('B1', 'Data');
+        $sheet->setCellValue('C1', 'ID Usuário');
+        $sheet->setCellValue('D1', 'Usuário');
+        $sheet->setCellValue('E1', 'ID Pedido');
+        $sheet->setCellValue('F1', 'ID Insumo');
+        $sheet->setCellValue('G1', 'Insumo');
+        $sheet->setCellValue('H1', 'Quantidade');
+
+        $i = 2;
+        while($row = $stmt->fetch()){
+            $dataEntradaDT = new DateTime($row->dthr_entrada);
+            $dataEntrada = $dataEntradaDT->format('d/m/Y');
+
+            $sheet->setCellValue('A'.$i, $row->id_entrada);
+            $sheet->setCellValue('B'.$i, $dataEntrada);
+            $sheet->setCellValue('C'.$i, $row->id_usuario);
+            $sheet->setCellValue('D'.$i, $row->nome_usuario);
+            $sheet->setCellValue('E'.$i, $row->id_pedido);
+            $sheet->setCellValue('F'.$i, $row->id_insumo);
+            $sheet->setCellValue('G'.$i, $row->nome_insumo);
+            $sheet->setCellValue('H'.$i, $row->quantidade);
+            $i++;
+        }
+
+        $currDateTimeObj = new DateTime();
+        $currDateTime = $currDateTimeObj->format('d-m-Y-H-i-s');
+        $this->writer->save('reports/reportEntradaInsumos-'.$currDateTime.'.xlsx');
+        
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Relatório gerado com sucesso.',
+            'payload' => array(
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportEntradaInsumos-'.$currDateTime.'.xlsx'
+            )
+        ));
+    }
+
+    public function reportArmazenagemInsumos($filters){
+        $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
+        $sql = '
+            SELECT
+                a.id id_armazenagem,
+                a.dthr_armazenagem,
+                a.id_usuario id_usuario,
+                u.nome nome_usuario,
+                pins.id_pedido id_pedido,
+                pins.id_insumo,
+                ins.nome nome_insumo,
+                ai.id_almoxarifado,
+                al.nome nome_almoxarifado,
+                ai.id_posicao,
+                pa.posicao nome_posicao,
+                if(si.quantidade IS NOT NULL, (ai.quantidade - si.quantidade), ai.quantidade) quantidade
+            FROM pcp_armazenagens a
+            JOIN pcp_armazenagem_insumos ai ON ai.id_armazenagem = a.id
+            left JOIN pcp_saida_insumos si ON si.id_armazenagem_insumos = ai.id
+            JOIN pcp_entrada_insumos ei ON ei.id = ai.id_entrada_insumo
+            JOIN pcp_usuarios u ON u.id = a.id_usuario
+            JOIN pcp_pedidos_insumos pins ON pins.id = ei.id_pedido_insumo
+            JOIN pcp_insumos ins ON ins.id = pins.id_insumo
+            JOIN pcp_almoxarifado al ON al.id = ai.id_almoxarifado
+            JOIN pcp_posicao_armazem pa ON pa.id_almoxarifado = al.id AND pa.id = ai.id_posicao
+            WHERE
+                a.dthr_armazenagem BETWEEN "'.$filters['dataInicial'].' 00:00:00" AND "'.$filters['dataFinal'].' 23:59:59"
+            ORDER BY a.id, ins.nome
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $sheet->setCellValue('A1', 'ID');
+        $sheet->setCellValue('B1', 'Data');
+        $sheet->setCellValue('C1', 'ID Usuário');
+        $sheet->setCellValue('D1', 'Usuário');
+        $sheet->setCellValue('E1', 'ID Pedido');
+        $sheet->setCellValue('F1', 'ID Insumo');
+        $sheet->setCellValue('G1', 'Insumo');
+        $sheet->setCellValue('H1', 'ID Almoxarifado');
+        $sheet->setCellValue('I1', 'Almoxarifado');
+        $sheet->setCellValue('J1', 'ID Posição');
+        $sheet->setCellValue('K1', 'Posição');
+        $sheet->setCellValue('L1', 'Quantidade');
+
+        $i = 2;
+        while($row = $stmt->fetch()){
+            $dataArmazenagemDT = new DateTime($row->dthr_armazenagem);
+            $dataArmazenagem = $dataArmazenagemDT->format('d/m/Y');
+
+            $sheet->setCellValue('A'.$i, $row->id_armazenagem);
+            $sheet->setCellValue('B'.$i, $dataArmazenagem);
+            $sheet->setCellValue('C'.$i, $row->id_usuario);
+            $sheet->setCellValue('D'.$i, $row->nome_usuario);
+            $sheet->setCellValue('E'.$i, $row->id_pedido);
+            $sheet->setCellValue('F'.$i, $row->id_insumo);
+            $sheet->setCellValue('G'.$i, $row->nome_insumo);
+            $sheet->setCellValue('H'.$i, $row->id_almoxarifado);
+            $sheet->setCellValue('I'.$i, $row->nome_almoxarifado);
+            $sheet->setCellValue('J'.$i, $row->id_posicao);
+            $sheet->setCellValue('K'.$i, $row->nome_posicao);
+            $sheet->setCellValue('L'.$i, $row->quantidade);
+            $i++;
+        }
+
+        $currDateTimeObj = new DateTime();
+        $currDateTime = $currDateTimeObj->format('d-m-Y-H-i-s');
+        $this->writer->save('reports/reportArmazenagemInsumos-'.$currDateTime.'.xlsx');
+        
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Relatório gerado com sucesso.',
+            'payload' => array(
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportArmazenagemInsumos-'.$currDateTime.'.xlsx'
+            )
+        ));
+    }
+
+    public function reportSaidaInsumos($filters){
+        $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
+        $sql = '
+            SELECT
+                s.id id_saida,
+                s.dthr_saida,
+                s.id_usuario id_usuario,
+                u.nome nome_usuario,
+                pins.id_pedido id_pedido,
+                pins.id_insumo,
+                ins.nome nome_insumo,
+                si.id_almoxarifado,
+                al.nome nome_almoxarifado,
+                ai.id_posicao,
+                pa.posicao nome_posicao,
+                si.quantidade
+            FROM pcp_saidas s
+            JOIN pcp_saida_insumos si ON si.id_saida = s.id
+            JOIN pcp_armazenagem_insumos ai ON ai.id = si.id_armazenagem_insumos
+            JOIN pcp_entrada_insumos ei ON ei.id = ai.id_entrada_insumo
+            JOIN pcp_usuarios u ON u.id = s.id_usuario
+            JOIN pcp_pedidos_insumos pins ON pins.id = ei.id_pedido_insumo
+            JOIN pcp_insumos ins ON ins.id = pins.id_insumo
+            JOIN pcp_almoxarifado al ON al.id = si.id_almoxarifado
+            JOIN pcp_posicao_armazem pa ON pa.id_almoxarifado = al.id AND pa.id = si.id_posicao
+            WHERE
+                s.dthr_saida BETWEEN "'.$filters['dataInicial'].' 00:00:00" AND "'.$filters['dataFinal'].' 23:59:59"
+            ORDER BY s.id, ins.nome
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $sheet->setCellValue('A1', 'ID');
+        $sheet->setCellValue('B1', 'Data');
+        $sheet->setCellValue('C1', 'ID Usuário');
+        $sheet->setCellValue('D1', 'Usuário');
+        $sheet->setCellValue('E1', 'ID Pedido');
+        $sheet->setCellValue('F1', 'ID Insumo');
+        $sheet->setCellValue('G1', 'Insumo');
+        $sheet->setCellValue('H1', 'ID Almoxarifado');
+        $sheet->setCellValue('I1', 'Almoxarifado');
+        $sheet->setCellValue('J1', 'ID Posição');
+        $sheet->setCellValue('K1', 'Posição');
+        $sheet->setCellValue('L1', 'Quantidade');
+
+        $i = 2;
+        while($row = $stmt->fetch()){
+            $dataSaidaDT = new DateTime($row->dthr_saida);
+            $dataSaida = $dataSaidaDT->format('d/m/Y');
+
+            $sheet->setCellValue('A'.$i, $row->id_saida);
+            $sheet->setCellValue('B'.$i, $dataSaida);
+            $sheet->setCellValue('C'.$i, $row->id_usuario);
+            $sheet->setCellValue('D'.$i, $row->nome_usuario);
+            $sheet->setCellValue('E'.$i, $row->id_pedido);
+            $sheet->setCellValue('F'.$i, $row->id_insumo);
+            $sheet->setCellValue('G'.$i, $row->nome_insumo);
+            $sheet->setCellValue('H'.$i, $row->id_almoxarifado);
+            $sheet->setCellValue('I'.$i, $row->nome_almoxarifado);
+            $sheet->setCellValue('J'.$i, $row->id_posicao);
+            $sheet->setCellValue('K'.$i, $row->nome_posicao);
+            $sheet->setCellValue('L'.$i, $row->quantidade);
+            $i++;
+        }
+
+        $currDateTimeObj = new DateTime();
+        $currDateTime = $currDateTimeObj->format('d-m-Y-H-i-s');
+        $this->writer->save('reports/reportSaidaInsumos-'.$currDateTime.'.xlsx');
+        
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Relatório gerado com sucesso.',
+            'payload' => array(
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportSaidaInsumos-'.$currDateTime.'.xlsx'
             )
         ));
     }

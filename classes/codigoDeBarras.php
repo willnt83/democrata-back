@@ -33,6 +33,19 @@ class CodigoDeBarras{
     }
 
     public function gerarCodigosDeBarrasCSV($filters){
+        // Verificação de existencia de registros de código de barras da produção informada
+        $sqlVer = '
+            select count(*) as registros
+                from pcp_codigo_de_barras
+                where
+                    id_producao = :id_producao;
+            ';
+        $stmtVer = $this->pdo->prepare($sqlVer);
+        $stmtVer->bindParam(':id_producao', $filters['id_producao']);
+        $stmtVer->execute();
+        $rowVer = $stmtVer->fetch();
+        $existeRegistro = $rowVer->registros > 0 ? true : false;
+
         if(!file_exists('barcodes/'.$filters['id_producao'].'/producao-'.$filters['id_producao'].'.csv')){
             // Cria o diretório se não existir
             if (!file_exists('barcodes/'.$filters['id_producao'])) {
@@ -75,7 +88,7 @@ class CodigoDeBarras{
                 JOIN pcp_produtos_linhas_setores_conjunto plsc ON plsc.id_produto = pa.id_produto AND plsc.id_linha_de_producao = p.id_linha_de_producao AND plsc.id_setor = pa.id_setor
                 JOIN pcp_conjuntos_subprodutos cs ON cs.id_conjunto = plsc.id_conjunto AND cs.id_subproduto = pa.id_subproduto
                 '.$where.'
-                order by lps.ordem, pa.id_setor, ss.nome, pa.id_produto;
+                order by lps.ordem, pa.id_setor, ss.nome, pa.id
             ';
 
             $stmt = $this->pdo->prepare($sql);
@@ -117,20 +130,8 @@ class CodigoDeBarras{
                 }
             }
 
-            // Verificação de código de barras já existente na tabela pcp_codigo_de_barras
-            $sqlVer = '
-                select count(*) count
-                from pcp_codigo_de_barras
-                where
-                    id_producao = :idProducao;
-            ';
-            $stmtVer = $this->pdo->prepare($sqlVer);
-            $stmtVer->bindParam(':idProducao', $filters['id_producao']);
-            $stmtVer->execute();
-            $rowCount = $stmtVer->fetch();
-
             // Não há registros em pcp_codigo_de_barras
-            if($rowCount->count == 0){
+            if(!$existeRegistro){
                 // Inserção no banco
                 $valuesStr = '';
                 $comma = '';
@@ -157,7 +158,6 @@ class CodigoDeBarras{
                 $stmt2 = $this->pdo->prepare($sql2);
                 $stmt2->execute();
             }
-
 
             // Geração do CSV
             $fp = fopen('barcodes/'.$filters['id_producao'].'/producao-'.$filters['id_producao'].'.csv', 'w');
@@ -188,6 +188,20 @@ class CodigoDeBarras{
     }
 
     public function gerarCodigosDeBarras($filters){
+        // Verificação de existencia de registros de código de barras da produção informada
+        $sqlVer = '
+            select count(*) as registros
+                from pcp_codigo_de_barras
+                where
+                    id_producao = :id_producao;
+            ';
+        $stmtVer = $this->pdo->prepare($sqlVer);
+        $stmtVer->bindParam(':id_producao', $filters['id_producao']);
+        $stmtVer->execute();
+        $rowVer = $stmtVer->fetch();
+        $existeRegistro = $rowVer->registros > 0 ? true : false;
+
+
         if(!file_exists('barcodes/'.$filters['id_producao'].'/producao-'.$filters['id_producao'].'.pdf')){
             //http://www.fpdf.org/
             require('../vendor/fpdf/fpdf.php');
@@ -230,7 +244,7 @@ class CodigoDeBarras{
                 JOIN pcp_produtos_linhas_setores_conjunto plsc ON plsc.id_produto = pa.id_produto AND plsc.id_linha_de_producao = p.id_linha_de_producao AND plsc.id_setor = pa.id_setor
                 JOIN pcp_conjuntos_subprodutos cs ON cs.id_conjunto = plsc.id_conjunto AND cs.id_subproduto = pa.id_subproduto
                 '.$where.'
-                order by lps.ordem, pa.id_setor, ss.nome, pa.id_produto;
+                order by lps.ordem, pa.id_setor, ss.nome, pa.id
             ';
 
             $stmt = $this->pdo->prepare($sql);
@@ -280,30 +294,31 @@ class CodigoDeBarras{
             }
 
             // Inserção no banco
-            $valuesStr = '';
-            $comma = '';
-            $first = true;
+            if(!$existeRegistro){
+                $valuesStr = '';
+                $comma = '';
+                $first = true;
 
-            foreach($insertData as $row){
-                if($first){
-                    $comma = '';
-                    $first = false;
+                foreach($insertData as $row){
+                    if($first){
+                        $comma = '';
+                        $first = false;
+                    }
+                    else
+                        $comma = ', ';
+
+                    $valuesStr .= $comma.$row;
                 }
-                else
-                    $comma = ', ';
 
-                $valuesStr .= $comma.$row;
+                $sql2 = '
+                    insert into pcp_codigo_de_barras
+                        (id_producao, id_produto, id_conjunto, id_setor, id_subproduto, sequencial, codigo, dt_geracao, pontos)
+                        values
+                        '.$valuesStr.';
+                ';
+                $stmt2 = $this->pdo->prepare($sql2);
+                $stmt2->execute();
             }
-            
-            $sql2 = '
-                insert into pcp_codigo_de_barras
-                    (id_producao, id_produto, id_conjunto, id_setor, id_subproduto, sequencial, codigo, dt_geracao, pontos)
-                    values
-                    '.$valuesStr.';
-            ';
-            
-            $stmt2 = $this->pdo->prepare($sql2);
-            $stmt2->execute();
 
             // Geração do PDF
             $i = 0;

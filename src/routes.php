@@ -338,6 +338,27 @@ $app->get('/reportGeralLancamentoProducao', function (Request $request, Response
     $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
     return $response->write($classRelatorios->reportGeralLancamentoProducao($request->getQueryParams()));
 });
+
+$app->get('/reportNaoProduzidos', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportNaoProduzidos($request->getQueryParams()));
+});
+
+$app->get('/reportEntradaInsumos', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportEntradaInsumos($request->getQueryParams()));
+});
+
+$app->get('/reportArmazenagemInsumos', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportArmazenagemInsumos($request->getQueryParams()));
+});
+
+$app->get('/reportSaidaInsumos', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportSaidaInsumos($request->getQueryParams()));
+});
+
 /* Código de Barras */
 $app->get('/gerarCodigosDeBarrasCSV', function (Request $request, Response $response){
     $classCodigoDeBarras = new CodigoDeBarras($this->db);
