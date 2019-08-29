@@ -291,6 +291,38 @@ class ArmazenagemInsumos{
         }
     }
 
+    public function deleteArmazenagem($filters){
+        try{
+            $sql = '
+                delete from pcp_armazenagem_insumos
+                where id_armazenagem = :id
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':id', $filters['id']); 
+            $stmt->execute();
+
+            $sql = '
+                delete from pcp_armazenagens
+                where
+                    id = :id
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':id', $filters['id']); 
+            $stmt->execute();
+
+            return json_encode(array(
+                'success' => true,
+                'msg' => 'Armazenagem removida com sucesso.'
+            ));
+        }
+        catch(PDOException $e){
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
+        }
+    }
+
     public function generateImage($img, $file){
         $file_parts = explode('/', $file);
         if(!is_dir($file_parts[0].'/'.$file_parts[1])){

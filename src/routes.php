@@ -301,6 +301,11 @@ $app->get('/getInsumosArmazenados', function (Request $request, Response $respon
     return $response->write($classArmazenagemInsumos->getInsumosArmazenados($request->getQueryParams()));
 });
 
+$app->get('/deleteArmazenagem', function (Request $request, Response $response){
+    $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
+    return $response->write($classArmazenagemInsumos->deleteArmazenagem($request->getQueryParams()));
+});
+
 /* Saída de Insumos */
 $app->get('/getSaidas', function (Request $request, Response $response){
     $classSaidaInsumos = new SaidaInsumos($this->db);
@@ -317,6 +322,10 @@ $app->get('/getInsumosRetirados', function (Request $request, Response $response
     return $response->write($classSaidaInsumos->getInsumosRetirados($request->getQueryParams()));
 });
 
+$app->get('/deleteSaida', function (Request $request, Response $response){
+    $classSaidaInsumos = new SaidaInsumos($this->db);
+    return $response->write($classSaidaInsumos->deleteSaida($request->getQueryParams()));
+});
 
 /* Relatórios */
 $app->get('/reportProdutosCadastrados', function (Request $request, Response $response){
