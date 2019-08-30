@@ -62,6 +62,7 @@ class Produtos{
                 p.id,
                 p.nome,
                 p.codigo,
+                p.sku,
                 p.ativo,
                 p.id_cor idCor,
                 c.nome nomeCor,
@@ -98,6 +99,7 @@ class Produtos{
                     'id' => (int)$row->id,
                     'nome' => $row->nome,
                     'codigo' => $row->codigo,
+                    'sku' => $row->sku,
                     'ativo' => $row->ativo,
                     'cor' => array(
                         'id' => (int)$row->idCor,
@@ -119,6 +121,7 @@ class Produtos{
                         'id' => (int)$row->id,
                         'nome' => $row->nome,
                         'codigo' => $row->codigo,
+                        'sku' => $row->sku,
                         'ativo' => $row->ativo,
                         'cor' => array(
                             'id' => (int)$row->idCor,
@@ -194,6 +197,7 @@ class Produtos{
                     set
                         nome = :nome,
                         codigo = :codigo,
+                        sku = :sku,
                         ativo = :ativo,
                         id_cor = :cor
                     where id = :id;
@@ -203,6 +207,7 @@ class Produtos{
                 $stmt->bindParam(':id', $request['id']);
                 $stmt->bindParam(':nome', $request['nome']);
                 $stmt->bindParam(':codigo', $request['codigo']);
+                $stmt->bindParam(':sku', $request['sku']);
                 $stmt->bindParam(':cor', $request['cor']);
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();
@@ -232,6 +237,7 @@ class Produtos{
                     set
                         nome = :nome,
                         codigo = :codigo,
+                        sku = :sku,
                         id_cor = :cor,
                         id_linha_de_producao = :id_linha_de_producao,
                         ativo = :ativo
@@ -239,6 +245,7 @@ class Produtos{
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':nome', $request['nome']);
                 $stmt->bindParam(':codigo', $request['codigo']);
+                $stmt->bindParam(':sku', $request['sku']);
                 $stmt->bindParam(':cor', $request['cor']);
                 $stmt->bindParam(':id_linha_de_producao', $request['idLinhaDeProducao']);
                 $stmt->bindParam(':ativo', $request['ativo']);
