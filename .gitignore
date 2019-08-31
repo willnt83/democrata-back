@@ -16,7 +16,9 @@ public/pedidoscompra*
 public/barcodes*
 public/reports*
 public/uploads*
+public/etiquetasArmazenagem*
 public/pedidoscompra
 public/barcodes
 public/reports
 public/uploads
+public/etiquetasArmazenagem

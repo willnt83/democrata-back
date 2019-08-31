@@ -169,6 +169,7 @@ class Insumos{
                                             $insertInsumo = true;
                                         }
 
+                                        // Verifica se irá inserir ou atualizar o insumo
                                         if($insertInsumo){
                                             // Retorna a unidade de medida
                                             if($content[3] and $content[3] !== null){
@@ -210,7 +211,7 @@ class Insumos{
                                                 if($content[2] === '' or $content[2] === null)
                                                     $stmt->bindParam(':categoria', $n = null);
                                                 else
-                                                    $stmt->bindParam(':categoria', trim($content[1]));
+                                                    $stmt->bindParam(':categoria', trim($content[2]));
 
                                                 if($content[3] === '' or $content[3] === null or !is_numeric($content[3]))
                                                     $stmt->bindParam(':unidademedida', $n = null, PDO::PARAM_INT);
@@ -234,6 +235,8 @@ class Insumos{
 
                                                 $stmt->execute();
                                             }
+                                        } else {
+                                            
                                         }
                                     }
                                 } catch(\Exception $e) {

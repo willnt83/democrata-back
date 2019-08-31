@@ -285,6 +285,11 @@ $app->get('/getEntradaInsumos', function (Request $request, Response $response){
     return $response->write($classEntradaInsumos->getEntradaInsumos($request->getQueryParams()));
 });
 
+$app->get('/deleteEntrada', function (Request $request, Response $response){
+    $classEntradaInsumos = new EntradaInsumos($this->db);
+    return $response->write($classEntradaInsumos->deleteEntrada($request->getQueryParams()));
+});
+
 /* Armazenagem de Insumos */
 $app->get('/getArmazenagens', function (Request $request, Response $response){
     $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);

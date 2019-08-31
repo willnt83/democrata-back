@@ -271,6 +271,38 @@ class EntradaInsumos extends PedidosInsumos{
         }
     }
 
+    public function deleteEntrada($filters){
+        try{
+            $sql = '
+                delete from pcp_entrada_insumos
+                where id_entrada = :id
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':id', $filters['id']); 
+            $stmt->execute();
+
+            $sql = '
+                delete from pcp_entradas
+                where
+                    id = :id
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':id', $filters['id']); 
+            $stmt->execute();
+
+            return json_encode(array(
+                'success' => true,
+                'msg' => 'Entrada removida com sucesso.'
+            ));
+        }
+        catch(PDOException $e){
+            return json_encode(array(
+                'success' => false,
+                'msg' => 'Não é permitido excluir entrada já armazenada'
+            ));
+        }
+    }
+
     private function getDadosPedidoInsumo($idPedido = 0, $idInsumo = 0, $idEntradaInsumo = 0){
         $sql = 'select		pci.id, pci.status, pci.quantidade,
                             ifnull((
