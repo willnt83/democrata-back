@@ -184,7 +184,7 @@ class Relatorios{
         $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
   
         $sql = '
-            SELECT cb.id_funcionario, f.nome, f.matricula, COUNT(cb.id) quantidade, sum(cb.pontos) pontos
+            SELECT cb.id_funcionario, f.nome, f.matricula, f.setor, f.salario, f.salario_base, COUNT(cb.id) quantidade, sum(cb.pontos) pontos
             FROM pcp_codigo_de_barras cb
             JOIN pcp_funcionarios f ON f.id = cb.id_funcionario
             where cb.dt_lancamento >= "'.$filters['dataInicial'].'" and cb.dt_lancamento <= "'.$filters['dataFinal'].'"
@@ -199,8 +199,11 @@ class Relatorios{
         $sheet->setCellValue('A1', 'ID');
         $sheet->setCellValue('B1', 'Funcionário');
         $sheet->setCellValue('C1', 'Matrícula');
-        $sheet->setCellValue('D1', 'Quantidade');
-        $sheet->setCellValue('E1', 'Pontos');
+        $sheet->setCellValue('D1', 'Setor');
+        $sheet->setCellValue('E1', 'Salário');
+        $sheet->setCellValue('F1', 'Salário Base');
+        $sheet->setCellValue('G1', 'Quantidade');
+        $sheet->setCellValue('H1', 'Pontos');
 
         $i = 2;
         while ($row = $stmt->fetch()) {
@@ -208,8 +211,13 @@ class Relatorios{
             $sheet->setCellValue('A'.$i, $row->id_funcionario);
             $sheet->setCellValue('B'.$i, $row->nome);
             $sheet->setCellValue('C'.$i, $row->matricula);
-            $sheet->setCellValue('D'.$i, $row->quantidade);
-            $sheet->setCellValue('E'.$i, $row->pontos);
+
+            $sheet->setCellValue('D'.$i, $row->setor);
+            $sheet->setCellValue('E'.$i, $row->salario);
+            $sheet->setCellValue('F'.$i, $row->salario_base);
+
+            $sheet->setCellValue('G'.$i, $row->quantidade);
+            $sheet->setCellValue('H'.$i, $row->pontos);
             $i++;
         }
         $currDateTimeObj = new DateTime();

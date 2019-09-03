@@ -34,6 +34,8 @@ class Funcionarios{
                 'nome' => $row->nome,
                 'matricula' => $row->matricula,
                 'salario' => $row->salario,
+                'salarioBase' => $row->salario_base,
+                'setor' => $row->setor,
                 'ativo' => $row->ativo
             );
         }
@@ -62,6 +64,8 @@ class Funcionarios{
                         nome = :nome,
                         matricula = :matricula,
                         salario = :salario,
+                        salario_base = :salarioBase,
+                        setor = :setor,
                         ativo = :ativo
                     where id = :id;
                 ';
@@ -70,6 +74,8 @@ class Funcionarios{
                 $stmt->bindParam(':nome', $request['nome']);
                 $stmt->bindParam(':matricula', $request['matricula']);
                 $stmt->bindParam(':salario', $request['salario']);
+                $stmt->bindParam(':salarioBase', $request['salarioBase']);
+                $stmt->bindParam(':setor', $request['setor']);
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();
 
@@ -82,12 +88,16 @@ class Funcionarios{
                         nome = :nome,
                         matricula = :matricula,
                         salario = :salario,
+                        salario_base = :salarioBase,
+                        setor = :setor,
                         ativo = :ativo
                 ';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':nome', $request['nome']);
                 $stmt->bindParam(':matricula', $request['matricula']);
                 $stmt->bindParam(':salario', $request['salario']);
+                $stmt->bindParam(':salarioBase', $request['salarioBase']);
+                $stmt->bindParam(':setor', $request['setor']);
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();
 
