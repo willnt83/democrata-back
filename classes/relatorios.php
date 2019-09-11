@@ -361,8 +361,9 @@ class Relatorios{
         $sheet->setCellValue('H1', 'Setor');
         $sheet->setCellValue('I1', 'ID Subproduto');
         $sheet->setCellValue('J1', 'Subproduto');
-        $sheet->setCellValue('K1', 'Código');
-        $sheet->setCellValue('L1', 'Pontos');
+        $sheet->setCellValue('K1', 'Descrição');
+        $sheet->setCellValue('L1', 'Código');
+        $sheet->setCellValue('M1', 'Pontos');
 
         $i = 2;
         while($row = $stmt->fetch()) {
@@ -376,8 +377,9 @@ class Relatorios{
             $sheet->setCellValue('H'.$i, $row->nome_setor);
             $sheet->setCellValue('I'.$i, $row->id_subproduto);
             $sheet->setCellValue('J'.$i, $row->nome_subproduto);
-            $sheet->setCellValue('K'.$i, $row->codigo_barras);
-            $sheet->setCellValue('L'.$i, $row->pontos);
+            $sheet->setCellValue('K'.$i, $row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto);
+            $sheet->setCellValue('L'.$i, $row->codigo_barras);
+            $sheet->setCellValue('M'.$i, $row->pontos);
             $i++;
         }
         $currDateTimeObj = new DateTime();
@@ -480,8 +482,6 @@ class Relatorios{
             JOIN pcp_insumos ins ON ins.id = pins.id_insumo
             JOIN pcp_almoxarifado al ON al.id = ai.id_almoxarifado
             JOIN pcp_posicao_armazem pa ON pa.id_almoxarifado = al.id AND pa.id = ai.id_posicao
-            WHERE
-                a.dthr_armazenagem BETWEEN "'.$filters['dataInicial'].' 00:00:00" AND "'.$filters['dataFinal'].' 23:59:59"
             ORDER BY a.id, ins.nome
         ';
 
