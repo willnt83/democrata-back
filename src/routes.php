@@ -399,14 +399,14 @@ $app->get('/getCodigosDeBarrasEstornados', function (Request $request, Response 
     return $response->write($classCodigoDeBarras->getCodigosDeBarrasEstornados($request->getQueryParams()));
 });
 
-$app->get('/getPedidosInsumos', function (Request $request, Response $response){
+$app->get('/getPedidosCompraAvailabes', function (Request $request, Response $response){
     $classPedidosInsumos = new PedidosInsumos($this->db);
-    return $response->write($classPedidosInsumos->getPedidosInsumos($request->getQueryParams()));
+    return $response->write($classPedidosInsumos->getPedidosCompraAvailabes($request->getQueryParams()));
 });
 
-$app->get('/getInsumosAvailabesToEnter', function (Request $request, Response $response){
+$app->get('/getPedidosInsumosAvailabes', function (Request $request, Response $response){
     $classPedidosInsumos = new PedidosInsumos($this->db);
-    return $response->write($classPedidosInsumos->getInsumosAvailabesToEnter($request->getQueryParams()));
+    return $response->write($classPedidosInsumos->getPedidosInsumosAvailabes($request->getQueryParams()));
 });
 /*****************************************************/
 
@@ -566,11 +566,6 @@ $app->post('/conferenciaCodigoDeBarras', function ($request, $response){
 $app->post('/estornoCodigoDeBarras', function ($request, $response){
     $classCodigoDeBarras = new CodigoDeBarras($this->db);
     return $response->write($classCodigoDeBarras->estornoCodigoDeBarras(json_decode($request->getBody(), true)));
-});
-
-$app->post('/changeStatusInsumo', function (Request $request, Response $response){
-    $classPedidosInsumos = new PedidosInsumos($this->db);
-    return $response->write($classPedidosInsumos->changeStatusInsumo($request->getQueryParams()));
 });
 
 /* Entrada de Insumo */

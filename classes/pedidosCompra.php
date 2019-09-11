@@ -1,12 +1,7 @@
 <?php
 class PedidosCompra{
-    private $statusPedidoArray;
-    private $statusInsumoArray;
-
     public function __construct($db){
         $this->pdo = $db;
-        $this->statusPedidoArray = array('A','F');
-        $this->statusInsumoArray = array('S','E','C');
         //require_once 'goods.php';
     }
 
@@ -24,7 +19,7 @@ class PedidosCompra{
 
         $responseData = array();
 
-        $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf, pc.status, 
+        $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf,
                         pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor
                 from	pcp_pedidos pc
                         inner join pcp_fornecedores f on pc.id_fornecedor = f.id
@@ -41,8 +36,7 @@ class PedidosCompra{
                 'data_prevista'     => $row->dt_prevista,
                 'idFornecedor'      => (int) $row->idFornecedor,
                 'nomeFornecedor'    => $row->nomeFornecedor,
-                'chave_nf'          => $row->chave_nf,
-                'status'            => $row->status
+                'chave_nf'          => $row->chave_nf
             );
         }
 
@@ -59,7 +53,7 @@ class PedidosCompra{
             $where = 'where ';
             $i = 0;
             foreach($filters as $key => $value){
-                // Table's nickname and statuses list
+                // Table's nickname
                 if($key === 'id') {
                     $nick = 'pc.';
                     $equalBinding = ' = :'.$key;
@@ -76,24 +70,6 @@ class PedidosCompra{
                     $equalBinding = ' like :'.$key;
                     $filters[$key] = '%'.$value.'%';
                     $key = 'nome';
-                } else if($key === 'status' or $key === 'statusInsumo'){
-                    $nick = ($key === 'status') ? 'pc.' : 'pci.';
-                    $statusesArray = explode(',', $value);
-                    if(count($statusesArray) > 1) {
-                        $equalBinding = '';
-                        unset($filters[$key]);
-                        foreach($statusesArray as $key_status=>$value_status){
-                            if($key_status > 0) $equalBinding .= ' or ';
-                            $equalBinding .= $nick.'status = :'.$key.$key_status;
-                            $filters[$key.$key_status] = $value_status;
-                        }
-                        $key = '';                        
-                        $nick = '';
-                        if(trim($equalBinding) != '') $equalBinding = '('.$equalBinding.')';
-                    } else {
-                        $equalBinding = ' = :'.$key;
-                        $key = 'status';
-                    }                    
                 } else {
                     $nick = '';
                     $equalBinding = ' = :'.$key;
@@ -105,10 +81,10 @@ class PedidosCompra{
             }
         }
 
-        $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.status, pc.chave_nf, 
+        $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf, 
                         pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor,
                         pci.id as item, pci.id_insumo as idInsumo, ins.nome as nomeInsumo, ins.ins, 
-                        um.unidade as unidadeUnidadeMedida, pci.status as statusInsumo, pci.quantidade,
+                        um.unidade as unidadeUnidadeMedida, pci.quantidade,
                         ifnull((select sum(quantidade) from pcp_entrada_insumos e where e.id_pedido_insumo = pci.id),0) as quantidade_conferida
                 from	pcp_pedidos pc
                         inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
@@ -136,7 +112,6 @@ class PedidosCompra{
                     'idFornecedor'      => (int) $row->idFornecedor,
                     'nomeFornecedor'    => $row->nomeFornecedor,
                     'chave_nf'          => $row->chave_nf,
-                    'status'            => $row->status,
                     'insumos'           => array()
                 );
                 $i++;
@@ -150,8 +125,7 @@ class PedidosCompra{
                 'ins'                   => $row->ins,
                 'unidademedida'         => $row->unidadeUnidadeMedida,
                 'quantidade'            => (float) $row->quantidade,
-                'quantidade_conferida'  => (float) $row->quantidade_conferida,
-                'statusInsumo'          => $row->statusInsumo
+                'quantidade_conferida'  => (float) $row->quantidade_conferida
             );
 
             $pedidoId = $row->id;
@@ -188,12 +162,6 @@ class PedidosCompra{
                 
             }
 
-            // Verifica se alguns dos insumos que serão excluídos então conferidos/armazenados
-
-            // Status do Pedido
-            if(!array_key_exists('status', $request) or !in_array(trim(strtoupper($request['status'])),$this->statusPedidoArray))
-                $request['status'] = 'A';
-
             // Pedido de Compra
             if($request['id']){
                 // Edit
@@ -201,8 +169,7 @@ class PedidosCompra{
                         set     dthr_pedido = CONCAT(:data_pedido," ",:hora_pedido),
                                 chave_nf = :chave_nf,
                                 id_fornecedor = :id_fornecedor,
-                                dt_prevista = :dt_prevista,
-                                status = :status
+                                dt_prevista = :dt_prevista
                         where   id = :id';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':id', $request['id']);
@@ -211,7 +178,6 @@ class PedidosCompra{
                 $stmt->bindParam(':chave_nf', $request['chave_nf']);
                 $stmt->bindParam(':id_fornecedor', $request['idFornecedor']);
                 $stmt->bindParam(':dt_prevista', $request['data_prevista']);
-                $stmt->bindParam(':status', $request['status']);
                 $stmt->execute();
                 $pedidoId = $request['id'];
                 $msg = 'Pedido de compra atualizado com sucesso.';
@@ -221,15 +187,13 @@ class PedidosCompra{
                         set dthr_pedido = CONCAT(:data_pedido," ",:hora_pedido),
                             chave_nf = :chave_nf,
                             id_fornecedor = :id_fornecedor,
-                            dt_prevista = :dt_prevista,
-                            status = :status';
+                            dt_prevista = :dt_prevista';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':data_pedido', $request['data_pedido']);
                 $stmt->bindParam(':hora_pedido', $request['hora_pedido']);
                 $stmt->bindParam(':chave_nf', $request['chave_nf']);
                 $stmt->bindParam(':id_fornecedor', $request['idFornecedor']);
                 $stmt->bindParam(':dt_prevista', $request['data_prevista']);
-                $stmt->bindParam(':status', $request['status']);
                 $stmt->execute();
                 $pedidoId = $this->pdo->lastInsertId();
                 $msg = 'Pedido de compra cadastrado com sucesso.';
@@ -238,37 +202,29 @@ class PedidosCompra{
             // Inserindo os insumos
             $id_pedido_insumos_array = array();
             foreach($request['insumos'] as $key => $insumo){
-                // Status do Insumo
-                if(!array_key_exists('statusInsumo', $insumo) or !in_array(trim(strtoupper($insumo['statusInsumo'])),$this->statusInsumoArray))
-                    $insumo['statusInsumo'] = 'S';
-
                 // Verifica se existe o insumo para inserir/atualizar
                 if($insumo['item']){
                     $id_pedido_insumos_array[] = $insumo['item'];
                     $sql = 'update  pcp_pedidos_insumos
                             set     id_pedido = :id_pedido,
                                     id_insumo = :id_insumo,
-                                    quantidade = :quantidade,
-                                    status = :status
+                                    quantidade = :quantidade
                             where   id = :item ';
                     $stmt = $this->pdo->prepare($sql);
                     $stmt->bindParam(':id_pedido', $pedidoId);
                     $stmt->bindParam(':id_insumo', $insumo['idInsumo']);
                     $stmt->bindParam(':quantidade', $insumo['quantidade']);
-                    $stmt->bindParam(':status', $insumo['statusInsumo']);
                     $stmt->bindParam(':item', $insumo['item']);
                     $stmt->execute();
                 } else {
                     $sql = 'insert into pcp_pedidos_insumos
                             set id_pedido = :id_pedido,
                                 id_insumo = :id_insumo,
-                                quantidade = :quantidade,
-                                status = :status';
+                                quantidade = :quantidade';
                     $stmt = $this->pdo->prepare($sql);
                     $stmt->bindParam(':id_pedido', $pedidoId);
                     $stmt->bindParam(':id_insumo', $insumo['idInsumo']);
                     $stmt->bindParam(':quantidade', $insumo['quantidade']);
-                    $stmt->bindParam(':status', $insumo['statusInsumo']);
                     $stmt->execute();
                     $idItem = $this->pdo->lastInsertId();
                     if($idItem) $id_pedido_insumos_array[] = $idItem;
@@ -295,16 +251,6 @@ class PedidosCompra{
                 'msg' => $e->getMessage()
             ));
         }
-    }
-
-    public function changeStatus($idPedido, $status){
-        $sql = 'update  pcp_pedidos
-                set     status = :status
-                where   id = :idPedido';
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindParam(':idPedido', $idPedido);
-        $stmt->bindParam(':status', $status);
-        $stmt->execute();
     }
 
     public function deletePedidoCompra($filters){

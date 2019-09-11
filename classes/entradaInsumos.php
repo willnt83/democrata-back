@@ -109,7 +109,7 @@ class EntradaInsumos extends PedidosInsumos{
             if(!array_key_exists('entradas', $request) or $request['entradas'] === '' or $request['entradas'] === null or count($request['entradas']) === 0)
                 throw new \Exception('É necessário informar pelo menos uma entrada');
 
-            // Valida as entradas de insumos, retornando o idPedidoInsumo, o status do pedido insumo e a soma das quantidades
+            // Valida as entradas de insumos, retornando o idPedidoInsumo e a soma das quantidades
             foreach($request['entradas'] as $key => $entrada){
                 if(!array_key_exists('idPedido', $entrada) or $entrada['idPedido'] === '' or $entrada['idPedido'] === null)
                     throw new \Exception('Código do Pedido é obrigatório nas entradas');
@@ -120,7 +120,7 @@ class EntradaInsumos extends PedidosInsumos{
                 else
                     $entrada['quantidade'] = (float) $entrada['quantidade'];
 
-                // Retora o id, status e quantidades do pedido insumo
+                // Retora o id e quantidades do pedido insumo
                 $dadosReturn = $this->getDadosPedidoInsumo($entrada['idPedido'], $entrada['idInsumo'], $entrada['id']);
                 if(!$dadosReturn['success']) {
                     throw new \Exception('Erro ao inserir as entradas! Tente novamente.');
@@ -128,20 +128,6 @@ class EntradaInsumos extends PedidosInsumos{
 
                 // id do pedido insumo
                 $entrada['idPedidoInsumo'] = $dadosReturn['id'];
-
-                // Status que será aplicado ao pedido insumo
-                if(($entrada['quantidade'] + $dadosReturn['quantidadeConferida']) >= $dadosReturn['quantidade']){
-                    $statusInsumo = 'C';
-                } else {
-                    $statusInsumo = 'E';
-                }
-
-                // Verifica se alterará o status do insumo
-                if($dadosReturn['status'] !== $statusInsumo){
-                    $entrada['status'] = $statusInsumo;
-                } else {
-                    $entrada['status'] = '';
-                }
 
                 // Atualiza o array
                 $request['entradas'][$key] = $entrada;
@@ -181,7 +167,7 @@ class EntradaInsumos extends PedidosInsumos{
             }            
 
             // Insere/atualiza as entrada insumos
-            foreach($request['entradas']  as $key => $entrada){ 
+            foreach($request['entradas']  as $key => $entrada){
                 if($entrada['id']){
                     $sql = 'update  pcp_entrada_insumos
                             set     id_pedido_insumo = :id_pedido_insumo,
@@ -211,15 +197,6 @@ class EntradaInsumos extends PedidosInsumos{
                     $idItem = $this->pdo->lastInsertId();
                     if($idItem) $id_entrada_insumos_array[] = $idItem;
                 }
-
-                // Salva o pedido para verificar o status posteriormentes
-                if(!in_array($entrada['idPedido'],$id_pedido_compra))
-                    $id_pedido_compra[] = $entrada['idPedido'];
-
-                // Altera o status do insumo do pedido de compra
-                if($entrada['idPedidoInsumo'] and trim($entrada['status']) != ''){                    
-                    $pedidoInsumos->changeStatus($entrada['idPedidoInsumo'], trim($entrada['status']));
-                }
             }
             
             // Deleta os ids de entrada que não estão no JSON (se caso possuir)
@@ -228,34 +205,6 @@ class EntradaInsumos extends PedidosInsumos{
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':id_entrada', $entradaId);
                 $stmt->execute();
-            }
-
-            // Verifica e altera o status dos pedidos que tiveram entradas
-            //
-            // Se todo os insumos estiverem Conferidos, alterar o status para Finalizado
-            if(count($id_pedido_compra) > 0) {
-                foreach($id_pedido_compra as $key => $value){
-                    $sql = 'select 		case
-                                            when count(*) = sum(case when pi.status = "C" then 1 else 0 end) then "F"
-                                            else "A"
-                                        end as "status"
-                            from		pcp_pedidos p
-                                        inner join pcp_pedidos_insumos pi on p.id = pi.id_pedido
-                            where		p.id = :id
-                            group by 	p.id';
-                    $stmt = $this->pdo->prepare($sql);                            
-                    $stmt->bindParam(':id', $value);
-                    $stmt->execute();
-                    $row = $stmt->fetch();
-                    if($row){
-                        $statusPedido = isset($row->status) ? $row->status : 'A' ;
-                        $sqlUpdate = 'update pcp_pedidos set status = :status where id = :id';
-                        $stmt = $this->pdo->prepare($sqlUpdate);
-                        $stmt->bindParam(':status', $statusPedido);
-                        $stmt->bindParam(':id', $value);
-                        $stmt->execute();                        
-                    }
-                }
             }
 
             return json_encode(array(
@@ -304,7 +253,7 @@ class EntradaInsumos extends PedidosInsumos{
     }
 
     private function getDadosPedidoInsumo($idPedido = 0, $idInsumo = 0, $idEntradaInsumo = 0){
-        $sql = 'select		pci.id, pci.status, pci.quantidade,
+        $sql = 'select		pci.id, pci.quantidade,
                             ifnull((
                                 select 	sum(ent.quantidade) 
                                 from 	pcp_entrada_insumos ent 
@@ -323,7 +272,6 @@ class EntradaInsumos extends PedidosInsumos{
             return array(
                 'success'             => true,
                 'id'                  => (int) $row->id,
-                'status'              => $row->status,
                 'quantidade'          => (float) $row->quantidade,
                 'quantidadeConferida' => (float) $row->quantidadeConferida
             ); 
