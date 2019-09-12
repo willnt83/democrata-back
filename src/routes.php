@@ -404,6 +404,11 @@ $app->get('/getPedidosCompraAvailabes', function (Request $request, Response $re
     return $response->write($classPedidosInsumos->getPedidosCompraAvailabes($request->getQueryParams()));
 });
 
+$app->get('/getPedidosCompraInsumosAvailabes', function (Request $request, Response $response){
+    $classPedidosInsumos = new PedidosInsumos($this->db);
+    return $response->write($classPedidosInsumos->getPedidosCompraInsumosAvailabes($request->getQueryParams()));
+});
+
 $app->get('/getPedidosInsumosAvailabes', function (Request $request, Response $response){
     $classPedidosInsumos = new PedidosInsumos($this->db);
     return $response->write($classPedidosInsumos->getPedidosInsumosAvailabes($request->getQueryParams()));

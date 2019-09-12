@@ -6,6 +6,55 @@ class PedidosInsumos{
     }
 
     public function getPedidosCompraAvailabes($filters){
+        $where = '';
+        $responseData = array();
+        if(count($filters) > 0){
+            foreach($filters as $key => $value){
+                if($key === 'id') {
+                    $nick = 'pc.';
+                    $equalBinding = ' = :'.$key;
+                } else if($key === 'idInsumo') {
+                    $nick = 'ins.';                    
+                    $equalBinding = ' = :'.$key;
+                    $key = 'id';
+                } else if($key === 'nomeInsumo') {
+                    $nick = 'ins.';                    
+                    $equalBinding = ' like :'.$key;
+                    $filters[$key] = '%'.$value.'%';
+                    $key = 'nome';
+                } else {
+                    $nick = '';
+                    $equalBinding = ' = :'.$key;
+                }
+
+                $where .= ' and '.$nick.$key.$equalBinding;
+            }
+        }
+        $sql = 'select 	    pc.id as idPedido, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf,
+                            pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor
+                from	    pcp_pedidos pc
+                            inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
+                            inner join pcp_insumos ins on pci.id_insumo = ins.id
+                            inner join pcp_fornecedores f on pc.id_fornecedor = f.id
+                where		pci.quantidade > (
+                                select 	ifnull(sum(ent.quantidade), 0)
+                                from 	pcp_entrada_insumos as ent 
+                                where 	ent.id_pedido_insumo = pci.id
+                            )'.$where.'
+                group by	pc.id;';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($filters);
+        while ($row = $stmt->fetch()) {
+            $row->id = (int)$row->id;
+            $responseData[] = $row;
+        }
+        return json_encode(array(
+            'success' => true,
+            'payload' => $responseData
+        ));
+    }
+
+    public function getPedidosCompraInsumosAvailabes($filters){
         $where          = '';
 
         if(count($filters) > 0){
@@ -52,7 +101,7 @@ class PedidosInsumos{
                         left join pcp_unidades_medida um on um.id = ins.id_unidade_medida
                 '.$where.'                        
                 having(quantidade > quantidadeConferida)
-                order by pci.id;';
+                order by pci.id';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);
 
@@ -80,7 +129,7 @@ class PedidosInsumos{
                             inner join pcp_pedidos_insumos pci on pci.id_insumo = ins.id
                             left join pcp_unidades_medida um on um.id = ins.id_unidade_medida
                 where	    pci.quantidade > (
-                                select 	sum(ent.quantidade) 
+                                select 	ifnull(sum(ent.quantidade),0)
                                 from 	pcp_entrada_insumos as ent 
                                 where 	ent.id_pedido_insumo = pci.id
                             )
