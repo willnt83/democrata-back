@@ -399,6 +399,12 @@ $app->get('/getCodigosDeBarrasEstornados', function (Request $request, Response 
     return $response->write($classCodigoDeBarras->getCodigosDeBarrasEstornados($request->getQueryParams()));
 });
 
+$app->get('/getCodigoDeBarrasInfo', function (Request $request, Response $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->getCodigoDeBarrasInfo($request->getQueryParams()));
+});
+
+
 $app->get('/getPedidosInsumos', function (Request $request, Response $response){
     $classPedidosInsumos = new PedidosInsumos($this->db);
     return $response->write($classPedidosInsumos->getPedidosInsumos($request->getQueryParams()));

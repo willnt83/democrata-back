@@ -853,4 +853,41 @@ class CodigoDeBarras{
             'payload' => $responseData
         ));
     }
+
+    public function getCodigoDeBarrasInfo($request){
+        $sql = '
+            SELECT
+                cb.id, p.nome nome_producao, pro.nome nome_produto, cor.nome cor_produto,
+                con.nome nome_conjunto, s.nome nome_setor, sp.nome nome_subproduto, cb.lancado, cb.conferido
+            FROM pcp_codigo_de_barras cb
+            JOIN pcp_producoes p ON p.id = cb.id_producao
+            JOIN pcp_produtos pro ON pro.id = cb.id_produto
+            JOIN pcp_cores cor ON cor.id = pro.id_cor
+            JOIN pcp_conjuntos con ON con.id = cb.id_conjunto
+            JOIN pcp_setores s ON s.id = cb.id_setor
+            JOIN pcp_subprodutos sp ON sp.id = cb.id_subproduto
+            WHERE cb.codigo = :codigo;
+        ';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':codigo', $request['codigo']);
+        $stmt->execute();
+        $row = $stmt->fetch();
+        $responseData = array(
+            'idProducao' => $row->id,
+            'nomeProducao' => $row->nome_producao,
+            'nomeProduto' => $row->nome_produto,
+            'corProduto' => $row->cor_produto,
+            'nomeConjunto' => $row->nome_conjunto,
+            'nomeSetor' => $row->nome_setor,
+            'nomeSubproduto' => $row->nome_subproduto,
+            'lancado' => $row->lancado,
+            'conferido' => $row->conferido
+        );
+
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Informações de código de barras recuperadas com sucesso.',
+            'payload' => $responseData
+        ));
+    }
 }

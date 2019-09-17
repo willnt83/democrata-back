@@ -28,15 +28,16 @@ class Relatorios{
                 p.ativo,
                 p.codigo,
                 p.sku,
-                -- p.id_cor idCor,
+                p.id_cor idCor,
                 c.nome nomeCor,
                 p.id_linha_de_producao idLinhaDeProducao,
                 lp.nome nomeLinhaDeProducao,
-                -- plsc.id_setor idSetor,
+                plsc.id_setor idSetor,
                 s.nome nomeSetor,
                 lps.ordem,
-                -- plsc.id_conjunto idConjunto,
+                plsc.id_conjunto idConjunto,
                 con.nome nomeConjunto,
+                sp.id idSubproduto,
                 sp.nome nomeSubproduto
             from pcp_produtos p
             join pcp_cores c on c.id = p.id_cor
@@ -53,29 +54,41 @@ class Relatorios{
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);
 
-        $sheet->setCellValue('A1', 'Produto');
-        $sheet->setCellValue('B1', 'Código');
-        $sheet->setCellValue('C1', 'SKU');
-        $sheet->setCellValue('D1', 'Cor');
-        $sheet->setCellValue('E1', 'Linha de Produção');
-        $sheet->setCellValue('F1', 'Setor');
-        $sheet->setCellValue('G1', 'Conjunto');
-        $sheet->setCellValue('H1', 'Subproduto');
-        $sheet->setCellValue('I1', 'Ativo');
+        $sheet->setCellValue('A1', 'ID Produto');
+        $sheet->setCellValue('B1', 'Produto');
+        $sheet->setCellValue('C1', 'Código');
+        $sheet->setCellValue('D1', 'SKU');
+        $sheet->setCellValue('E1', 'ID Cor');
+        $sheet->setCellValue('F1', 'Cor');
+        $sheet->setCellValue('G1', 'ID Linha de Produção');
+        $sheet->setCellValue('H1', 'Linha de Produção');
+        $sheet->setCellValue('I1', 'ID Setor');
+        $sheet->setCellValue('J1', 'Setor');
+        $sheet->setCellValue('K1', 'ID Conjunto');
+        $sheet->setCellValue('L1', 'Conjunto');
+        $sheet->setCellValue('M1', 'ID Subproduto');
+        $sheet->setCellValue('N1', 'Subproduto');
+        $sheet->setCellValue('O1', 'Ativo');
         
 
         $i = 2;
         while ($row = $stmt->fetch()) {
             $ativo = $row->ativo === 'Y' ? 'Sim' : 'Não';
-            $sheet->setCellValue('A'.$i, $row->nome);
-            $sheet->setCellValue('B'.$i, $row->codigo);
-            $sheet->setCellValue('C'.$i, $row->sku);            
-            $sheet->setCellValue('D'.$i, $row->nomeCor);
-            $sheet->setCellValue('E'.$i, $row->nomeLinhaDeProducao);
-            $sheet->setCellValue('F'.$i, $row->nomeSetor);
-            $sheet->setCellValue('G'.$i, $row->nomeConjunto);
-            $sheet->setCellValue('H'.$i, $row->nomeSubproduto);
-            $sheet->setCellValue('I'.$i, $ativo);
+            $sheet->setCellValue('A'.$i, $row->id);
+            $sheet->setCellValue('B'.$i, $row->nome);
+            $sheet->setCellValue('C'.$i, $row->codigo);
+            $sheet->setCellValue('D'.$i, $row->sku);
+            $sheet->setCellValue('E'.$i, $row->idCor);
+            $sheet->setCellValue('F'.$i, $row->nomeCor);
+            $sheet->setCellValue('G'.$i, $row->idLinhaDeProducao);
+            $sheet->setCellValue('H'.$i, $row->nomeLinhaDeProducao);
+            $sheet->setCellValue('I'.$i, $row->idSetor);
+            $sheet->setCellValue('J'.$i, $row->nomeSetor);
+            $sheet->setCellValue('K'.$i, $row->idConjunto);
+            $sheet->setCellValue('L'.$i, $row->nomeConjunto);
+            $sheet->setCellValue('M'.$i, $row->idSubproduto);
+            $sheet->setCellValue('N'.$i, $row->nomeSubproduto);
+            $sheet->setCellValue('O'.$i, $ativo);
             $i++;
         }
         $currDateTimeObj = new DateTime();
