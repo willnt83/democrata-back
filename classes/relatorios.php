@@ -625,4 +625,68 @@ class Relatorios{
             )
         ));
     }
+
+    public function reportEstoqueProdutos($filters){
+        $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
+        $sql = '
+            SELECT
+                cb.id_producao,
+                cb.id_produto,
+                concat(pro.nome," (", cor.nome,")") descricao_produto,
+                pro.codigo codigo_produto,
+                pro.sku sku_produto,
+                concat(pro.nome,"-",s.nome) descricao,
+                cb.codigo,
+                cb.dt_lancamento
+            FROM pcp_codigo_de_barras cb
+            JOIN pcp_produtos pro ON pro.id = cb.id_produto
+            JOIN pcp_cores cor ON cor.id = pro.id_cor
+            JOIN pcp_subprodutos s ON s.id = cb.id_subproduto
+            WHERE
+                cb.lancado = "Y"
+                AND cb.conferido = "N"
+                AND cb.id_setor = 8
+                AND cb.dt_lancamento >= "2019-09-02";
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $sheet->setCellValue('A1', 'ID Produçào');
+        $sheet->setCellValue('B1', 'ID Produto');
+        $sheet->setCellValue('C1', 'Desc. Produto');
+        $sheet->setCellValue('D1', 'Cód. Produto');
+        $sheet->setCellValue('E1', 'SKU Produto');
+        $sheet->setCellValue('F1', 'Descrição');
+        $sheet->setCellValue('G1', 'Cód. Barras');
+        $sheet->setCellValue('H1', 'Data Lançamento');
+
+        $i = 2;
+        while($row = $stmt->fetch()){
+            $dataLancamentoDT = new DateTime($row->dt_lancamento);
+            $dataLancamento = $dataLancamentoDT->format('d/m/Y');
+
+            $sheet->setCellValue('A'.$i, $row->id_producao);
+            $sheet->setCellValue('B'.$i, $row->id_produto);
+            $sheet->setCellValue('C'.$i, $row->descricao_produto);
+            $sheet->setCellValue('D'.$i, $row->codigo_produto);
+            $sheet->setCellValue('E'.$i, $row->sku_produto);
+            $sheet->setCellValue('F'.$i, $row->descricao);
+            $sheet->setCellValue('G'.$i, $row->codigo);
+            $sheet->setCellValue('H'.$i, $dataLancamento);
+            $i++;
+        }
+
+        $currDateTimeObj = new DateTime();
+        $currDateTime = $currDateTimeObj->format('d-m-Y-H-i-s');
+        $this->writer->save('reports/reportEstoqueProdutos-'.$currDateTime.'.xlsx');
+        
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Relatório gerado com sucesso.',
+            'payload' => array(
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportEstoqueProdutos-'.$currDateTime.'.xlsx'
+            )
+        ));
+    }
 }

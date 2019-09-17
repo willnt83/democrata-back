@@ -373,6 +373,11 @@ $app->get('/reportSaidaInsumos', function (Request $request, Response $response)
     return $response->write($classRelatorios->reportSaidaInsumos($request->getQueryParams()));
 });
 
+$app->get('/reportEstoqueProdutos', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportEstoqueProdutos($request->getQueryParams()));
+});
+
 /* Código de Barras */
 $app->get('/gerarCodigosDeBarrasCSV', function (Request $request, Response $response){
     $classCodigoDeBarras = new CodigoDeBarras($this->db);
