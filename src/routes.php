@@ -409,6 +409,19 @@ $app->get('/getCodigoDeBarrasInfo', function (Request $request, Response $respon
     return $response->write($classCodigoDeBarras->getCodigoDeBarrasInfo($request->getQueryParams()));
 });
 
+$app->get('/getPedidosCompraAvailabes', function (Request $request, Response $response){
+    $classPedidosInsumos = new PedidosInsumos($this->db);
+    return $response->write($classPedidosInsumos->getPedidosCompraAvailabes($request->getQueryParams()));
+});
+
+$app->get('/getPedidosCompraInsumosAvailabes', function (Request $request, Response $response){
+    $classPedidosInsumos = new PedidosInsumos($this->db);
+    return $response->write($classPedidosInsumos->getPedidosCompraInsumosAvailabes($request->getQueryParams()));
+});
+$app->get('/getPedidosInsumosAvailabes', function (Request $request, Response $response){
+    $classPedidosInsumos = new PedidosInsumos($this->db);
+    return $response->write($classPedidosInsumos->getPedidosInsumosAvailabes($request->getQueryParams()));
+});
 
 $app->get('/getPedidosInsumos', function (Request $request, Response $response){
     $classPedidosInsumos = new PedidosInsumos($this->db);

@@ -45,7 +45,7 @@ class PedidosInsumos{
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);
         while ($row = $stmt->fetch()) {
-            $row->id = (int)$row->id;
+            $row->idPedido = (int)$row->idPedido;
             $responseData[] = $row;
         }
         return json_encode(array(
