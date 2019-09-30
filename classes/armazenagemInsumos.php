@@ -53,7 +53,7 @@ class ArmazenagemInsumos{
             $i = 0;
             foreach($filters as $key => $value){
                 $and = $i > 0 ? ' and ' : '';
-                $where .= $and.'ia.'.$key.' = :'.$key;
+                $where .= $and.'p.'.$key.' = :'.$key;
                 $i++;
             }
         }

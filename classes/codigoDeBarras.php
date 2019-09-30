@@ -858,7 +858,7 @@ class CodigoDeBarras{
         $sql = '
             SELECT
                 cb.id, p.nome nome_producao, pro.nome nome_produto, cor.nome cor_produto,
-                con.nome nome_conjunto, s.nome nome_setor, sp.nome nome_subproduto, cb.lancado, cb.conferido
+                con.nome nome_conjunto, s.nome nome_setor, sp.nome nome_subproduto, f.nome nome_funcionario, cb.lancado, cb.conferido
             FROM pcp_codigo_de_barras cb
             JOIN pcp_producoes p ON p.id = cb.id_producao
             JOIN pcp_produtos pro ON pro.id = cb.id_produto
@@ -866,6 +866,7 @@ class CodigoDeBarras{
             JOIN pcp_conjuntos con ON con.id = cb.id_conjunto
             JOIN pcp_setores s ON s.id = cb.id_setor
             JOIN pcp_subprodutos sp ON sp.id = cb.id_subproduto
+            JOIN pcp_funcionarios f ON f.id = cb.id_funcionario
             WHERE cb.codigo = :codigo;
         ';
         $stmt = $this->pdo->prepare($sql);
@@ -880,6 +881,7 @@ class CodigoDeBarras{
             'nomeConjunto' => $row->nome_conjunto,
             'nomeSetor' => $row->nome_setor,
             'nomeSubproduto' => $row->nome_subproduto,
+            'nomeFuncionario' => $row->nome_funcionario,
             'lancado' => $row->lancado,
             'conferido' => $row->conferido
         );
