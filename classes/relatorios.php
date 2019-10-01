@@ -104,6 +104,64 @@ class Relatorios{
         ));
     }
 
+    public function reportFuncionariosCadastrados($filters){
+        $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
+        $classFuncionarios = new Funcionarios($this->pdo);
+
+        $where = '';
+        if(count($filters) > 0){
+            $where = 'where ';
+            $i = 0;
+            foreach($filters as $key => $value){
+                $and = $i > 0 ? ' and ' : '';
+                $where .= $and.$key.' = :'.$key;
+                $i++;
+            }
+        }
+        $sql = '
+            SELECT *, CONCAT("999999-", id) AS cod_barras
+            FROM pcp_funcionarios
+            '.$where.';
+        ';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($filters);
+
+        $sheet->setCellValue('A1', 'ID Funcionário');
+        $sheet->setCellValue('B1', 'Matrícula');
+        $sheet->setCellValue('C1', 'Nome');
+        $sheet->setCellValue('D1', 'Salário');
+        $sheet->setCellValue('E1', 'Salário Base');
+        $sheet->setCellValue('F1', 'Setor');
+        $sheet->setCellValue('G1', 'Ativo');
+        $sheet->setCellValue('H1', 'Cód. Barras');
+        
+
+        $i = 2;
+        while ($row = $stmt->fetch()) {
+            $ativo = $row->ativo === 'Y' ? 'Sim' : 'Não';
+            $sheet->setCellValue('A'.$i, $row->id);
+            $sheet->setCellValue('B'.$i, $row->matricula);
+            $sheet->setCellValue('C'.$i, $row->nome);
+            $sheet->setCellValue('D'.$i, $row->salario);
+            $sheet->setCellValue('E'.$i, $row->salario_base);
+            $sheet->setCellValue('F'.$i, $row->setor);
+            $sheet->setCellValue('G'.$i, $ativo);
+            $sheet->setCellValue('H'.$i, $row->cod_barras);
+            $i++;
+        }
+        $currDateTimeObj = new DateTime();
+        $currDateTime = $currDateTimeObj->format('d-m-Y-H-i-s');
+        $this->writer->save('reports/funcionariosCadastrados-'.$currDateTime.'.xlsx');
+        
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Relatório gerado com sucesso.',
+            'payload' => array(
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/funcionariosCadastrados-'.$currDateTime.'.xlsx'
+            )
+        ));
+    }
+
     public function reportProducoes($filters){
         $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
         $where = '';
@@ -212,11 +270,12 @@ class Relatorios{
         $sheet->setCellValue('A1', 'ID');
         $sheet->setCellValue('B1', 'Funcionário');
         $sheet->setCellValue('C1', 'Matrícula');
-        $sheet->setCellValue('D1', 'Setor');
-        $sheet->setCellValue('E1', 'Salário');
-        $sheet->setCellValue('F1', 'Salário Base');
-        $sheet->setCellValue('G1', 'Quantidade');
-        $sheet->setCellValue('H1', 'Pontos');
+        $sheet->setCellValue('D1', 'Cód. Barras');
+        $sheet->setCellValue('E1', 'Setor');
+        $sheet->setCellValue('F1', 'Salário');
+        $sheet->setCellValue('G1', 'Salário Base');
+        $sheet->setCellValue('H1', 'Quantidade');
+        $sheet->setCellValue('I1', 'Pontos');
 
         $i = 2;
         while ($row = $stmt->fetch()) {
@@ -224,13 +283,14 @@ class Relatorios{
             $sheet->setCellValue('A'.$i, $row->id_funcionario);
             $sheet->setCellValue('B'.$i, $row->nome);
             $sheet->setCellValue('C'.$i, $row->matricula);
+            $sheet->setCellValue('D'.$i, $row->matricula.'-'.$row->id_funcionario);
 
-            $sheet->setCellValue('D'.$i, $row->setor);
-            $sheet->setCellValue('E'.$i, $row->salario);
-            $sheet->setCellValue('F'.$i, $row->salario_base);
+            $sheet->setCellValue('E'.$i, $row->setor);
+            $sheet->setCellValue('F'.$i, $row->salario);
+            $sheet->setCellValue('G'.$i, $row->salario_base);
 
-            $sheet->setCellValue('G'.$i, $row->quantidade);
-            $sheet->setCellValue('H'.$i, $row->pontos);
+            $sheet->setCellValue('H'.$i, $row->quantidade);
+            $sheet->setCellValue('I'.$i, $row->pontos);
             $i++;
         }
         $currDateTimeObj = new DateTime();

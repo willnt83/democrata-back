@@ -338,6 +338,11 @@ $app->get('/reportProdutosCadastrados', function (Request $request, Response $re
     return $response->write($classRelatorios->reportProdutosCadastrados($request->getQueryParams()));
 });
 
+$app->get('/reportFuncionariosCadastrados', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportFuncionariosCadastrados($request->getQueryParams()));
+});
+
 $app->get('/reportProducoes', function (Request $request, Response $response){
     $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
     return $response->write($classRelatorios->reportProducoes($request->getQueryParams()));
