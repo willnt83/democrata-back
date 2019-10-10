@@ -27,6 +27,8 @@ require '../classes/codigoDeBarras.php';
 require '../classes/armazenagemInsumos.php';
 require '../classes/saidaInsumos.php';
 require '../classes/entradaProdutosFinalizados.php';
+require '../classes/wmsProdAlmoxarifados.php';
+require '../classes/wmsProdPosicoes.php';
 
 // Routes
 /************************ GET ************************/
@@ -440,6 +442,23 @@ $app->get('/getInsumosAvailabesToEnter', function (Request $request, Response $r
 });
 
 /* WMS Produtos */
+/* Almoxarifados */
+$app->get('/wms-produtos/getAlmoxarifados', function (Request $request, Response $response){
+    $classAlmoxarifadosWMSProd = new WMSProdAlmoxasrifados($this->db);
+    return $response->write($classAlmoxarifadosWMSProd->getAlmoxarifados($request->getQueryParams()));
+});
+
+$app->get('/wms-produtos/deleteAlmoxarifado', function (Request $request, Response $response){
+    $classAlmoxarifadosWMSProd = new WMSProdAlmoxasrifados($this->db);
+    return $response->write($classAlmoxarifadosWMSProd->deleteAlmoxarifado($request->getQueryParams()));
+});
+
+/* Posições */
+$app->get('/wms-produtos/getPosicoes', function (Request $request, Response $response){
+    $classPosicoesWMSProd = new WMSProdPosicoes($this->db);
+    return $response->write($classPosicoesWMSProd->getPosicoes($request->getQueryParams()));
+});
+
 /* Entrada */
 $app->get('/getEntradas', function (Request $request, Response $response){
     $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
@@ -642,6 +661,18 @@ $app->post('/createUpdateSaida', function ($request, $response){
 });
 
 /* WMS Produtos Finalizados */
+/* Almoxarifados */
+$app->post('/wms-produtos/createUpdateAlmoxarifado', function ($request, $response){
+    $classAlmoxarifadosWMSProd = new WMSProdAlmoxasrifados($this->db);
+    return $response->write($classAlmoxarifadosWMSProd->createUpdateAlmoxarifado(json_decode($request->getBody(), true)));
+});
+
+/* Posições */
+$app->post('/wms-produtos/createUpdatePosicao', function ($request, $response){
+    $classPosicoesWMSProd = new WMSProdPosicoes($this->db);
+    return $response->write($classPosicoesWMSProd->createUpdatePosicao(json_decode($request->getBody(), true)));
+});
+
 /* Entrada */
 $app->post('/lancamentoEntradaProdutos', function ($request, $response){
     $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
