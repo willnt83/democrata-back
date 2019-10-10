@@ -26,6 +26,7 @@ require '../classes/relatorios.php';
 require '../classes/codigoDeBarras.php';
 require '../classes/armazenagemInsumos.php';
 require '../classes/saidaInsumos.php';
+require '../classes/entradaProdutosFinalizados.php';
 
 // Routes
 /************************ GET ************************/
@@ -437,9 +438,24 @@ $app->get('/getInsumosAvailabesToEnter', function (Request $request, Response $r
     $classPedidosInsumos = new PedidosInsumos($this->db);
     return $response->write($classPedidosInsumos->getInsumosAvailabesToEnter($request->getQueryParams()));
 });
+
+/* WMS Produtos */
+/* Entrada */
+$app->get('/getEntradas', function (Request $request, Response $response){
+    $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
+    return $response->write($classEntradaProdutosFinalizados->getEntradas($request->getQueryParams()));
+});
+
+$app->get('/getEntradaProdutos', function (Request $request, Response $response){
+    $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
+    return $response->write($classEntradaProdutosFinalizados->getEntradaProdutos($request->getQueryParams()));
+});
 /*****************************************************/
-
-
+/*****************************************************/
+/*****************************************************/
+/*****************************************************/
+/*****************************************************/
+/*****************************************************/
 
 /************************ POST ************************/
 /* Unidades */
@@ -625,4 +641,10 @@ $app->post('/createUpdateSaida', function ($request, $response){
     return $response->write($classSaidaInsumos->createUpdateSaida(json_decode($request->getBody(), true)));
 });
 
+/* WMS Produtos Finalizados */
+/* Entrada */
+$app->post('/lancamentoEntradaProdutos', function ($request, $response){
+    $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
+    return $response->write($classEntradaProdutosFinalizados->lancamentoEntradaProdutos(json_decode($request->getBody(), true)));
+});
 /******************************************************/

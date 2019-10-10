@@ -866,7 +866,7 @@ class CodigoDeBarras{
             JOIN pcp_conjuntos con ON con.id = cb.id_conjunto
             JOIN pcp_setores s ON s.id = cb.id_setor
             JOIN pcp_subprodutos sp ON sp.id = cb.id_subproduto
-            JOIN pcp_funcionarios f ON f.id = cb.id_funcionario
+            LEFT JOIN pcp_funcionarios f ON f.id = cb.id_funcionario
             WHERE cb.codigo = :codigo;
         ';
         $stmt = $this->pdo->prepare($sql);
@@ -883,7 +883,8 @@ class CodigoDeBarras{
             'nomeSubproduto' => $row->nome_subproduto,
             'nomeFuncionario' => $row->nome_funcionario,
             'lancado' => $row->lancado,
-            'conferido' => $row->conferido
+            'conferido' => $row->conferido,
+            'codigo' => $request['codigo']
         );
 
         return json_encode(array(
