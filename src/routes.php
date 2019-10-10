@@ -26,7 +26,7 @@ require '../classes/relatorios.php';
 require '../classes/codigoDeBarras.php';
 require '../classes/armazenagemInsumos.php';
 require '../classes/saidaInsumos.php';
-require '../classes/entradaProdutosFinalizados.php';
+require '../classes/wmsProdEntrada.php';
 require '../classes/wmsProdAlmoxarifados.php';
 require '../classes/wmsProdPosicoes.php';
 
@@ -465,15 +465,22 @@ $app->get('/wms-produtos/deletePosicao', function (Request $request, Response $r
 });
 
 /* Entrada */
-$app->get('/getEntradas', function (Request $request, Response $response){
-    $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
+$app->get('/wms-produtos/getEntradas', function (Request $request, Response $response){
+    $classEntradaProdutosFinalizados = new WMSProdEntradas($this->db);
     return $response->write($classEntradaProdutosFinalizados->getEntradas($request->getQueryParams()));
 });
 
-$app->get('/getEntradaProdutos', function (Request $request, Response $response){
-    $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
+$app->get('/wms-produtos/getEntradaProdutos', function (Request $request, Response $response){
+    $classEntradaProdutosFinalizados = new WMSProdEntradas($this->db);
     return $response->write($classEntradaProdutosFinalizados->getEntradaProdutos($request->getQueryParams()));
 });
+
+/* Armazenagem */
+$app->get('/wms-produtos/getArmazenagens', function (Request $request, Response $response){
+    $classArmazenagemProdutosFinalizados = new WMSProdArmazenagens($this->db);
+    return $response->write($classArmazenagemProdutosFinalizados->getArmazenagens($request->getQueryParams()));
+});
+
 /*****************************************************/
 /*****************************************************/
 /*****************************************************/
@@ -679,7 +686,7 @@ $app->post('/wms-produtos/createUpdatePosicao', function ($request, $response){
 });
 
 /* Entrada */
-$app->post('/lancamentoEntradaProdutos', function ($request, $response){
+$app->post('/wms-produtos/lancamentoEntradaProdutos', function ($request, $response){
     $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
     return $response->write($classEntradaProdutosFinalizados->lancamentoEntradaProdutos(json_decode($request->getBody(), true)));
 });

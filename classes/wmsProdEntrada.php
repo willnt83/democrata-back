@@ -1,6 +1,6 @@
 <?php
 
-class EntradaProdutosFinalizados{
+class WMSProdEntradas{
     public function __construct($db){
         $this->pdo = $db;
     }
