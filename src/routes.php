@@ -459,6 +459,11 @@ $app->get('/wms-produtos/getPosicoes', function (Request $request, Response $res
     return $response->write($classPosicoesWMSProd->getPosicoes($request->getQueryParams()));
 });
 
+$app->get('/wms-produtos/deletePosicao', function (Request $request, Response $response){
+    $classPosicoesWMSProd = new WMSProdPosicoes($this->db);
+    return $response->write($classPosicoesWMSProd->deletePosicao($request->getQueryParams()));
+});
+
 /* Entrada */
 $app->get('/getEntradas', function (Request $request, Response $response){
     $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);

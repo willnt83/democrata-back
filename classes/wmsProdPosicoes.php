@@ -141,9 +141,9 @@ class WMSProdPosicoes{
         }
     }
 
-    public function deletePosicaoArmazem($filters){
+    public function deletePosicao($filters){
         try{
-            $sql = 'delete from pcp_posicao_armazem where id = :id';
+            $sql = 'delete from wmpsprod_posicoes where id = :id';
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':id', $filters['id']); 
             $stmt->execute();
