@@ -487,6 +487,27 @@ $app->get('/wms-produtos/getArmazenagemProdutos', function (Request $request, Re
     return $response->write($classArmazenagemProdutosFinalizados->getArmazenagemProdutos($request->getQueryParams()));
 });
 
+/* Saída */
+$app->get('/wms-produtos/getSaidas', function (Request $request, Response $response){
+    $WMSProdSaidas = new WMSProdSaidas($this->db);
+    return $response->write($WMSProdSaidas->getSaidas($request->getQueryParams()));
+});
+
+$app->get('/wms-produtos/getProdutosDisponiveisParaSaida', function (Request $request, Response $response){
+    $WMSProdSaidas = new WMSProdSaidas($this->db);
+    return $response->write($WMSProdSaidas->getInsumosDispgetProdutosDisponiveisParaSaidaoniveisParaSaida($request->getQueryParams()));
+});
+
+$app->get('/wms-produtos/getProdutosRetirados', function (Request $request, Response $response){
+    $WMSProdSaidas = new WMSProdSaidas($this->db);
+    return $response->write($WMSProdSaidas->getProdutosRetirados($request->getQueryParams()));
+});
+
+$app->get('/wms-produtos/deleteSaidaProdutos', function (Request $request, Response $response){
+    $WMSProdSaidas = new WMSProdSaidas($this->db);
+    return $response->write($WMSProdSaidas->deleteSaidaProdutos($request->getQueryParams()));
+});
+
 /*****************************************************/
 /*****************************************************/
 /*****************************************************/
