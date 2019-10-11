@@ -26,7 +26,8 @@ require '../classes/relatorios.php';
 require '../classes/codigoDeBarras.php';
 require '../classes/armazenagemInsumos.php';
 require '../classes/saidaInsumos.php';
-require '../classes/wmsProdEntrada.php';
+require '../classes/wmsProdEntradas.php';
+require '../classes/wmsProdArmazenagens.php';
 require '../classes/wmsProdAlmoxarifados.php';
 require '../classes/wmsProdPosicoes.php';
 
@@ -481,6 +482,11 @@ $app->get('/wms-produtos/getArmazenagens', function (Request $request, Response 
     return $response->write($classArmazenagemProdutosFinalizados->getArmazenagens($request->getQueryParams()));
 });
 
+$app->get('/wms-produtos/getArmazenagemProdutos', function (Request $request, Response $response){
+    $classArmazenagemProdutosFinalizados = new WMSProdArmazenagens($this->db);
+    return $response->write($classArmazenagemProdutosFinalizados->getArmazenagemProdutos($request->getQueryParams()));
+});
+
 /*****************************************************/
 /*****************************************************/
 /*****************************************************/
@@ -690,4 +696,11 @@ $app->post('/wms-produtos/lancamentoEntradaProdutos', function ($request, $respo
     $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
     return $response->write($classEntradaProdutosFinalizados->lancamentoEntradaProdutos(json_decode($request->getBody(), true)));
 });
+
+/* Armazenagem */
+$app->post('/wms-produtos/lancamentoArmazenagemProdutos', function ($request, $response){
+    $classArmazenagemProdutos = new WMSProdArmazenagens($this->db);
+    return $response->write($classArmazenagemProdutos->lancamentoArmazenagemProdutos(json_decode($request->getBody(), true)));
+});
+
 /******************************************************/

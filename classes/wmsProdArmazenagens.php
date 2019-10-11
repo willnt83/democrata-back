@@ -18,8 +18,8 @@ class WMSProdArmazenagens{
         }
 
         $sql = '
-            SELECT ep.id, ep.dthr_entrada, u.nome nome_usuario
-            from pcp_entrada_produtos ep
+            SELECT ep.id, ep.dthr_armazenagem, u.nome nome_usuario
+            from wmsprod_armazenagens ep
             LEFT JOIN pcp_usuarios u ON u.id = ep.id_usuario
             '.$where.'
             order by ep.id;
@@ -30,9 +30,11 @@ class WMSProdArmazenagens{
 
         $responseData = array();
         while ($row = $stmt->fetch()) {
+            $dataFormalizadaD = new DateTime($row->dthr_armazenagem);
+            $dataFormalizada = $dataFormalizadaD->format('d/m/Y H:i:s');
             $responseData[] = array(
                 'id' => (int)$row->id,
-                'dataEntrada' => $row->dthr_entrada,
+                'dataArmazenagem' => $dataFormalizada,
                 'nomeUsuario' => $row->nome_usuario
             );
         }
@@ -50,27 +52,30 @@ class WMSProdArmazenagens{
             $i = 0;
             foreach($filters as $key => $value){
                 $and = $i > 0 ? ' and ' : '';
-                $where .= $and.$key.' = :'.$key;
+                $where .= $and.'ap.'.$key.' = :'.$key;
                 $i++;
             }
         }
 
         $sql = '
             SELECT
-                epi.id,
-                epi.id_entrada_produtos,
-                epi.id_producao,
-                pd.nome nome_producao,
-                epi.id_produto,
+                ap.id,
+                ap.id_armazenagem,
+                ap.codigo,
+                ap.id_produto,
                 pro.nome nome_produto,
-                epi.codigo,
-                cor.nome cor_produto
-            from pcp_entrada_produtos_itens epi
-            JOIN pcp_producoes pd ON pd.id = epi.id_producao
-            JOIN pcp_produtos pro ON pro.id = epi.id_produto
+                cor.nome cor_produto,
+                ap.id_almoxarifado,
+                a.nome nome_almoxarifado,
+                ap.id_posicao,
+                p.posicao nome_posicao
+            FROM wmsprod_armazenagem_produtos ap
+            JOIN pcp_produtos pro ON pro.id = ap.id_produto
             JOIN pcp_cores cor ON cor.id = pro.id_cor
+            JOIN wmsprod_almoxarifados a ON a.id = ap.id_almoxarifado
+            JOIN wmsprod_posicoes p ON p.id = ap.id_posicao
             '.$where.'
-            order by epi.id;
+            order by ap.id
         ';
 
         $stmt = $this->pdo->prepare($sql);
@@ -80,16 +85,20 @@ class WMSProdArmazenagens{
         while ($row = $stmt->fetch()) {
             $responseData[] = array(
                 'id' => (int)$row->id,
-                'idEntradaProdutos' => (int)$row->id_entrada_produtos,
+                'idArmazenagem' => (int)$row->id_armazenagem,
                 'codigo' => $row->codigo,
-                'producao' => array(
-                    'id' => (int)$row->id_producao,
-                    'nome' => $row->nome_producao
-                ),
                 'produto' => array(
                     'id' => (int)$row->id_produto,
                     'nome' => $row->nome_produto,
                     'cor' => $row->cor_produto
+                ),
+                'almoxarifado' => array(
+                    'id' => (int)$row->id_almoxarifado,
+                    'nome' => $row->nome_almoxarifado
+                ),
+                'posicao' => array(
+                    'id' => (int)$row->id_posicao,
+                    'nome' => $row->nome_posicao
                 )
             );
         }
@@ -100,81 +109,86 @@ class WMSProdArmazenagens{
         ));
     }
 
-
-
     public function lancamentoArmazenagemProdutos($request){
         try{
             // Valida a request
             if(!array_key_exists('idUsuario', $request) or $request['idUsuario'] === '' or $request['idUsuario'] === null)
-                throw new \Exception('Id do usuário não informado');
-            else if(!array_key_exists('barcode', $request) or $request['barcode'] === '' or $request['barcode'] === null)
-                throw new \Exception('Código de barras não informado');
+                throw new \Exception('idUsuario não informado');
+            if(!array_key_exists('codigo', $request) or $request['codigo'] === '' or $request['codigo'] === null)
+                throw new \Exception('codigo não informado');
+            if(!array_key_exists('idProduto', $request) or $request['idProduto'] === '' or $request['idProduto'] === null)
+                throw new \Exception('idProduto não informado');
+            if(!array_key_exists('idAlmoxarifado', $request) or $request['idAlmoxarifado'] === '' or $request['idAlmoxarifado'] === null)
+                throw new \Exception('idAlmoxarifado não informado');
+            if(!array_key_exists('idPosicao', $request) or $request['idPosicao'] === '' or $request['idPosicao'] === null)
+                throw new \Exception('idPosicao não informado');
 
-            // Valida se o produto foi lançado
-            $sql = '
-                select lancado from pcp_codigo_de_barras
-                where
-                    codigo = :codigo
-                    and lancado="Y";
-            ';
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':codigo', $request['barcode']);
-            $stmt->execute();
-            if(count($stmt->fetchAll()) == 0){
-                throw new \Exception('Produto ainda não finalizado.');
-            }
-
-            // Valida se o produto já teve sua entrada lançada
+            // Valida se o produto está na entrada
             $sql = '
                 select id from pcp_entrada_produtos_itens
-                where codigo = :codigo;
+                where
+                    codigo = :codigo
             ';
             $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':codigo', $request['barcode']);
+            $stmt->bindParam(':codigo', $request['codigo']);
             $stmt->execute();
-            if(count($stmt->fetchAll()) > 0){
-                throw new \Exception('Entrada do produto já realizada.');
+            if(count($stmt->fetchAll()) == 0){
+                throw new \Exception('Produto não encontra-se na entrada');
             }
 
+            // Valida se o produto já foi armazenado
+            $sql = '
+                select id from wmsprod_armazenagem_produtos
+                where
+                    codigo = :codigo
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':codigo', $request['codigo']);
+            $stmt->execute();
+            if(count($stmt->fetchAll()) > 0){
+                throw new \Exception('Produto já armazenado');
+            }
             
-            if($request['idEntrada']){
-                $idEntrada = $request['idEntrada'];
+            if($request['idArmazenagem']){
+                $idArmazenagem = $request['idArmazenagem'];
             }
             else{
                 $sql = '
-                    insert into pcp_entrada_produtos
+                    insert into wmsprod_armazenagens
                     set
-                        dthr_entrada = now(),
+                        dthr_armazenagem = now(),
                         id_usuario = :idUsuario
                 ';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':idUsuario', $request['idUsuario']);
                 $stmt->execute();
-                $idEntrada = $this->pdo->lastInsertId();
+                $idArmazenagem = $this->pdo->lastInsertId();
             }
 
-            $barcodeArr = explode('-', $request['barcode']);
+            $barcodeArr = explode('-', $request['codigo']);
 
             $sql = '
-                insert into pcp_entrada_produtos_itens
+                insert into wmsprod_armazenagem_produtos
                 set
-                    id_entrada_produtos = :idEntrada,
+                    id_armazenagem = :idArmazenagem,
                     codigo = :codigo,
-                    id_producao = :idProducao,
-                    id_produto = :idProduto
+                    id_produto = :idProduto,
+                    id_almoxarifado = :idAlmoxarifado,
+                    id_posicao = :idPosicao
             ';
             $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':idEntrada', $idEntrada);
-            $stmt->bindParam(':codigo', $request['barcode']);
-            $stmt->bindParam(':idProducao', $barcodeArr[0]);
-            $stmt->bindParam(':idProduto', $barcodeArr[1]);
+            $stmt->bindParam(':idArmazenagem', $idArmazenagem);
+            $stmt->bindParam(':codigo', $request['codigo']);
+            $stmt->bindParam(':idProduto', $request['idProduto']);
+            $stmt->bindParam(':idAlmoxarifado', $request['idAlmoxarifado']);
+            $stmt->bindParam(':idPosicao', $request['idPosicao']);
             $stmt->execute();
 
             return json_encode(array(
                 'success' => true,
                 'msg' => 'Entrada registrada com sucesso',
                 'payload' => array(
-                    'idEntrada' => $idEntrada
+                    'idArmazenagem' => $idArmazenagem
                 )
             ));
 

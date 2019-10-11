@@ -20,8 +20,8 @@ class WMSProdPosicoes{
         $sql = '
             select  posicao.id, posicao.posicao, posicao.ativo, 
                     almoxarifado.id idAlmoxarifado, almoxarifado.nome nomeAlmoxarifado
-            from    wmpsprod_posicoes as posicao
-                    join pcp_almoxarifado as almoxarifado on posicao.id_almoxarifado = almoxarifado.id
+            from    wmsprod_posicoes as posicao
+                    join wmsprod_almoxarifados as almoxarifado on posicao.id_almoxarifado = almoxarifado.id
             '.$where.'
             order by id';
 
@@ -57,7 +57,7 @@ class WMSProdPosicoes{
 
             $sql = '
                 SELECT *
-                FROM wmpsprod_posicoes pa
+                FROM wmsprod_posicoes pa
                 WHERE
                     pa.id_almoxarifado in '.$in.'
                     and pa.ativo = "Y"
@@ -102,7 +102,7 @@ class WMSProdPosicoes{
             if($request['id']){
                 // Edit
                 $sql = '
-                    update wmpsprod_posicoes
+                    update wmsprod_posicoes
                     set
                         posicao = :posicao,
                         ativo = :ativo,
@@ -112,7 +112,7 @@ class WMSProdPosicoes{
             }
             else{
                 $sql = '
-                    insert into wmpsprod_posicoes
+                    insert into wmsprod_posicoes
                     set
                         posicao = :posicao,
                         ativo = :ativo,
@@ -143,7 +143,7 @@ class WMSProdPosicoes{
 
     public function deletePosicao($filters){
         try{
-            $sql = 'delete from wmpsprod_posicoes where id = :id';
+            $sql = 'delete from wmsprod_posicoes where id = :id';
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':id', $filters['id']); 
             $stmt->execute();
