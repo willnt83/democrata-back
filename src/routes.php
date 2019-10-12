@@ -28,6 +28,7 @@ require '../classes/armazenagemInsumos.php';
 require '../classes/saidaInsumos.php';
 require '../classes/wmsProdEntradas.php';
 require '../classes/wmsProdArmazenagens.php';
+require '../classes/wmsProdSaidas.php';
 require '../classes/wmsProdAlmoxarifados.php';
 require '../classes/wmsProdPosicoes.php';
 
@@ -493,14 +494,14 @@ $app->get('/wms-produtos/getSaidas', function (Request $request, Response $respo
     return $response->write($WMSProdSaidas->getSaidas($request->getQueryParams()));
 });
 
-$app->get('/wms-produtos/getProdutosDisponiveisParaSaida', function (Request $request, Response $response){
+$app->get('/wms-produtos/getSaidaProdutos', function (Request $request, Response $response){
     $WMSProdSaidas = new WMSProdSaidas($this->db);
-    return $response->write($WMSProdSaidas->getInsumosDispgetProdutosDisponiveisParaSaidaoniveisParaSaida($request->getQueryParams()));
+    return $response->write($WMSProdSaidas->getSaidaProdutos($request->getQueryParams()));
 });
 
-$app->get('/wms-produtos/getProdutosRetirados', function (Request $request, Response $response){
+$app->get('/wms-produtos/deleteSaida', function (Request $request, Response $response){
     $WMSProdSaidas = new WMSProdSaidas($this->db);
-    return $response->write($WMSProdSaidas->getProdutosRetirados($request->getQueryParams()));
+    return $response->write($WMSProdSaidas->deleteSaida($request->getQueryParams()));
 });
 
 $app->get('/wms-produtos/deleteSaidaProdutos', function (Request $request, Response $response){
@@ -722,6 +723,12 @@ $app->post('/wms-produtos/lancamentoEntradaProdutos', function ($request, $respo
 $app->post('/wms-produtos/lancamentoArmazenagemProdutos', function ($request, $response){
     $classArmazenagemProdutos = new WMSProdArmazenagens($this->db);
     return $response->write($classArmazenagemProdutos->lancamentoArmazenagemProdutos(json_decode($request->getBody(), true)));
+});
+
+/* Saída */
+$app->post('/wms-produtos/lancamentoSaidaProdutos', function (Request $request, Response $response){
+    $WMSProdSaidas = new WMSProdSaidas($this->db);
+    return $response->write($WMSProdSaidas->lancamentoSaidaProdutos(json_decode($request->getBody(), true)));
 });
 
 /******************************************************/

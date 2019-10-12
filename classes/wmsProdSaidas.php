@@ -1,6 +1,6 @@
 <?php
 
-class SaidaInsumos{
+class WMSProdSaidas{
     public function __construct($db){
         $this->pdo = $db;
     }
@@ -29,13 +29,14 @@ class SaidaInsumos{
 
         $responseData = array();
         while($row = $stmt->fetch()){
+            $dataSaidaFormalizada = new DateTime($row->dthr_saida);
             $responseData[] = array(
-                'idSaida' => (int)$row->id_saida,
+                'id' => (int)$row->id_saida,
                 'usuario' => array(
                     'id' => (int)$row->id_usuario,
                     'nome' => $row->nome_usuario,
                 ),
-                'dthrSaida' => $row->dthr_saida
+                'dataSaida' => $dataSaidaFormalizada->format('d/m/Y H:i:s')
             );
         }
 
@@ -45,206 +46,127 @@ class SaidaInsumos{
         ));
     }
 
-    public function getInsumosRetirados($filters){
-        $where = '';
-        if(count($filters) > 0){
-            $where = 'where ';
-            $i = 0;
-            foreach($filters as $key => $value){
-                $and = $i > 0 ? ' and ' : '';
-                $where .= $and.'si.'.$key.' = :'.$key;
-                $i++;
-            }
-        }
-
-        $sql = '
-            SELECT
-                si.id_saida,
-                si.id id_saida_insumo,
-                si.id_armazenagem_insumos,
-                ins.id id_insumo,
-                ins.ins ins_insumo,
-                ins.nome nome_insumo,
-                si.id_saida,
-                si.id_almoxarifado,
-                a.nome nome_almoxarifado,
-                si.id_posicao,
-                pa.posicao nome_posicao,
-                si.quantidade quantidade_retirada
-            FROM pcp_saida_insumos si
-            JOIN pcp_almoxarifado a ON a.id = si.id_almoxarifado
-            JOIN pcp_posicao_armazem pa ON pa.id = si.id_posicao
-            JOIN pcp_armazenagem_insumos ai ON ai.id = si.id_armazenagem_insumos
-            JOIN pcp_entrada_insumos pens ON pens.id = ai.id_entrada_insumo
-            JOIN pcp_pedidos_insumos pins ON pins.id = pens.id_pedido_insumo
-            JOIN pcp_insumos ins ON ins.id = pins.id_insumo
-            '.$where.'
-            ORDER BY si.id asc
-            ';
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($filters);
-
-        $responseData = array();
-        while($row = $stmt->fetch()){
-            /*
-            $quantidadeArmazenada = $row->quantidade_total_armazenada !== null ? (int)$row->quantidade_total_armazenada : 0;
-            $quantidadeArmazenar = (int)$row->quantidade_entrada - $quantidadeArmazenada;
-            */
-
-            $responseData[] = array(
-                'idSaida' => (int)$row->id_saida,
-                'idSaidaInsumo' => (int)$row->id_saida_insumo,
-                'idArmazenagemInsumo' => (int)$row->id_armazenagem_insumos,
-                'insumo' => array(
-                    'id' => (int)$row->id_insumo,
-                    'nome' => $row->nome_insumo,
-                    'ins' => $row->ins_insumo,
-                    'idAlmoxarifado' => (int)$row->id_almoxarifado,
-                    'nomeAlmoxarifado' => $row->nome_almoxarifado,
-                    'idPosicao' => (int)$row->id_posicao,
-                    'nomePosicao' => $row->nome_posicao,
-                    'quantidadeRetirada' => (float)$row->quantidade_retirada
-                )
-            );
-        }
-
-        return json_encode(array(
-            'success' => true,
-            'payload' => $responseData
-        ));
-    }
-
-    // Recupera as informações de entrada
-    public function getInsumosDisponiveisParaSaida($filters){
-        $where = '';
-        if(count($filters) > 0){
-            $where = 'where ';
-            $i = 0;
-            foreach($filters as $key => $value){
-                $and = $i > 0 ? ' and ' : '';
-                $alias = ($key === 'id_insumo') ? 'pins.' : 'ai.';
-                $where .= $and.$alias.$key.' = :'.$key;
-                $i++;
-            }
-        }
-
-        $sql = '
-            SELECT
-                ai.id id_armazenagem_insumo,
-                ai.id_entrada_insumo,
-                ins.id id_insumo,
-                ins.ins ins_insumo,
-                ins.nome nome_insumo,
-                ai.id_almoxarifado,
-                al.nome nome_almoxarifado,
-                ai.id_posicao,
-                pa.posicao nome_posicao,
-                ai.quantidade quantidade_armazenada,
-                totais.quantidade_retirada,
-                (ai.quantidade - if(totais.quantidade_retirada IS NOT NULL, totais.quantidade_retirada, 0)) quantidade_disponivel,
-                e.dthr_entrada
-            FROM pcp_armazenagem_insumos ai
-            JOIN pcp_armazenagens a ON a.id = ai.id_armazenagem
-            JOIN pcp_almoxarifado al ON al.id = ai.id_almoxarifado
-            JOIN pcp_posicao_armazem pa ON pa.id = ai.id_posicao
-            JOIN pcp_entrada_insumos eins ON eins.id = ai.id_entrada_insumo
-            JOIN pcp_pedidos_insumos pins ON pins.id = eins.id_pedido_insumo
-            JOIN pcp_insumos ins ON ins.id = pins.id_insumo
-            JOIN pcp_entradas e ON e.id = eins.id_entrada
-            left JOIN (
-                SELECT si.id_armazenagem_insumos, SUM(si.quantidade) quantidade_retirada
-                FROM pcp_saida_insumos si
-                GROUP BY si.id_armazenagem_insumos
-            ) AS totais ON totais.id_armazenagem_insumos = ai.id
-            '.$where.'
-            GROUP BY ai.id
-            ORDER BY e.dthr_entrada ASC
-        ';
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($filters);
-
-        $responseData = array();
-        while($row = $stmt->fetch()){
-            /*
-            $quantidadeArmazenada = $row->quantidade_total_armazenada !== null ? (int)$row->quantidade_total_armazenada : 0;
-            $quantidadeArmazenar = (int)$row->quantidade_entrada - $quantidadeArmazenada;
-            */
-
-            $responseData[] = array(
-                'idArmazenagemInsumo' => (int)$row->id_armazenagem_insumo,
-                'idEntradaInsumo' => (int)$row->id_entrada_insumo,
-                'idInsumo' => (int)$row->id_insumo,
-                'insInsumo' => $row->ins_insumo,
-                'nomeInsumo' => $row->nome_insumo,
-                'idAlmoxarifado' => (int)$row->id_almoxarifado,
-                'nomeAlmoxarifado' => $row->nome_almoxarifado,
-                'idPosicao' => (int)$row->id_posicao,
-                'nomePosicao' => $row->nome_posicao,
-                'quantidadeDisponivel' => (float)$row->quantidade_disponivel,
-                'dataRecebimento' => $row->dthr_entrada
-            );
-        }
-
-        return json_encode(array(
-            'success' => true,
-            'payload' => $responseData
-        ));
-    }    
-
-    public function createUpdateSaida($request){
+    public function getSaidaProdutos($filters){
         try{
-            // Validações
-            $i = 0;
-            while($i < count($request['lancamentos'])){
-                if(
-                    !array_key_exists('idArmazenagemInsumos', $request['lancamentos'][$i])
-                    or $request['lancamentos'][$i]['idArmazenagemInsumos'] === ''
-                    or $request['lancamentos'][$i]['idArmazenagemInsumos'] === null
-                )
-                    throw new \Exception('Campo idArmazenagemInsumos é obrigatório.');
-                if(
-                    !array_key_exists('idAlmoxarifado', $request['lancamentos'][$i])
-                    or $request['lancamentos'][$i]['idAlmoxarifado'] === ''
-                    or $request['lancamentos'][$i]['idAlmoxarifado'] === null
-                )
-                    throw new \Exception('Campo idAlmoxarifado é obrigatório.');
-                
-                if(!array_key_exists('idPosicao', $request['lancamentos'][$i])
-                    or $request['lancamentos'][$i]['idPosicao'] === ''
-                    or $request['lancamentos'][$i]['idPosicao'] === null
-                )
-                    throw new \Exception('Campo idPosicao é obrigatório.');
-                
-                if(!array_key_exists('quantidade', $request['lancamentos'][$i])
-                    or $request['lancamentos'][$i]['quantidade'] === ''
-                    or $request['lancamentos'][$i]['quantidade'] === null
-                )
-                    throw new \Exception('Campo quantidade é obrigatório.');
+            $where = '';
+            if(count($filters) > 0){
+                $where = 'where ';
+                $i = 0;
+                foreach($filters as $key => $value){
+                    $and = $i > 0 ? ' and ' : '';
+                    $where .= $and.'saidaprod.'.$key.' = :'.$key;
+                    $i++;
+                }
+            }
 
-                $i++;
-            }
-            // Edit
-            if($request['idSaida']){
-                $sql = '
-                    update pcp_saidas
-                    set
-                        dthr_saida = now(),
-                        id_usuario = :idUsuario
-                    where id = :idSaida;
+            $sql = '
+                select  saidaprod.id,
+                        saidaprod.id_saida_produtos,
+                        pro.id as idProduto,
+                        pro.nome as nomeProduto,
+                        pro.sku as skuProduto,
+                        cor.nome as nomeCor,
+                        alm.id as idAlmoxarifado,
+                        alm.nome as nomeAlmoxarifado,
+                        pos.id as idPosicao,
+                        pos.posicao as nomePosicao
+                from	pcp_saida_produtos_itens saidaprod
+                        inner join pcp_produtos pro on pro.id = saidaprod.id_produto
+                        inner join pcp_cores cor on cor.id = pro.id_cor
+                        inner join wmsprod_almoxarifados alm on alm.id = saidaprod.id_almoxarifado
+                        inner join wmsprod_posicoes pos on pos.id = saidaprod.id_posicao
+                '.$where.'
+                order by saidaprod.id
                 ';
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->bindParam(':idUsuario', $request['idUsuario']);
-                $stmt->bindParam(':idSaida', $request['idSaida']);
-                $stmt->execute();
-                $idSaida = $request['idSaida'];
-                $msg = 'Armazenagem atualizada com sucesso.';
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($filters);
+
+            $responseData = array();
+            while($row = $stmt->fetch()){
+                $responseData[] = array(
+                    'id' => (int) $row->id_saida_produtos,
+                    'idSaidaProduto' => (int) $row->id,                
+                    'produto' => array(
+                        'id'    => (int) $row->idProduto,
+                        'sku'   => $row->skuProduto,
+                        'nome'  => $row->nomeProduto,
+                        'cor'   => $row->nomeCor
+                    ),
+                    'almoxarifado' => array(
+                        'id' => (int) $row->idAlmoxarifado,
+                        'descricao' => $row->nomeAlmoxarifado
+                    ),
+                    'posicao' => array(
+                        'id' => (int) $row->idPosicao,
+                        'descricao' => $row->nomePosicao
+                    )             
+                );
             }
-            // Insert
+
+            return json_encode(array(
+                'success' => true,
+                'payload' => $responseData
+            ));
+        } catch(\Exception $e) {
+            return json_encode(array(
+                'success' => false,
+                'msg' => 'Erro ao buscar os dados de produtos da saída! Tente novamente.',
+                'error' => $e->getMessage()
+            ));
+        }
+    }
+
+    public function lancamentoSaidaProdutos($request){
+        try{
+            $this->pdo->beginTransaction();
+
+            // Valida a request
+            if(!array_key_exists('idUsuario', $request) or $request['idUsuario'] === '' or $request['idUsuario'] === null)
+                throw new \Exception('Id do usuário não informado');
+            else if(!array_key_exists('barcode', $request) or $request['barcode'] === '' or $request['barcode'] === null)
+                throw new \Exception('Código de barras não informado');
+
+            // Verifica se o código de barras é válido
+            $barcodeArray = explode('-', $request['barcode']);
+            if(count($barcodeArray) < 3)
+                throw new \Exception('Código de barras inválido');
+
+            // Quebra o código de barras em: idProduto-IdAlmoxarifado-IdPosicao
+            $idProduto      = $barcodeArray[0];
+            $IdAlmoxarifado = $barcodeArray[1];
+            $IdPosicao      = $barcodeArray[2];
+
+            // Valida se o produto/posição está mesmo armazenado
+            $sql = '
+                select id 
+                from wmsprod_armazenagem_produtos
+                where
+                    id_produto = :id_produto
+                    and id_almoxarifado = :id_almoxarifado
+                    and id_posicao = :id_posicao
+                order by id desc
+                limit 1;
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':id_produto', $idProduto);
+            $stmt->bindParam(':id_almoxarifado', $IdAlmoxarifado);
+            $stmt->bindParam(':id_posicao', $IdPosicao);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            if($row){
+                $idArmazenagemItem = $row->id;
+            } else {
+                $idArmazenagemItem = 0;
+                throw new \Exception('Produto ainda não armazenado.');
+            }
+            
+            if($request['idSaida']){
+                $idSaida = $request['idSaida'];
+            }
             else{
                 $sql = '
-                    insert into pcp_saidas
+                    insert into pcp_saida_produtos
                     set
                         dthr_saida = now(),
                         id_usuario = :idUsuario
@@ -253,216 +175,45 @@ class SaidaInsumos{
                 $stmt->bindParam(':idUsuario', $request['idUsuario']);
                 $stmt->execute();
                 $idSaida = $this->pdo->lastInsertId();
-                $msg = 'Saída registrada com sucesso.';
             }
-            
-            // Removendo todos as armazenagens realizadas para o insumo do pedido
-            $sqlDelete = '
-                delete from pcp_saida_insumos
-                where id_saida = :idSaida;
+
+            $sql = '
+                insert into pcp_saida_produtos_itens
+                set
+                    id_saida_produtos = :idSaida,
+                    id_armazenagem_produtos_itens = :id_armazenagem_produtos_itens,                    
+                    id_produto = :id_produto,
+                    id_almoxarifado = :id_almoxarifado,
+                    id_posicao = :id_posicao
             ';
-            $stmt = $this->pdo->prepare($sqlDelete);
+            $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':idSaida', $idSaida);
+            $stmt->bindParam(':id_armazenagem_produtos_itens', $idArmazenagemItem);
+            $stmt->bindParam(':id_produto', $idProduto);
+            $stmt->bindParam(':id_almoxarifado', $IdAlmoxarifado);
+            $stmt->bindParam(':id_posicao', $IdPosicao);
             $stmt->execute();
+            $idSaidaProduto = $this->pdo->lastInsertId();
 
-            // Inserindo registros de armazenagem
-            $i = 0;
-            while($i < count($request['lancamentos'])){
-                $sql = '
-                    insert into pcp_saida_insumos
-                    set
-                        id_saida = :idSaida,
-                        id_armazenagem_insumos = :idArmazenagemInsumos,
-                        id_almoxarifado = :idAlmoxarifado,
-                        id_posicao = :idPosicao,
-                        quantidade = :quantidade
-                ';
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->bindParam(':idSaida', $idSaida);
-                $stmt->bindParam(':idArmazenagemInsumos', $request['lancamentos'][$i]['idArmazenagemInsumos']);
-                $stmt->bindParam(':idAlmoxarifado', $request['lancamentos'][$i]['idAlmoxarifado']);
-                $stmt->bindParam(':idPosicao', $request['lancamentos'][$i]['idPosicao']);
-                $stmt->bindParam(':quantidade', $request['lancamentos'][$i]['quantidade']);
-                $stmt->execute();
-                $i++;
-            }
-            // Reponse
-            return json_encode(array(
-                'success' => true,
-                'msg' => $msg
-            ));
-        }catch(\Exception $e){
-            return json_encode(array(
-                'success' => false,
-                'msg' => $e->getMessage()
-            ));
-        }
-    }
-
-    public function deleteSaida($filters){
-        try{
-            $sql = '
-                delete from pcp_saida_insumos
-                where id_saida = :id
-            ';
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':id', $filters['id']); 
-            $stmt->execute();
-
-            $sql = '
-                delete from pcp_saidas
-                where
-                    id = :id
-            ';
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':id', $filters['id']); 
-            $stmt->execute();
+            $this->pdo->commit(); 
 
             return json_encode(array(
                 'success' => true,
-                'msg' => 'Saída removida com sucesso.'
+                'msg' => 'Saída registrada com sucesso',
+                'payload' => array(
+                    'idSaida' => $idSaida,
+                    'idSaidaProduto'=> $idSaidaProduto
+                )
             ));
-        }
-        catch(PDOException $e){
+
+
+        } catch(\Exception $e) {
+            $this->pdo->rollBack();
             return json_encode(array(
                 'success' => false,
-                'msg' => $e->getMessage()
+                'msg' => 'Erro ao inserir os dados de saída! Tente novamente',
+                'error' => $e->getMessage()
             ));
         }
-    }
-
-    public function generateImage($img, $file){
-        $file_parts = explode('/', $file);
-        if(!is_dir($file_parts[0].'/'.$file_parts[1])){
-            mkdir($file_parts[0].'/'.$file_parts[1], 0777, true);
-        }
-
-        $image_parts = explode(";base64,", $img);
-        $image_type_aux = explode("image/", $image_parts[0]);
-        $image_type = $image_type_aux[1];
-        $image_base64 = base64_decode($image_parts[1]);
-        
-        file_put_contents($file, $image_base64);
-        return $file;
-    }
-
-    public function geracaoEtiquetasArmazenagem($request){
-        require('../vendor/fpdf/fpdf.php');
-        $generator = new Picqer\Barcode\BarcodeGeneratorPNG();
-
-        $pdf = new FPDF();
-        $i = 0;
-        $etiquetas = array();
-        $todayDT = new Datetime();
-        $today = $todayDT->format('Ymd_His');
-
-        while($i < count($request)){
-            $x = 1;
-            while($x <= (int)$request[$i]['quantidadeEtiquetas']){
-                $etiquetas[] = $request[$i];
-                $x++;
-            }
-            $i++;
-        }
-        
-        $i = 0;
-        $pdf->AddPage();
-        $pdf->SetFont('Arial', '', 10);
-
-        while($i < count($etiquetas)){
-            $dataRecebimento1DT = new Datetime($etiquetas[$i]['dataRecebimento']);
-            $dataRecebimento1 = $dataRecebimento1DT->format('d/m/Y H:i:s');
-            if(($i+1) < count($etiquetas)){
-                $proximo = true;
-                $dataRecebimento2DT = new Datetime($etiquetas[$i+1]['dataRecebimento']);
-                $dataRecebimento2 = $dataRecebimento2DT->format('d/m/Y H:i:s');
-            }
-            else $proximo = false;
-
-            $pdf->Cell(45, 7.5, utf8_decode('CÓDIGO'), 'LTR', 0, 'L');
-            $pdf->Cell(50, 7.5, $etiquetas[$i]['codigo'], 'LTR', 0, 'L');
-            if($proximo){
-                $pdf->Cell(2, 7.5, '', 0, 0, 'C');
-                $pdf->Cell(45, 7.5, utf8_decode('CÓDIGO'), 'LTR', 0, 'L');
-                $pdf->Cell(50, 7.5, $etiquetas[$i+1]['codigo'], 'LTR', 0, 'L');
-            }
-            $pdf->Ln();
-
-            $pdf->Cell(45, 7.5, 'NOME', 'LTR', 0, 'L');
-            $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i]['nome']), 'LTR', 0, 'L');
-            if($proximo){
-                $pdf->Cell(2, 7.5, '', 0, 0, 'C');
-                $pdf->Cell(45, 7.5, 'NOME', 'LTR', 0, 'L');
-                $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i+1]['nome']), 'LTR', 0, 'L');
-            }
-            $pdf->Ln();
-
-            $pdf->Cell(45, 7.5, utf8_decode('LOCAL FÍSICO'), 'LTR', 0, 'L');
-            $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i]['localFisico']), 'LTR', 0, 'L');
-            if($proximo){
-                $pdf->Cell(2, 7.5, '', 0, 0, 'C');
-                $pdf->Cell(45, 7.5, utf8_decode('LOCAL FÍSICO'), 'LTR', 0, 'L');
-                $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i+1]['localFisico']), 'LTR', 0, 'L');
-            }
-            $pdf->Ln();
-
-            $pdf->Cell(45, 7.5, 'DATA DE RECEBIMENTO', 'LTR', 0, 'L');
-            $pdf->Cell(50, 7.5, $dataRecebimento1, 'LTR', 0, 'L');
-            if($proximo){
-                $pdf->Cell(2, 7.5, '', 0, 0, 'C');
-                $pdf->Cell(45, 7.5, 'DATA DE RECEBIMENTO', 'LTR', 0, 'L');
-                $pdf->Cell(50, 7.5, $dataRecebimento2, 'LTR', 0, 'L');
-            }
-            $pdf->Ln();
-
-            $pdf->Cell(45, 7.5, 'QUANTIDADE', 'LTRB', 0, 'L');
-            $pdf->Cell(50, 7.5, $etiquetas[$i]['quantidade'], 'LTR', 0, 'L');
-            if($proximo){
-                $pdf->Cell(2, 7.5, '', 0, 0, 'C');
-                $pdf->Cell(45, 7.5, 'QUANTIDADE', 'LTRB', 0, 'L');
-                $pdf->Cell(50, 7.5, $etiquetas[$i+1]['quantidade'], 'LTR', 0, 'L');
-            }
-            $pdf->Ln();
-
-            $pdf->Cell(45, 7.5, 'UNIDADE DE MEDIDA', 'LTRB', 0, 'L');
-            $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i]['unidadeMedida']), 'LTRB', 0, 'L');
-            if($proximo){
-                $pdf->Cell(2, 7.5, '', 0, 0, 'C');
-                $pdf->Cell(45, 7.5, 'UNIDADE DE MEDIDA', 'LTRB', 0, 'L');
-                $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i+1]['unidadeMedida']), 'LTRB', 0, 'L');
-            }
-            $pdf->Ln();
-
-            // Código de Barras
-            $cod = $etiquetas[$i]['idPedidoInsumo'].'-'.$etiquetas[$i]['idAlmoxarifado'].'-'.$etiquetas[$i]['idPosicao'];
-            $strBase64 = 'data:image/png;base64,'.base64_encode($generator->getBarcode($cod, $generator::TYPE_CODE_128));
-            $img = $this->generateImage($strBase64, 'etiquetasArmazenagem/images/'.$cod.'.png');
-          
-            $pdf->Cell(45, 12, utf8_decode('Código: '.$cod), 'LTRB', 0, 'L');
-            $pdf->Cell(50, 12, $pdf->Image($img, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTRB', 0, 'L', false);
-            if($proximo){
-                $pdf->Cell(2, 12, '', 0, 0, 'C');
-                
-                $cod = $etiquetas[$i]['idPedidoInsumo'].'-'.$etiquetas[$i+1]['idAlmoxarifado'].'-'.$etiquetas[$i+1]['idPosicao'];
-                $strBase64 = 'data:image/png;base64,'.base64_encode($generator->getBarcode($cod, $generator::TYPE_CODE_128));
-                $img = $this->generateImage($strBase64, 'etiquetasArmazenagem/images/'.$cod.'.png');
-                $pdf->Cell(45, 12, utf8_decode('Código: '.$cod), 'LTRB', 0, 'L');
-                $pdf->Cell(50, 12, $pdf->Image($img, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTRB', 0, 'L', false);
-
-            }
-            $pdf->Ln();
-            $pdf->Ln();
-            $i += 2;
-        }
-        $path = 'etiquetasArmazenagem/etiquetaArmazenagem-'.$today.'.pdf';
-        
-        $pdf->Output('F', $path, true);
-
-        return json_encode(array(
-            'success' => true,
-            'payload' => array(
-                'url' => $path
-            )
-        ));
     }
 }
