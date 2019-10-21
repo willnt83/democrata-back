@@ -35,6 +35,7 @@ class Funcionarios{
                 'matricula' => $row->matricula,
                 'salario' => $row->salario,
                 'salarioBase' => $row->salario_base,
+                'linha' => $row->linha,
                 'setor' => $row->setor,
                 'ativo' => $row->ativo
             );
@@ -65,6 +66,7 @@ class Funcionarios{
                         matricula = :matricula,
                         salario = :salario,
                         salario_base = :salarioBase,
+                        linha = :linha,
                         setor = :setor,
                         ativo = :ativo
                     where id = :id;
@@ -75,6 +77,7 @@ class Funcionarios{
                 $stmt->bindParam(':matricula', $request['matricula']);
                 $stmt->bindParam(':salario', $request['salario']);
                 $stmt->bindParam(':salarioBase', $request['salarioBase']);
+                $stmt->bindParam(':linha', $request['linha']);
                 $stmt->bindParam(':setor', $request['setor']);
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();
@@ -89,6 +92,7 @@ class Funcionarios{
                         matricula = :matricula,
                         salario = :salario,
                         salario_base = :salarioBase,
+                        linha = :linha,
                         setor = :setor,
                         ativo = :ativo
                 ';
@@ -97,6 +101,7 @@ class Funcionarios{
                 $stmt->bindParam(':matricula', $request['matricula']);
                 $stmt->bindParam(':salario', $request['salario']);
                 $stmt->bindParam(':salarioBase', $request['salarioBase']);
+                $stmt->bindParam(':linha', $request['linha']);
                 $stmt->bindParam(':setor', $request['setor']);
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();

@@ -69,6 +69,8 @@ class CodigoDeBarras{
                     pa.id_produto,
                     p.nome nome_produto,
                     cor.nome cor_produto,
+                    p.sku sku_produto,
+                    p.codigo codigo_produto,
                     plsc.id_conjunto,
                     pa.id_setor,
                     s.nome nome_setor,
@@ -106,26 +108,27 @@ class CodigoDeBarras{
                 // Nome do setor
                 if($row->id_setor != $lastSetor){
                     //$output[] = array(utf8_decode($row->nome_setor), '');
-                    $output[] = array(utf8_decode($row->nome_setor), '');
+                    $output[] = array(utf8_decode($row->nome_setor));
                     $lastSetor = $row->id_setor;
                 }
 
                 $pontos = $row->pontos == null ? 0 : $row->pontos;
+
                 if($row->total_quantidade > 1){
                     $i = 1;
                     while($i <= $row->total_quantidade){
                         $barCode = $row->id_producao."-".$row->id_produto."-".$row->id_conjunto."-".$row->id_setor."-".$row->id_subproduto."-".$i;
                         //$output[] = array(utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
-                        $output[] = array(utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
+                        $output[] = array(utf8_decode($row->sku_produto), utf8_decode($row->codigo_produto), utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
                         $insertData[] = '('.$row->id_producao.', '.$row->id_produto.', '.$row->id_conjunto.', '.$row->id_setor.', '.$row->id_subproduto.', '.$i.', "'.$barCode.'", "'.$currDate.'", '.$pontos.')';
                         $i++;
                     }
                 }
+                
                 else{
                     $barCode = $row->id_producao."-".$row->id_produto."-".$row->id_conjunto."-".$row->id_setor."-".$row->id_subproduto."-1";
                     //$output[] = array(utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
-                    $output[] = array(utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
-
+                    $output[] = array(utf8_decode($row->sku_produto), utf8_decode($row->codigo_produto), utf8_decode($row->nome_produto.'-'.$row->cor_produto.'-'.$row->nome_subproduto), $barCode);
                     $insertData[] = '('.$row->id_producao.', '.$row->id_produto.', '.$row->id_conjunto.', '.$row->id_setor.', '.$row->id_subproduto.', 1, "'.$barCode.'", "'.$currDate.'", '.$pontos.')';
                 }
             }
@@ -160,9 +163,13 @@ class CodigoDeBarras{
             }
 
             // Geração do CSV
+            /*
+            echo "\nOUTPUT\n";
+            print_r($output);
+            */
             $fp = fopen('barcodes/'.$filters['id_producao'].'/producao-'.$filters['id_producao'].'.csv', 'w');
 
-            foreach ($output as $fields) {
+            foreach($output as $fields) {
                 fputcsv($fp, $fields, ';');
             }
 

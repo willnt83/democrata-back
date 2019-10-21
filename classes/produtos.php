@@ -178,6 +178,7 @@ class Produtos{
             if($request['id'] !== null){
                 // Edit
                 // Verificando de código de produto já existente
+                /*
                 $sql = '
                     select id
                     from pcp_produtos
@@ -191,6 +192,7 @@ class Produtos{
 
                 if($row && (int)$row->id !== (int)$request['id'])
                     throw new \Exception('Já existe um produto com o código informado.');
+                */
                 
                 $sql = '
                     update pcp_produtos
@@ -218,6 +220,7 @@ class Produtos{
                 // Insert
 
                 // Verificando de código de produto já existente
+                /*
                 $sql = '
                     select count(*) count
                     from pcp_produtos
@@ -231,6 +234,7 @@ class Produtos{
                 //echo "\ncount: ".$row->count;
                 if($row->count > 0)
                     throw new \Exception('Já existe um produto com o código informado.');
+                */
                 
                 $sql = '
                     insert into pcp_produtos
