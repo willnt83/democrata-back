@@ -19,7 +19,7 @@ class WMSProdSaidas{
 
         $sql = '
             SELECT a.id id_saida, a.id_usuario, u.nome nome_usuario, a.dthr_saida
-            FROM pcp_saida_produtos a
+            FROM wmsprod_saidas a
             JOIN pcp_usuarios u ON u.id = a.id_usuario
             '.$where.'
             ORDER BY a.id
@@ -61,20 +61,15 @@ class WMSProdSaidas{
 
             $sql = '
                 select  saidaprod.id,
-                        saidaprod.id_saida_produtos,
+                        saidaprod.id_saida,
                         pro.id as idProduto,
                         pro.nome as nomeProduto,
                         pro.sku as skuProduto,
-                        cor.nome as nomeCor,
-                        alm.id as idAlmoxarifado,
-                        alm.nome as nomeAlmoxarifado,
-                        pos.id as idPosicao,
-                        pos.posicao as nomePosicao
-                from	pcp_saida_produtos_itens saidaprod
+                        cor.id as idCor,
+                        cor.nome as nomeCor
+                from	wmsprod_saida_produtos saidaprod
                         inner join pcp_produtos pro on pro.id = saidaprod.id_produto
                         inner join pcp_cores cor on cor.id = pro.id_cor
-                        inner join wmsprod_almoxarifados alm on alm.id = saidaprod.id_almoxarifado
-                        inner join wmsprod_posicoes pos on pos.id = saidaprod.id_posicao
                 '.$where.'
                 order by saidaprod.id
                 ';
@@ -85,22 +80,17 @@ class WMSProdSaidas{
             $responseData = array();
             while($row = $stmt->fetch()){
                 $responseData[] = array(
-                    'id' => (int) $row->id_saida_produtos,
+                    'id' => (int) $row->id_saida,
                     'idSaidaProduto' => (int) $row->id,                
                     'produto' => array(
                         'id'    => (int) $row->idProduto,
                         'sku'   => $row->skuProduto,
-                        'nome'  => $row->nomeProduto,
-                        'cor'   => $row->nomeCor
+                        'nome'  => $row->nomeProduto
                     ),
-                    'almoxarifado' => array(
-                        'id' => (int) $row->idAlmoxarifado,
-                        'descricao' => $row->nomeAlmoxarifado
-                    ),
-                    'posicao' => array(
-                        'id' => (int) $row->idPosicao,
-                        'descricao' => $row->nomePosicao
-                    )             
+                    'cor' => array(
+                        'id' => (int) $row->idCor,
+                        'descricao' => $row->nomeCor
+                    )           
                 );
             }
 
@@ -129,44 +119,19 @@ class WMSProdSaidas{
 
             // Verifica se o código de barras é válido
             $barcodeArray = explode('-', $request['barcode']);
-            if(count($barcodeArray) < 3)
+            if(count($barcodeArray) < 2)
                 throw new \Exception('Código de barras inválido');
 
-            // Quebra o código de barras em: idProduto-IdAlmoxarifado-IdPosicao
-            $idProduto      = $barcodeArray[0];
-            $IdAlmoxarifado = $barcodeArray[1];
-            $IdPosicao      = $barcodeArray[2];
-
-            // Valida se o produto/posição está mesmo armazenado
-            $sql = '
-                select id 
-                from wmsprod_armazenagem_produtos
-                where
-                    id_produto = :id_produto
-                    and id_almoxarifado = :id_almoxarifado
-                    and id_posicao = :id_posicao
-                order by id desc
-                limit 1;
-            ';
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':id_produto', $idProduto);
-            $stmt->bindParam(':id_almoxarifado', $IdAlmoxarifado);
-            $stmt->bindParam(':id_posicao', $IdPosicao);
-            $stmt->execute();
-            $row = $stmt->fetch();
-            if($row){
-                $idArmazenagemItem = $row->id;
-            } else {
-                $idArmazenagemItem = 0;
-                throw new \Exception('Produto ainda não armazenado.');
-            }
+            // Quebra o código de barras e recupera o id produto
+            $idProduto = $barcodeArray[1];
             
+            // Update ou insert
             if($request['idSaida']){
                 $idSaida = $request['idSaida'];
             }
             else{
                 $sql = '
-                    insert into pcp_saida_produtos
+                    insert into wmsprod_saidas
                     set
                         dthr_saida = now(),
                         id_usuario = :idUsuario
@@ -178,20 +143,16 @@ class WMSProdSaidas{
             }
 
             $sql = '
-                insert into pcp_saida_produtos_itens
+                insert into wmsprod_saida_produtos
                 set
-                    id_saida_produtos = :idSaida,
-                    id_armazenagem_produtos_itens = :id_armazenagem_produtos_itens,                    
+                    id_saida = :idSaida,
                     id_produto = :id_produto,
-                    id_almoxarifado = :id_almoxarifado,
-                    id_posicao = :id_posicao
+                    codigo = :codigo
             ';
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':idSaida', $idSaida);
-            $stmt->bindParam(':id_armazenagem_produtos_itens', $idArmazenagemItem);
             $stmt->bindParam(':id_produto', $idProduto);
-            $stmt->bindParam(':id_almoxarifado', $IdAlmoxarifado);
-            $stmt->bindParam(':id_posicao', $IdPosicao);
+            $stmt->bindParam(':codigo', $request['barcode']);
             $stmt->execute();
             $idSaidaProduto = $this->pdo->lastInsertId();
 
