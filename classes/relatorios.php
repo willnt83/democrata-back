@@ -255,7 +255,7 @@ class Relatorios{
         $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
   
         $sql = '
-            SELECT cb.id_funcionario, f.nome, f.matricula, f.setor, f.salario, f.salario_base, COUNT(cb.id) quantidade, sum(cb.pontos) pontos
+            SELECT cb.id_funcionario, f.nome, f.matricula, f.linha, f.setor, f.salario, f.salario_base, COUNT(cb.id) quantidade, sum(cb.pontos) pontos
             FROM pcp_codigo_de_barras cb
             JOIN pcp_funcionarios f ON f.id = cb.id_funcionario
             where cb.dt_lancamento >= "'.$filters['dataInicial'].'" and cb.dt_lancamento <= "'.$filters['dataFinal'].'"
@@ -271,11 +271,12 @@ class Relatorios{
         $sheet->setCellValue('B1', 'Funcionário');
         $sheet->setCellValue('C1', 'Matrícula');
         $sheet->setCellValue('D1', 'Cód. Barras');
-        $sheet->setCellValue('E1', 'Setor');
-        $sheet->setCellValue('F1', 'Salário');
-        $sheet->setCellValue('G1', 'Salário Base');
-        $sheet->setCellValue('H1', 'Quantidade');
-        $sheet->setCellValue('I1', 'Pontos');
+        $sheet->setCellValue('E1', 'Linha');
+        $sheet->setCellValue('F1', 'Setor');
+        $sheet->setCellValue('G1', 'Salário');
+        $sheet->setCellValue('H1', 'Salário Base');
+        $sheet->setCellValue('I1', 'Quantidade');
+        $sheet->setCellValue('J1', 'Pontos');
 
         $i = 2;
         while ($row = $stmt->fetch()) {
@@ -283,14 +284,13 @@ class Relatorios{
             $sheet->setCellValue('A'.$i, $row->id_funcionario);
             $sheet->setCellValue('B'.$i, $row->nome);
             $sheet->setCellValue('C'.$i, $row->matricula);
-            $sheet->setCellValue('D'.$i, $row->matricula.'-'.$row->id_funcionario);
-
-            $sheet->setCellValue('E'.$i, $row->setor);
-            $sheet->setCellValue('F'.$i, $row->salario);
-            $sheet->setCellValue('G'.$i, $row->salario_base);
-
-            $sheet->setCellValue('H'.$i, $row->quantidade);
-            $sheet->setCellValue('I'.$i, $row->pontos);
+            $sheet->setCellValue('D'.$i, '999999-'.$row->id_funcionario);
+            $sheet->setCellValue('E'.$i, $row->linha);
+            $sheet->setCellValue('F'.$i, $row->setor);
+            $sheet->setCellValue('G'.$i, $row->salario);
+            $sheet->setCellValue('H'.$i, $row->salario_base);
+            $sheet->setCellValue('I'.$i, $row->quantidade);
+            $sheet->setCellValue('J'.$i, $row->pontos);
             $i++;
         }
         $currDateTimeObj = new DateTime();

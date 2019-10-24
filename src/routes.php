@@ -26,7 +26,7 @@ require '../classes/relatorios.php';
 require '../classes/codigoDeBarras.php';
 require '../classes/armazenagemInsumos.php';
 require '../classes/saidaInsumos.php';
-require '../classes/wmsProdEntradas.php';
+//require '../classes/wmsProdEntradas.php';
 require '../classes/wmsProdArmazenagens.php';
 require '../classes/wmsProdSaidas.php';
 require '../classes/wmsProdAlmoxarifados.php';
@@ -467,6 +467,7 @@ $app->get('/wms-produtos/deletePosicao', function (Request $request, Response $r
 });
 
 /* Entrada */
+/*
 $app->get('/wms-produtos/getEntradas', function (Request $request, Response $response){
     $classEntradaProdutosFinalizados = new WMSProdEntradas($this->db);
     return $response->write($classEntradaProdutosFinalizados->getEntradas($request->getQueryParams()));
@@ -476,6 +477,7 @@ $app->get('/wms-produtos/getEntradaProdutos', function (Request $request, Respon
     $classEntradaProdutosFinalizados = new WMSProdEntradas($this->db);
     return $response->write($classEntradaProdutosFinalizados->getEntradaProdutos($request->getQueryParams()));
 });
+*/
 
 /* Armazenagem */
 $app->get('/wms-produtos/getArmazenagens', function (Request $request, Response $response){

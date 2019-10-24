@@ -125,9 +125,12 @@ class WMSProdArmazenagens{
 
             // Valida se o produto está na entrada
             $sql = '
-                select id from pcp_entrada_produtos_itens
+                select id
+                from pcp_codigo_de_barras cb
                 where
-                    codigo = :codigo
+                    cb.codigo = :codigo
+                    and cb.id_setor = 8
+                    and cb.lancado = "Y"
             ';
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':codigo', $request['codigo']);

@@ -107,8 +107,7 @@ class CodigoDeBarras{
             while($row = $stmt->fetch()){
                 // Nome do setor
                 if($row->id_setor != $lastSetor){
-                    //$output[] = array(utf8_decode($row->nome_setor), '');
-                    $output[] = array(utf8_decode($row->nome_setor));
+                    $output[] = array('', '', utf8_decode($row->nome_setor));
                     $lastSetor = $row->id_setor;
                 }
 
@@ -443,7 +442,7 @@ class CodigoDeBarras{
 
     public function lancamentoCodigoDeBarras($request){
         $sql = '
-            select id, lancado
+            select id, lancado, id_setor
             from pcp_codigo_de_barras cb
             where cb.codigo = :codigo;
         ';
