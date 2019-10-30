@@ -146,4 +146,40 @@ class PedidosInsumos{
             'payload' => $responseData
         ));
     }
+
+    public function getPedidosCompraInsumosArmazenarAvailables($filters){
+        $responseData = array();
+        $sql = '
+            SELECT
+                pc.id as idPedido,
+                pc.dthr_pedido,
+                pc.dt_prevista,
+                pc.chave_nf,
+                pc.id_fornecedor as idFornecedor,
+                f.nome as nomeFornecedor
+            from pcp_pedidos pc
+            inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
+            inner join pcp_insumos ins on pci.id_insumo = ins.id
+            inner join pcp_fornecedores f on pc.id_fornecedor = f.id
+            INNER JOIN pcp_entrada_insumos ent ON ent.id_pedido_insumo = pci.id
+            WHERE
+                ent.quantidade > (
+                    select 	ifnull(sum(ai.quantidade), 0)
+                    from 	pcp_armazenagem_insumos as ai
+                    INNER JOIN pcp_entrada_insumos ent2 ON ent2.id = ai.id_entrada_insumo
+                    where ent2.id_pedido_insumo = pci.id
+            )
+            group by pc.id;
+        ';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        while($row = $stmt->fetch()){
+            $row->idPedido = (int)$row->idPedido;
+            $responseData[] = $row;
+        }
+        return json_encode(array(
+            'success' => true,
+            'payload' => $responseData
+        ));
+    }
 }

@@ -53,7 +53,7 @@ class ArmazenagemInsumos{
             $i = 0;
             foreach($filters as $key => $value){
                 $and = $i > 0 ? ' and ' : '';
-                $where .= $and.'p.'.$key.' = :'.$key;
+                $where .= $and.'pins.'.$key.' = :'.$key;
                 $i++;
             }
         }
@@ -122,6 +122,9 @@ class ArmazenagemInsumos{
 
         $sql = '
             SELECT
+                pins.id_pedido,
+                p.id_fornecedor,
+                f.nome nome_fornecedor,
                 ai.id_entrada_insumo,
                 pins.id_insumo,
                 ins.nome nome_insumo,
@@ -145,6 +148,8 @@ class ArmazenagemInsumos{
                 GROUP BY ai2.id_entrada_insumo
             ) AS totais ON totais.id_entrada_insumo = ai.id_entrada_insumo
             JOIN pcp_pedidos_insumos pins ON pins.id = ei.id_pedido_insumo
+            JOIN pcp_pedidos p ON p.id = pins.id_pedido
+            JOIN pcp_fornecedores f ON f.id = p.id_fornecedor
             JOIN pcp_insumos ins ON ins.id = pins.id_insumo
             JOIN pcp_unidades_medida um ON um.id = ins.id_unidade_medida
             '.$where.'
@@ -162,6 +167,9 @@ class ArmazenagemInsumos{
 
             $responseData[] = array(
                 'idEntradaInsumo' => (int)$row->id_entrada_insumo,
+                'idPedido' => (int)$row->id_pedido,
+                'idFornecedor' => (int)$row->id_fornecedor,
+                'nomeFornecedor' => $row->nome_fornecedor,
                 'insumo' => array(
                     'id' => (int)$row->id_insumo,
                     'nome' => $row->nome_insumo,

@@ -428,6 +428,7 @@ $app->get('/getPedidosCompraInsumosAvailabes', function (Request $request, Respo
     $classPedidosInsumos = new PedidosInsumos($this->db);
     return $response->write($classPedidosInsumos->getPedidosCompraInsumosAvailabes($request->getQueryParams()));
 });
+
 $app->get('/getPedidosInsumosAvailabes', function (Request $request, Response $response){
     $classPedidosInsumos = new PedidosInsumos($this->db);
     return $response->write($classPedidosInsumos->getPedidosInsumosAvailabes($request->getQueryParams()));
@@ -441,6 +442,11 @@ $app->get('/getPedidosInsumos', function (Request $request, Response $response){
 $app->get('/getInsumosAvailabesToEnter', function (Request $request, Response $response){
     $classPedidosInsumos = new PedidosInsumos($this->db);
     return $response->write($classPedidosInsumos->getInsumosAvailabesToEnter($request->getQueryParams()));
+});
+
+$app->get('/getPedidosCompraInsumosArmazenarAvailables', function (Request $request, Response $response){
+    $classPedidosInsumos = new PedidosInsumos($this->db);
+    return $response->write($classPedidosInsumos->getPedidosCompraInsumosArmazenarAvailables($request->getQueryParams()));
 });
 
 /* WMS Produtos */
