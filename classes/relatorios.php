@@ -719,13 +719,13 @@ class Relatorios{
                     SELECT null
                     from wmsprod_saida_produtos sai
                     WHERE sai.codigo = ap.codigo
-        )
+                )
         ';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
-        $sheet->setCellValue('A1', 'ID Produçào');
+        $sheet->setCellValue('A1', 'ID Produção');
         $sheet->setCellValue('B1', 'ID Produto');
         $sheet->setCellValue('C1', 'Desc. Produto');
         $sheet->setCellValue('D1', 'Cód. Produto');
@@ -764,6 +764,79 @@ class Relatorios{
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
                 'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportEstoqueProdutos-'.$currDateTime.'.xlsx'
+            )
+        ));
+    }
+
+    public function reportSaidaProdutos($filters){
+        $sheet = $this->spreadsheet->getActiveSheet(); //retornando a aba ativa
+        $sql = '
+            SELECT
+                cb.id_producao,
+                sp.id_produto,
+                p.nome nome_produto,
+                p.codigo codigo_produto,
+                p.sku sku_produto,
+                CONCAT(p.nome, "-", sub.nome) descricao,
+                cb.dt_lancamento,
+                a.dthr_armazenagem,
+                sai.dthr_saida,
+                cb.codigo
+            FROM wmsprod_saida_produtos sp
+            JOIN wmsprod_saidas sai ON sai.id = sp.id_saida
+            JOIN pcp_produtos p ON p.id = sp.id
+            JOIN pcp_codigo_de_barras cb ON cb.codigo = sp.codigo
+            JOIN pcp_subprodutos sub ON sub.id = cb.id_subproduto
+            JOIN wmsprod_armazenagem_produtos ap ON ap.codigo = sp.codigo
+            JOIN wmsprod_armazenagens a ON a.id = ap.id_armazenagem
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $sheet->setCellValue('A1', 'ID Produção');
+        $sheet->setCellValue('B1', 'ID Produto');
+        $sheet->setCellValue('C1', 'Desc. Produto');
+        $sheet->setCellValue('D1', 'Cód. Produto');
+        $sheet->setCellValue('E1', 'SKU Produto');
+        $sheet->setCellValue('F1', 'Descrição');
+        $sheet->setCellValue('G1', 'Cód. Barras');
+        $sheet->setCellValue('H1', 'Data Lançamento');
+        $sheet->setCellValue('I1', 'Data Armazenagem');
+        $sheet->setCellValue('J1', 'Data Saída');
+
+        $i = 2;
+        while($row = $stmt->fetch()){
+            $dataLancamentoDT = new DateTime($row->dt_lancamento);
+            $dataLancamento = $dataLancamentoDT->format('d/m/Y');
+            $dataArmazenagemDT = new DateTime($row->dthr_armazenagem);
+            $dataArmazenagem = $dataArmazenagemDT->format('d/m/Y');
+            $dataSaidaDT = new DateTime($row->dthr_saida);
+            $dataSaida = $dataSaidaDT->format('d/m/Y');
+
+
+            $sheet->setCellValue('A'.$i, $row->id_producao);
+            $sheet->setCellValue('B'.$i, $row->id_produto);
+            $sheet->setCellValue('C'.$i, $row->nome_produto);
+            $sheet->setCellValue('D'.$i, $row->codigo_produto);
+            $sheet->setCellValue('E'.$i, $row->sku_produto);
+            $sheet->setCellValue('F'.$i, $row->descricao);
+            $sheet->setCellValue('G'.$i, $row->codigo);
+            $sheet->setCellValue('H'.$i, $dataLancamento);
+            $sheet->setCellValue('I'.$i, $dataArmazenagem);
+            $sheet->setCellValue('J'.$i, $dataSaida);
+            $i++;
+        }
+
+        $currDateTimeObj = new DateTime();
+        $currDateTime = $currDateTimeObj->format('d-m-Y-H-i-s');
+        $this->writer->save('reports/reportSaidaProdutos-'.$currDateTime.'.xlsx');
+        
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Relatório gerado com sucesso.',
+            'payload' => array(
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportSaidaProdutos-'.$currDateTime.'.xlsx'
             )
         ));
     }
