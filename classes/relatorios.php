@@ -557,6 +557,7 @@ class Relatorios{
             JOIN pcp_insumos ins ON ins.id = pins.id_insumo
             JOIN pcp_almoxarifado al ON al.id = ai.id_almoxarifado
             JOIN pcp_posicao_armazem pa ON pa.id_almoxarifado = al.id AND pa.id = ai.id_posicao
+            GROUP BY ai.id
             ORDER BY a.id, ins.nome
         ';
 
@@ -693,22 +694,32 @@ class Relatorios{
         $sql = '
             SELECT
                 cb.id_producao,
-                cb.id_produto,
-                concat(pro.nome," (", cor.nome,")") descricao_produto,
-                pro.codigo codigo_produto,
-                pro.sku sku_produto,
-                concat(pro.nome,"-",s.nome) descricao,
-                cb.codigo,
-                cb.dt_lancamento
-            FROM pcp_codigo_de_barras cb
-            JOIN pcp_produtos pro ON pro.id = cb.id_produto
-            JOIN pcp_cores cor ON cor.id = pro.id_cor
+                ap.id_armazenagem,
+                ap.codigo,
+                ap.id_produto,
+                p.nome nome_produto,
+                p.codigo codigo_produto,
+                p.sku sku_produto,
+                CONCAT(p.nome, "-", s.nome) descricao,
+                ap.id_almoxarifado,
+                almo.nome nome_almoxarifado,
+                ap.id_posicao,
+                pos.posicao nome_posicao,
+                cb.dt_lancamento,
+                a.dthr_armazenagem
+            FROM wmsprod_armazenagem_produtos ap
+            JOIN wmsprod_armazenagens a ON a.id = ap.id_armazenagem
+            JOIN pcp_produtos p ON p.id = ap.id_produto
+            JOIN wmsprod_almoxarifados almo ON almo.id = ap.id_almoxarifado
+            JOIN wmsprod_posicoes pos ON pos.id = ap.id_posicao
+            JOIN pcp_codigo_de_barras cb ON cb.codigo = ap.codigo
             JOIN pcp_subprodutos s ON s.id = cb.id_subproduto
-            WHERE
-                cb.lancado = "Y"
-                AND cb.conferido = "N"
-                AND cb.id_setor = 8
-                AND cb.dt_lancamento >= "2019-09-02";
+            WHERE 
+                NOT EXISTS (
+                    SELECT null
+                    from wmsprod_saida_produtos sai
+                    WHERE sai.codigo = ap.codigo
+        )
         ';
 
         $stmt = $this->pdo->prepare($sql);
@@ -722,20 +733,25 @@ class Relatorios{
         $sheet->setCellValue('F1', 'Descrição');
         $sheet->setCellValue('G1', 'Cód. Barras');
         $sheet->setCellValue('H1', 'Data Lançamento');
+        $sheet->setCellValue('I1', 'Data Armazenagem');
+
 
         $i = 2;
         while($row = $stmt->fetch()){
             $dataLancamentoDT = new DateTime($row->dt_lancamento);
             $dataLancamento = $dataLancamentoDT->format('d/m/Y');
+            $dataArmazenagemDT = new DateTime($row->dthr_armazenagem);
+            $dataArmazenagem = $dataArmazenagemDT->format('d/m/Y');
 
             $sheet->setCellValue('A'.$i, $row->id_producao);
             $sheet->setCellValue('B'.$i, $row->id_produto);
-            $sheet->setCellValue('C'.$i, $row->descricao_produto);
+            $sheet->setCellValue('C'.$i, $row->nome_produto);
             $sheet->setCellValue('D'.$i, $row->codigo_produto);
             $sheet->setCellValue('E'.$i, $row->sku_produto);
             $sheet->setCellValue('F'.$i, $row->descricao);
             $sheet->setCellValue('G'.$i, $row->codigo);
             $sheet->setCellValue('H'.$i, $dataLancamento);
+            $sheet->setCellValue('I'.$i, $dataArmazenagem);
             $i++;
         }
 
