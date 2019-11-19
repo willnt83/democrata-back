@@ -119,8 +119,23 @@ class WMSProdSaidas{
 
             // Verifica se o código de barras é válido
             $barcodeArray = explode('-', $request['barcode']);
-            if(count($barcodeArray) < 2)
+            if(count($barcodeArray) != 6)
                 throw new \Exception('Código de barras inválido');
+
+            // Verifica se já foi feita a saída do produto
+            $sqlVer = '
+                select count(*) as registros
+                    from wmsprod_saida_produtos
+                    where
+                        codigo = :barcode;
+                ';
+            $stmtVer = $this->pdo->prepare($sqlVer);
+            $stmtVer->bindParam(':barcode', $request['barcode']);
+            $stmtVer->execute();
+            $rowVer = $stmtVer->fetch();
+            $existeRegistro = $rowVer->registros > 0 ? true : false;
+            if($existeRegistro)
+                throw new \Exception('Saída do produto já lançada');
 
             // Quebra o código de barras e recupera o id produto
             $idProduto = $barcodeArray[1];
@@ -172,8 +187,7 @@ class WMSProdSaidas{
             $this->pdo->rollBack();
             return json_encode(array(
                 'success' => false,
-                'msg' => 'Erro ao inserir os dados de saída! Tente novamente',
-                'error' => $e->getMessage()
+                'msg' => $e->getMessage()
             ));
         }
     }

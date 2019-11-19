@@ -697,7 +697,7 @@ class Relatorios{
                 ap.id_armazenagem,
                 ap.codigo,
                 ap.id_produto,
-                p.nome nome_produto,
+                CONCAT(p.nome, " - ", cor.nome) nome_produto,
                 p.codigo codigo_produto,
                 p.sku sku_produto,
                 CONCAT(p.nome, "-", s.nome) descricao,
@@ -710,9 +710,10 @@ class Relatorios{
             FROM wmsprod_armazenagem_produtos ap
             JOIN wmsprod_armazenagens a ON a.id = ap.id_armazenagem
             JOIN pcp_produtos p ON p.id = ap.id_produto
+            JOIN pcp_cores cor ON cor.id = p.id_cor
             JOIN wmsprod_almoxarifados almo ON almo.id = ap.id_almoxarifado
             JOIN wmsprod_posicoes pos ON pos.id = ap.id_posicao
-            JOIN pcp_codigo_de_barras cb ON cb.codigo = ap.codigo
+            JOIN pcp_codigo_de_barras cb ON cb.id_setor = 8 and cb.codigo = ap.codigo
             JOIN pcp_subprodutos s ON s.id = cb.id_subproduto
             WHERE 
                 NOT EXISTS (
@@ -732,8 +733,10 @@ class Relatorios{
         $sheet->setCellValue('E1', 'SKU Produto');
         $sheet->setCellValue('F1', 'Descrição');
         $sheet->setCellValue('G1', 'Cód. Barras');
-        $sheet->setCellValue('H1', 'Data Lançamento');
-        $sheet->setCellValue('I1', 'Data Armazenagem');
+        $sheet->setCellValue('H1', 'Almoxarifado');
+        $sheet->setCellValue('I1', 'Posição');
+        $sheet->setCellValue('J1', 'Data Lançamento');
+        $sheet->setCellValue('K1', 'Data Armazenagem');
 
 
         $i = 2;
@@ -750,8 +753,10 @@ class Relatorios{
             $sheet->setCellValue('E'.$i, $row->sku_produto);
             $sheet->setCellValue('F'.$i, $row->descricao);
             $sheet->setCellValue('G'.$i, $row->codigo);
-            $sheet->setCellValue('H'.$i, $dataLancamento);
-            $sheet->setCellValue('I'.$i, $dataArmazenagem);
+            $sheet->setCellValue('H'.$i, $row->nome_almoxarifado);
+            $sheet->setCellValue('I'.$i, $row->nome_posicao);
+            $sheet->setCellValue('J'.$i, $dataLancamento);
+            $sheet->setCellValue('K'.$i, $dataArmazenagem);
             $i++;
         }
 
@@ -774,7 +779,8 @@ class Relatorios{
             SELECT
                 cb.id_producao,
                 sp.id_produto,
-                p.nome nome_produto,
+                CONCAT(p.nome, " - ", cor.nome) nome_produto,
+                cor.nome cor_produto,
                 p.codigo codigo_produto,
                 p.sku sku_produto,
                 CONCAT(p.nome, "-", sub.nome) descricao,
@@ -785,7 +791,8 @@ class Relatorios{
             FROM wmsprod_saida_produtos sp
             JOIN wmsprod_saidas sai ON sai.id = sp.id_saida
             JOIN pcp_produtos p ON p.id = sp.id
-            JOIN pcp_codigo_de_barras cb ON cb.codigo = sp.codigo
+            JOIN pcp_cores cor ON cor.id = p.id_cor
+            JOIN pcp_codigo_de_barras cb ON cb.id_setor = 8 and cb.codigo = sp.codigo
             JOIN pcp_subprodutos sub ON sub.id = cb.id_subproduto
             JOIN wmsprod_armazenagem_produtos ap ON ap.codigo = sp.codigo
             JOIN wmsprod_armazenagens a ON a.id = ap.id_armazenagem
@@ -793,7 +800,6 @@ class Relatorios{
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
-
         $sheet->setCellValue('A1', 'ID Produção');
         $sheet->setCellValue('B1', 'ID Produto');
         $sheet->setCellValue('C1', 'Desc. Produto');
@@ -813,7 +819,6 @@ class Relatorios{
             $dataArmazenagem = $dataArmazenagemDT->format('d/m/Y');
             $dataSaidaDT = new DateTime($row->dthr_saida);
             $dataSaida = $dataSaidaDT->format('d/m/Y');
-
 
             $sheet->setCellValue('A'.$i, $row->id_producao);
             $sheet->setCellValue('B'.$i, $row->id_produto);
