@@ -393,6 +393,12 @@ $app->get('/reportSaidaProdutos', function (Request $request, Response $response
     return $response->write($classRelatorios->reportSaidaProdutos($request->getQueryParams()));
 });
 
+$app->get('/insertId', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->insertId($request->getQueryParams()));
+});
+
+
 /* Código de Barras */
 $app->get('/gerarCodigosDeBarrasCSV', function (Request $request, Response $response){
     $classCodigoDeBarras = new CodigoDeBarras($this->db);
@@ -476,6 +482,7 @@ $app->get('/wms-produtos/deletePosicao', function (Request $request, Response $r
     $classPosicoesWMSProd = new WMSProdPosicoes($this->db);
     return $response->write($classPosicoesWMSProd->deletePosicao($request->getQueryParams()));
 });
+
 
 /* Entrada */
 /*

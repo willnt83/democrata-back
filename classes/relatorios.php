@@ -790,12 +790,16 @@ class Relatorios{
                 cb.codigo
             FROM wmsprod_saida_produtos sp
             JOIN wmsprod_saidas sai ON sai.id = sp.id_saida
-            JOIN pcp_produtos p ON p.id = sp.id
+            JOIN pcp_produtos p ON p.id = sp.id_produto
             JOIN pcp_cores cor ON cor.id = p.id_cor
-            JOIN pcp_codigo_de_barras cb ON cb.id_setor = 8 and cb.codigo = sp.codigo
+            JOIN pcp_codigo_de_barras cb ON cb.id = sp.id_codigo
             JOIN pcp_subprodutos sub ON sub.id = cb.id_subproduto
-            JOIN wmsprod_armazenagem_produtos ap ON ap.codigo = sp.codigo
+            left JOIN wmsprod_armazenagem_produtos ap ON ap.codigo = sp.codigo
             JOIN wmsprod_armazenagens a ON a.id = ap.id_armazenagem
+            WHERE
+                cb.id is NOT null
+                AND ap.codigo IS NOT NULL
+            ORDER BY sai.dthr_saida;
         ';
 
         $stmt = $this->pdo->prepare($sql);
