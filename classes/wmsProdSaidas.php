@@ -54,25 +54,26 @@ class WMSProdSaidas{
                 $i = 0;
                 foreach($filters as $key => $value){
                     $and = $i > 0 ? ' and ' : '';
-                    $where .= $and.'saidaprod.'.$key.' = :'.$key;
+                    $where .= $and.'sp.'.$key.' = :'.$key;
                     $i++;
                 }
             }
 
             $sql = '
-                select  saidaprod.id,
-                        saidaprod.id_saida,
-                        pro.id as idProduto,
-                        pro.nome as nomeProduto,
-                        pro.sku as skuProduto,
-                        cor.id as idCor,
-                        cor.nome as nomeCor
-                from	wmsprod_saida_produtos saidaprod
-                        inner join pcp_produtos pro on pro.id = saidaprod.id_produto
-                        inner join pcp_cores cor on cor.id = pro.id_cor
+                SELECT
+                    sp.id,
+                    sp.id_saida,
+                    sp.codigo,
+                    sp.id_produto,
+                    p.nome nome_produto,
+                    p.sku sku_produto,
+                    c.nome cor_produto
+                FROM wmsprod_saida_produtos sp
+                JOIN pcp_produtos p ON p.id = sp.id_produto
+                JOIN pcp_cores c ON c.id = p.id_cor
                 '.$where.'
-                order by saidaprod.id
-                ';
+                ORDER BY sp.id
+            ';
 
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($filters);
@@ -80,17 +81,15 @@ class WMSProdSaidas{
             $responseData = array();
             while($row = $stmt->fetch()){
                 $responseData[] = array(
-                    'id' => (int) $row->id_saida,
-                    'idSaidaProduto' => (int) $row->id,                
+                    'id' => (int) $row->id,
+                    'idSaida' => (int) $row->id_saida,
+                    'codigo' => $row->codigo,
                     'produto' => array(
-                        'id'    => (int) $row->idProduto,
-                        'sku'   => $row->skuProduto,
-                        'nome'  => $row->nomeProduto
-                    ),
-                    'cor' => array(
-                        'id' => (int) $row->idCor,
-                        'descricao' => $row->nomeCor
-                    )           
+                        'id'    => (int) $row->id_produto,
+                        'sku'   => $row->sku_produto,
+                        'nome'  => $row->nome_produto,
+                        'cor' => $row->cor_produto
+                    )
                 );
             }
 
@@ -117,14 +116,43 @@ class WMSProdSaidas{
             else if(!array_key_exists('barcode', $request) or $request['barcode'] === '' or $request['barcode'] === null)
                 throw new \Exception('Código de barras não informado');
 
-            // Verifica se o código de barras é válido
             $barcodeArray = explode('-', $request['barcode']);
-            if(count($barcodeArray) != 6)
+
+            // Verifica se o o produto encontra-se armazenado
+            $sqlVer = '
+                select count(*) as registros
+                    from wmsprod_armazenagem_produtos
+                    where
+                        codigo = :barcode;
+                ';
+            $stmtVer = $this->pdo->prepare($sqlVer);
+            $stmtVer->bindParam(':barcode', $request['barcode']);
+            $stmtVer->execute();
+            $rowVer = $stmtVer->fetch();
+            $existeRegistro = $rowVer->registros > 0 ? true : false;
+            if(!$existeRegistro)
+                throw new \Exception('Este produto não encontra-se armazenado');
+
+            // Verifica se o código de barras é válido e o produto existe no pcp_codigo_de_barras
+            $sqlVer = '
+                select count(*) as registros, id
+                    from pcp_codigo_de_barras
+                    where
+                        codigo = :barcode;
+                ';
+            $stmtVer = $this->pdo->prepare($sqlVer);
+            $stmtVer->bindParam(':barcode', $request['barcode']);
+            $stmtVer->execute();
+            $rowVer = $stmtVer->fetch();
+            $existeRegistro = $rowVer->registros > 0 ? true : false;
+            if(!$existeRegistro)
                 throw new \Exception('Código de barras inválido');
+            else
+                $idCodigo = $rowVer->id;
 
             // Verifica se já foi feita a saída do produto
             $sqlVer = '
-                select count(*) as registros
+                select count(*) as registros, id
                     from wmsprod_saida_produtos
                     where
                         codigo = :barcode;
@@ -134,6 +162,8 @@ class WMSProdSaidas{
             $stmtVer->execute();
             $rowVer = $stmtVer->fetch();
             $existeRegistro = $rowVer->registros > 0 ? true : false;
+
+
             if($existeRegistro)
                 throw new \Exception('Saída do produto já lançada');
 
@@ -162,12 +192,14 @@ class WMSProdSaidas{
                 set
                     id_saida = :idSaida,
                     id_produto = :id_produto,
-                    codigo = :codigo
+                    codigo = :codigo,
+                    id_codigo = :idCodigo
             ';
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':idSaida', $idSaida);
             $stmt->bindParam(':id_produto', $idProduto);
             $stmt->bindParam(':codigo', $request['barcode']);
+            $stmt->bindParam(':idCodigo', $idCodigo);
             $stmt->execute();
             $idSaidaProduto = $this->pdo->lastInsertId();
 
