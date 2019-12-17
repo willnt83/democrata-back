@@ -3,8 +3,6 @@ class CodigoDeBarras{
     public function __construct($db){
         $this->pdo = $db;
         $this->debug = false;
-        //$this->spreadsheet = $spreadsheet;
-        //$this->writer = $writer;
     }
 
     public function date2sql($date){
@@ -441,54 +439,65 @@ class CodigoDeBarras{
     }
 
     public function lancamentoCodigoDeBarras($request){
-        $sql = '
-            select id, lancado, id_setor
-            from pcp_codigo_de_barras cb
-            where cb.codigo = :codigo;
-        ';
+        try{
+            // Validações
+            // Verifica se idFuncionario foi informado
+            if(!array_key_exists('idFuncionario', $request)
+                or $request['idFuncionario'] === ''
+                or $request['idFuncionario'] === null)
+                throw new \Exception('Funcionário não informado');
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindParam(':codigo', $request['barcode']);
-        $stmt->execute();
-        $row = $stmt->fetch();
+            $sql = '
+                select id, lancado, id_setor
+                from pcp_codigo_de_barras cb
+                where cb.codigo = :codigo;
+            ';
 
-        if($row){
-            $todayDT = new Datetime();
-            $today = $todayDT->format('Y-m-d');
-            if($row->lancado == 'N'){
-                $sql = '
-                    update pcp_codigo_de_barras
-                    set
-                        id_funcionario = :idFuncionario,
-                        lancado = "Y",
-                        conferido = "N",
-                        estornado = "N",
-                        dt_lancamento = :dataLancamento
-                    where id = :id;
-                ';
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->bindParam(':idFuncionario', $request['idFuncionario']);
-                $stmt->bindParam(':dataLancamento', $today);
-                $stmt->bindParam(':id', $row->id);
-                $stmt->execute();
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':codigo', $request['barcode']);
+            $stmt->execute();
+            $row = $stmt->fetch();
 
-                $success = true;
-                $msg = 'Código de barras registrado com sucesso.';
+            if($row){
+                $todayDT = new Datetime();
+                $today = $todayDT->format('Y-m-d');
+                if($row->lancado == 'N'){
+                    $sql = '
+                        update pcp_codigo_de_barras
+                        set
+                            id_funcionario = :idFuncionario,
+                            lancado = "Y",
+                            conferido = "N",
+                            estornado = "N",
+                            dt_lancamento = :dataLancamento
+                        where id = :id;
+                    ';
+                    $stmt = $this->pdo->prepare($sql);
+                    $stmt->bindParam(':idFuncionario', $request['idFuncionario']);
+                    $stmt->bindParam(':dataLancamento', $today);
+                    $stmt->bindParam(':id', $row->id);
+                    $stmt->execute();
+
+                    $msg = 'Código de barras registrado com sucesso';
+                }
+                else{
+                    throw new \Exception('Código de barras já lançado');
+                }
             }
             else{
-                $success = false;
-                $msg = 'Código de barras já lançado.';
+                throw new \Exception('Código de barras inexistente');
             }
-        }
-        else{
-            $success = false;
-            $msg = 'Código de barras inexistente.';
-        }
 
-        return json_encode(array(
-            'success' => $success,
-            'msg' => $msg
-        ));
+            return json_encode(array(
+                'success' => true,
+                'msg' => $msg
+            ));
+        }catch(\Exception $e){
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
+        }
     }
 
     public function getCodigosDeBarrasLancados($request){

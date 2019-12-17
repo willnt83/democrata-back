@@ -3,48 +3,58 @@
 class Funcionarios{
     public function __construct($db){
         $this->pdo = $db;
-        //require_once 'goods.php';
     }
 
     public function getFuncionarios($filters){
-        $where = '';
-        if(count($filters) > 0){
-            $where = 'where ';
-            $i = 0;
-            foreach($filters as $key => $value){
-                $and = $i > 0 ? ' and ' : '';
-                $where .= $and.$key.' = :'.$key;
-                $i++;
+        try{
+            $where = '';
+            if(count($filters) > 0){
+                $where = 'where ';
+                $i = 0;
+                foreach($filters as $key => $value){
+                    $and = $i > 0 ? ' and ' : '';
+                    $where .= $and.$key.' = :'.$key;
+                    $i++;
+                }
             }
+
+            $sql = '
+                select * from pcp_funcionarios
+                '.$where.'
+                order by nome;
+            ';
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($filters);
+
+            $responseData = array();
+            while($row = $stmt->fetch()){
+                $responseData[] = array(
+                    'id' => (int)$row->id,
+                    'nome' => $row->nome,
+                    'matricula' => $row->matricula,
+                    'salario' => $row->salario,
+                    'salarioBase' => $row->salario_base,
+                    'linha' => $row->linha,
+                    'setor' => $row->setor,
+                    'ativo' => $row->ativo
+                );
+            }
+
+            if(count($responseData) <= 0){
+                throw new \Exception('Funcionário não encontrado');
+            }
+
+            return json_encode(array(
+                'success' => true,
+                'payload' => $responseData
+            ));
+        }catch(\Exception $e){
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
         }
-
-        $sql = '
-            select * from pcp_funcionarios
-            '.$where.'
-            order by nome;
-        ';
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($filters);
-
-        $responseData = array();
-        while($row = $stmt->fetch()){
-            $responseData[] = array(
-                'id' => (int)$row->id,
-                'nome' => $row->nome,
-                'matricula' => $row->matricula,
-                'salario' => $row->salario,
-                'salarioBase' => $row->salario_base,
-                'linha' => $row->linha,
-                'setor' => $row->setor,
-                'ativo' => $row->ativo
-            );
-        }
-
-        return json_encode(array(
-            'success' => true,
-            'payload' => $responseData
-        ));
     }
 
     public function createUpdateFuncionario($request){

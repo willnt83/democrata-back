@@ -122,6 +122,7 @@ class ArmazenagemInsumos{
 
         $sql = '
             SELECT
+                ai.id idArmazenagemInsumo,
                 pins.id_pedido,
                 p.id_fornecedor,
                 f.nome nome_fornecedor,
@@ -166,6 +167,7 @@ class ArmazenagemInsumos{
             $quantidadeArmazenar = (float)$row->quantidade_entrada - $quantidadeArmazenada;
 
             $responseData[] = array(
+                'idArmazenagemInsumo' => (int)$row->idArmazenagemInsumo,
                 'idEntradaInsumo' => (int)$row->id_entrada_insumo,
                 'idPedido' => (int)$row->id_pedido,
                 'idFornecedor' => (int)$row->id_fornecedor,
@@ -349,6 +351,8 @@ class ArmazenagemInsumos{
     public function geracaoEtiquetasArmazenagem($request){
         require('../vendor/fpdf/fpdf.php');
         $generator = new Picqer\Barcode\BarcodeGeneratorPNG();
+        $idArmazenagem = $request['idArmazenagem'];
+        $request = $request['insumos'];
 
         $pdf = new FPDF();
         $i = 0;
@@ -372,74 +376,90 @@ class ArmazenagemInsumos{
         while($i < count($etiquetas)){
             $dataRecebimento1DT = new Datetime($etiquetas[$i]['dataRecebimento']);
             $dataRecebimento1 = $dataRecebimento1DT->format('d/m/Y H:i:s');
+            /*
+            Para geração de duas etiquetas por linha
             if(($i+1) < count($etiquetas)){
                 $proximo = true;
                 $dataRecebimento2DT = new Datetime($etiquetas[$i+1]['dataRecebimento']);
                 $dataRecebimento2 = $dataRecebimento2DT->format('d/m/Y H:i:s');
             }
             else $proximo = false;
+            */
 
-            $pdf->Cell(45, 7.5, utf8_decode('CÓDIGO'), 'LTR', 0, 'L');
-            $pdf->Cell(50, 7.5, $etiquetas[$i]['codigo'], 'LTR', 0, 'L');
+            $pdf->Cell(50, 7.5, utf8_decode('CÓDIGO'), 'LTR', 0, 'L');
+            $pdf->Cell(140, 7.5, $etiquetas[$i]['codigo'], 'LTR', 0, 'L');
+            /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
                 $pdf->Cell(45, 7.5, utf8_decode('CÓDIGO'), 'LTR', 0, 'L');
                 $pdf->Cell(50, 7.5, $etiquetas[$i+1]['codigo'], 'LTR', 0, 'L');
             }
+            */
             $pdf->Ln();
 
-            $pdf->Cell(45, 7.5, 'NOME', 'LTR', 0, 'L');
-            $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i]['nome']), 'LTR', 0, 'L');
+            $pdf->Cell(50, 7.5, 'NOME', 'LTR', 0, 'L');
+            $pdf->Cell(140, 7.5, utf8_decode($etiquetas[$i]['nome']), 'LTR', 0, 'L');
+            /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
                 $pdf->Cell(45, 7.5, 'NOME', 'LTR', 0, 'L');
                 $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i+1]['nome']), 'LTR', 0, 'L');
             }
+            */
             $pdf->Ln();
 
-            $pdf->Cell(45, 7.5, utf8_decode('LOCAL FÍSICO'), 'LTR', 0, 'L');
-            $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i]['localFisico']), 'LTR', 0, 'L');
+            $pdf->Cell(50, 7.5, utf8_decode('LOCAL FÍSICO'), 'LTR', 0, 'L');
+            $pdf->Cell(140, 7.5, utf8_decode($etiquetas[$i]['localFisico']), 'LTR', 0, 'L');
+            /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
                 $pdf->Cell(45, 7.5, utf8_decode('LOCAL FÍSICO'), 'LTR', 0, 'L');
                 $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i+1]['localFisico']), 'LTR', 0, 'L');
             }
+            */
             $pdf->Ln();
 
-            $pdf->Cell(45, 7.5, 'DATA DE RECEBIMENTO', 'LTR', 0, 'L');
-            $pdf->Cell(50, 7.5, $dataRecebimento1, 'LTR', 0, 'L');
+            $pdf->Cell(50, 7.5, 'DATA DE RECEBIMENTO', 'LTR', 0, 'L');
+            $pdf->Cell(140, 7.5, $dataRecebimento1, 'LTR', 0, 'L');
+            /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
                 $pdf->Cell(45, 7.5, 'DATA DE RECEBIMENTO', 'LTR', 0, 'L');
                 $pdf->Cell(50, 7.5, $dataRecebimento2, 'LTR', 0, 'L');
             }
+            */
             $pdf->Ln();
 
-            $pdf->Cell(45, 7.5, 'QUANTIDADE', 'LTRB', 0, 'L');
-            $pdf->Cell(50, 7.5, $etiquetas[$i]['quantidade'], 'LTR', 0, 'L');
+            $pdf->Cell(50, 7.5, 'QUANTIDADE', 'LTRB', 0, 'L');
+            $pdf->Cell(140, 7.5, $etiquetas[$i]['quantidade'], 'LTR', 0, 'L');
+            /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
                 $pdf->Cell(45, 7.5, 'QUANTIDADE', 'LTRB', 0, 'L');
                 $pdf->Cell(50, 7.5, $etiquetas[$i+1]['quantidade'], 'LTR', 0, 'L');
             }
+            */
             $pdf->Ln();
 
-            $pdf->Cell(45, 7.5, 'UNIDADE DE MEDIDA', 'LTRB', 0, 'L');
-            $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i]['unidadeMedida']), 'LTRB', 0, 'L');
+            $pdf->Cell(50, 7.5, 'UNIDADE DE MEDIDA', 'LTRB', 0, 'L');
+            $pdf->Cell(140, 7.5, utf8_decode($etiquetas[$i]['unidadeMedida']), 'LTRB', 0, 'L');
+            /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
                 $pdf->Cell(45, 7.5, 'UNIDADE DE MEDIDA', 'LTRB', 0, 'L');
                 $pdf->Cell(50, 7.5, utf8_decode($etiquetas[$i+1]['unidadeMedida']), 'LTRB', 0, 'L');
             }
+            */
             $pdf->Ln();
 
             // Código de Barras
-            $cod = $etiquetas[$i]['idInsumo'].'-'.$etiquetas[$i]['idAlmoxarifado'].'-'.$etiquetas[$i]['idPosicao'];
+            $cod = $idArmazenagem.'-'.$etiquetas[$i]['idInsumo'].'-'.$etiquetas[$i]['idAlmoxarifado'].'-'.$etiquetas[$i]['idPosicao'];
             $strBase64 = 'data:image/png;base64,'.base64_encode($generator->getBarcode($cod, $generator::TYPE_CODE_128));
             $img = $this->generateImage($strBase64, 'etiquetasArmazenagem/images/'.$cod.'.png');
           
-            $pdf->Cell(45, 12, utf8_decode('Código: '.$cod), 'LTRB', 0, 'L');
-            $pdf->Cell(50, 12, $pdf->Image($img, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTRB', 0, 'L', false);
+            $pdf->Cell(50, 12, utf8_decode('Cód. de Barras: '.$cod), 'LTRB', 0, 'L');
+            $pdf->Cell(140, 12, $pdf->Image($img, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTRB', 0, 'L', false);
+            /*
             if($proximo){
                 $pdf->Cell(2, 12, '', 0, 0, 'C');
                 
@@ -450,9 +470,11 @@ class ArmazenagemInsumos{
                 $pdf->Cell(50, 12, $pdf->Image($img, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTRB', 0, 'L', false);
 
             }
+            */
             $pdf->Ln();
             $pdf->Ln();
-            $i += 2;
+            //$i += 2;
+            $i++;
         }
         $path = 'etiquetasArmazenagem/etiquetaArmazenagem-'.$today.'.pdf';
         
