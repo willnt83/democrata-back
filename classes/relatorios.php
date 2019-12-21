@@ -334,7 +334,9 @@ class Relatorios{
                 cb.codigo codigo_barras,
                 cb.id_funcionario, f.nome nome_funcionario,
                 cb.dt_lancamento data_lancamento,
+                cb.qtdeDefeito,
                 if(cb.dt_conferencia <> "0000-00-00", cb.dt_conferencia, NULL) data_conferencia,
+                if(cb.dt_defeito <> "0000-00-00", cb.dt_defeito, NULL) data_defeito,
                 cb.pontos
             FROM pcp_codigo_de_barras cb
             JOIN pcp_producoes p ON p.id = cb.id_producao
@@ -370,6 +372,8 @@ class Relatorios{
         $sheet->setCellValue('P1', 'Pontos');
         $sheet->setCellValue('Q1', 'Valor Mão de Obra');
         $sheet->setCellValue('R1', 'Valor Matéria Prima');
+        $sheet->setCellValue('S1', 'Data Defeito');
+        $sheet->setCellValue('T1', 'Qtde Defeitos');
 
 
         $i = 2;
@@ -383,6 +387,13 @@ class Relatorios{
             }
             else
                 $dataConferencia = '';
+
+            if($row->data_defeito){
+                $dataDefeitoDT = new DateTime($row->data_defeito);
+                $dataDefeito = $dataDefeitoDT->format('d/m/Y');
+            }
+            else
+                $dataDefeito = '';
 
             $sheet->setCellValue('A'.$i, $row->id_producao);
             $sheet->setCellValue('B'.$i, $row->nome_producao);
@@ -402,6 +413,8 @@ class Relatorios{
             $sheet->setCellValue('P'.$i, $row->pontos);
             $sheet->setCellValue('Q'.$i, $row->mao_de_obra);
             $sheet->setCellValue('R'.$i, $row->materia_prima);
+            $sheet->setCellValue('S'.$i, $dataDefeito);
+            $sheet->setCellValue('T'.$i, $row->qtdeDefeito);
 
             $i++;
         }
