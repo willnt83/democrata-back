@@ -420,9 +420,19 @@ $app->get('/getCodigosDeBarrasProducao', function (Request $request, Response $r
     return $response->write($classCodigoDeBarras->getCodigosDeBarrasProducao($request->getQueryParams()));
 });
 
+$app->get('/getCodigoDeBarra', function (Request $request, Response $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->getCodigoDeBarra($request->getQueryParams()));
+});
+
 $app->get('/getCodigosDeBarrasEstornados', function (Request $request, Response $response){
     $classCodigoDeBarras = new CodigoDeBarras($this->db);
     return $response->write($classCodigoDeBarras->getCodigosDeBarrasEstornados($request->getQueryParams()));
+});
+
+$app->get('/getCodigosDeBarrasComDefeito', function (Request $request, Response $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->getCodigosDeBarrasComDefeito($request->getQueryParams()));
 });
 
 $app->get('/getCodigoDeBarrasInfo', function (Request $request, Response $response){
@@ -690,6 +700,11 @@ $app->post('/conferenciaCodigoDeBarras', function ($request, $response){
 $app->post('/estornoCodigoDeBarras', function ($request, $response){
     $classCodigoDeBarras = new CodigoDeBarras($this->db);
     return $response->write($classCodigoDeBarras->estornoCodigoDeBarras(json_decode($request->getBody(), true)));
+});
+
+$app->post('/defeitoCodigoDeBarras', function ($request, $response){
+    $classCodigoDeBarras = new CodigoDeBarras($this->db);
+    return $response->write($classCodigoDeBarras->defeitoCodigoDeBarras(json_decode($request->getBody(), true)));
 });
 
 $app->post('/changeStatusInsumo', function (Request $request, Response $response){
