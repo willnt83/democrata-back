@@ -66,6 +66,8 @@ class Produtos{
                 p.ativo,
                 p.id_cor idCor,
                 c.nome nomeCor,
+                p.mao_de_obra,
+                p.materia_prima,
                 p.id_linha_de_producao idLinhaDeProducao,
                 lp.nome nomeLinhaDeProducao,
                 plsc.id_setor idSetor,
@@ -101,6 +103,8 @@ class Produtos{
                     'codigo' => $row->codigo,
                     'sku' => $row->sku,
                     'ativo' => $row->ativo,
+                    'maoDeObra' => $row->mao_de_obra,
+                    'materiaPrima' => $row->materia_prima,
                     'cor' => array(
                         'id' => (int)$row->idCor,
                         'nome' => $row->nomeCor
@@ -123,6 +127,8 @@ class Produtos{
                         'codigo' => $row->codigo,
                         'sku' => $row->sku,
                         'ativo' => $row->ativo,
+                        'maoDeObra' => $row->mao_de_obra,
+                        'materiaPrima' => $row->materia_prima,
                         'cor' => array(
                             'id' => (int)$row->idCor,
                             'nome' => $row->nomeCor
@@ -177,23 +183,6 @@ class Produtos{
 
             if($request['id'] !== null){
                 // Edit
-                // Verificando de código de produto já existente
-                /*
-                $sql = '
-                    select id
-                    from pcp_produtos
-                    where
-                        codigo = :codigo;
-                ';
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->bindParam(':codigo', $request['codigo']);
-                $stmt->execute();
-                $row = $stmt->fetch();
-
-                if($row && (int)$row->id !== (int)$request['id'])
-                    throw new \Exception('Já existe um produto com o código informado.');
-                */
-                
                 $sql = '
                     update pcp_produtos
                     set
@@ -201,7 +190,9 @@ class Produtos{
                         codigo = :codigo,
                         sku = :sku,
                         ativo = :ativo,
-                        id_cor = :cor
+                        id_cor = :cor,
+                        mao_de_obra = :maoDeObra,
+                        materia_prima = :materiaPrima
                     where id = :id;
                 ';
 
@@ -211,6 +202,8 @@ class Produtos{
                 $stmt->bindParam(':codigo', $request['codigo']);
                 $stmt->bindParam(':sku', $request['sku']);
                 $stmt->bindParam(':cor', $request['cor']);
+                $stmt->bindParam(':maoDeObra', $request['maoDeObra']);
+                $stmt->bindParam(':materiaPrima', $request['materiaPrima']);
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();
                 $produtoId = $request['id'];
@@ -218,24 +211,6 @@ class Produtos{
             }
             else{
                 // Insert
-
-                // Verificando de código de produto já existente
-                /*
-                $sql = '
-                    select count(*) count
-                    from pcp_produtos
-                    where
-                        codigo = :codigo;
-                ';
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->bindParam(':codigo', $request['codigo']);
-                $stmt->execute();
-                $row = $stmt->fetch();
-                //echo "\ncount: ".$row->count;
-                if($row->count > 0)
-                    throw new \Exception('Já existe um produto com o código informado.');
-                */
-                
                 $sql = '
                     insert into pcp_produtos
                     set
@@ -243,6 +218,8 @@ class Produtos{
                         codigo = :codigo,
                         sku = :sku,
                         id_cor = :cor,
+                        mao_de_obra = :maoDeObra,
+                        materia_prima = :materiaPrima,
                         id_linha_de_producao = :id_linha_de_producao,
                         ativo = :ativo
                 ';
@@ -251,6 +228,8 @@ class Produtos{
                 $stmt->bindParam(':codigo', $request['codigo']);
                 $stmt->bindParam(':sku', $request['sku']);
                 $stmt->bindParam(':cor', $request['cor']);
+                $stmt->bindParam(':maoDeObra', $request['maoDeObra']);
+                $stmt->bindParam(':materiaPrima', $request['materiaPrima']);
                 $stmt->bindParam(':id_linha_de_producao', $request['idLinhaDeProducao']);
                 $stmt->bindParam(':ativo', $request['ativo']);
                 $stmt->execute();
