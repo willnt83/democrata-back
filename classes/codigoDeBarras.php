@@ -787,6 +787,112 @@ class CodigoDeBarras{
         ));
     }
 
+    public function getCodigoDeBarra($request){
+        try{
+            // Validações
+            if(!array_key_exists('barcode', $request) or $request['barcode'] === '' or $request['barcode'] === null)
+                throw new \Exception('Código de Barras não capturado corretamente! Tente novamente.');
+
+            // Parâmetros
+            $sqlWhere = '';
+            if(array_key_exists('idProducao', $request) and $request['idProducao'] !== '')
+                $sqlWhere .= ' and cb.id_producao = :idProducao';
+            if(array_key_exists('idSetor', $request) or $request['idSetor'] !== '')
+                $sqlWhere .= ' and cb.id_setor = :idSetor';
+            if(array_key_exists('idSubproduto', $request) or $request['idSubproduto'] !== '')
+                $sqlWhere .= ' and cb.id_subproduto = :idSubproduto';
+
+            $sql = '
+                SELECT
+                    cb.id,
+                    cb.id_producao, pro.nome nome_producao,
+                    cb.id_produto, p.nome nome_produto, cor.nome cor_produto,
+                    cb.id_conjunto, c.nome nome_conjunto,
+                    cb.id_setor, s.nome nome_setor,
+                    cb.id_subproduto, ss.nome nome_subproduto,
+                    cb.id_funcionario, f.nome nome_funcionario,
+                    cb.sequencial, cb.codigo, cb.lancado, cb.conferido,
+                    cb.estornado, cb.defeito
+                FROM pcp_codigo_de_barras cb
+                JOIN pcp_producoes pro ON pro.id = cb.id_producao
+                JOIN pcp_produtos p ON p.id = cb.id_produto
+                JOIN pcp_cores cor on cor.id = p.id_cor
+                JOIN pcp_conjuntos c ON c.id = cb.id_conjunto
+                JOIN pcp_setores s ON s.id = cb.id_setor
+                JOIN pcp_subprodutos ss ON ss.id = cb.id_subproduto
+                LEFT JOIN pcp_funcionarios f on f.id = cb.id_funcionario
+                where
+                    cb.codigo = :codigo
+                    '.$sqlWhere.'
+                limit 1;
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':codigo', $request['barcode']);
+
+            // Bindins Parameters
+            if(array_key_exists('idProducao', $request) and $request['idProducao'] !== '')
+                $stmt->bindParam(':idProducao', $request['idProducao']);
+            if(array_key_exists('idSetor', $request) and $request['idSetor'] !== '')
+                $stmt->bindParam(':idSetor', $request['idSetor']);
+            if(array_key_exists('idSubproduto', $request) and $request['idSubproduto'] !== '')
+                $stmt->bindParam(':idSubproduto', $request['idSubproduto']);
+
+            // Executing the query
+            $stmt->execute();
+            $responseData = array();
+            while($row = $stmt->fetch()){
+                $responseData = array(
+                    'id' => (int) $row->id,
+                    'producao' => array(
+                        'id' => $row->id_producao,
+                        'nome' => $row->nome_producao
+                    ),
+                    'produto' => array(
+                        'id' => $row->id_produto,
+                        'nome' => $row->nome_produto,
+                        'cor' => $row->cor_produto
+                    ),
+                    'conjunto' => array(
+                        'id' => $row->id_conjunto,
+                        'nome' => $row->nome_conjunto
+                    ),
+                    'setor' => array(
+                        'id' => $row->id_setor,
+                        'nome' => $row->nome_setor
+                    ),
+                    'subproduto' => array(
+                        'id' => $row->id_subproduto,
+                        'nome' => $row->nome_subproduto,
+                        'sequencial' => $row->sequencial
+                    ),
+                    'funcionario' => array(
+                        'id' => $row->id_funcionario,
+                        'nome' => $row->nome_funcionario
+                    ),
+                    'codigoDeBarras' => array(
+                        'codigo' => $row->codigo,
+                        'lancado' => $row->lancado,
+                        'conferido' => $row->conferido,
+                        'estornado' => $row->estornado,
+                        'defeito' => $row->defeito
+                    )
+                );
+            }
+
+            return json_encode(array(
+                'success' => true,
+                'msg' => 'Código de barras retornado com sucesso.',
+                'payload' => count($responseData) > 0 ? $responseData : null
+            ));
+        }catch(\Exception $e){
+            return json_encode(array(
+                'success'   => false,
+                'msg'       => $e->getMessage(),
+                'payload'   => null
+            ));
+        }
+    }
+
     public function getCodigosDeBarrasEstornados($request){
         $sql = '
             SELECT
@@ -856,6 +962,131 @@ class CodigoDeBarras{
         return json_encode(array(
             'success' => true,
             'msg' => 'Lista de códigos de barras estornados recuperada com sucesso.',
+            'payload' => $responseData
+        ));
+    }
+
+    public function defeitoCodigoDeBarras($request){
+        try{
+            if(!$request or !is_array($request)){
+                throw new \Exception('Problemas ao identificar os códigos de barras. Tente novamente.');
+            }
+            
+            $payload = array();
+
+            foreach($request as $key => $value){
+                $todayDT = new Datetime();
+                $today = $todayDT->format('Y-m-d');
+                $sql = '
+                    update  pcp_codigo_de_barras
+                    set     defeito = "Y",
+                            dt_defeito = :dataDefeito,
+                            qtdeDefeito = :qtdeDefeito
+                    where id = :id;
+                ';
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->bindParam(':dataDefeito', $today);
+                $stmt->bindParam(':qtdeDefeito', $value['quantidade']);
+                $stmt->bindParam(':id', $value['id']);
+                $stmt->execute();
+                $payload = array('id' => $value['id']);
+            }
+
+            if(count($payload) > 0){
+                return json_encode(array(
+                    'success' => true,
+                    'msg' => 'Lançamento de defeitos realizado com sucesso.',
+                    'payload' => $payload
+                ));
+            } else {
+                return json_encode(array(
+                    'success' => false,
+                    'msg' => 'Lançamento não efetuado. Tente novamente.',
+                    'payload' => null
+                ));             
+            }
+        } catch(\Exception $e) {
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
+        }
+    }
+
+    public function getCodigosDeBarrasComDefeito($request){
+        $sql = '
+            SELECT
+                cb.id,
+                cb.id_producao, pro.nome nome_producao,
+                cb.id_produto, p.nome nome_produto, cor.nome cor_produto,
+                cb.id_conjunto, c.nome nome_conjunto,
+                cb.id_setor, s.nome nome_setor,
+                cb.id_subproduto, ss.nome nome_subproduto,
+                cb.id_funcionario, f.nome nome_funcionario,
+                cb.sequencial, cb.codigo, cb.conferido, cb.estornado, cb.defeito
+            FROM pcp_codigo_de_barras cb
+            JOIN pcp_producoes pro ON pro.id = cb.id_producao
+            JOIN pcp_produtos p ON p.id = cb.id_produto
+            JOIN pcp_cores cor on cor.id = p.id_cor
+            JOIN pcp_conjuntos c ON c.id = cb.id_conjunto
+            JOIN pcp_setores s ON s.id = cb.id_setor
+            JOIN pcp_subprodutos ss ON ss.id = cb.id_subproduto
+            JOIN pcp_funcionarios f on f.id = cb.id_funcionario
+            where
+                cb.id_producao = :idProducao
+                and cb.id_setor = :idSetor
+                and cb.id_subproduto = :idSubproduto
+                and cb.defeito = "Y"
+            ORDER BY cb.id
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':idProducao', $request['idProducao']);
+        $stmt->bindParam(':idSetor', $request['idSetor']);
+        $stmt->bindParam(':idSubproduto', $request['idSubproduto']);
+        $stmt->execute();
+        $responseData = array();
+        while($row = $stmt->fetch()){
+            $responseData[] = array(
+                'id' => (int)$row->id,
+                'producao' => array(
+                    'id' => $row->id_producao,
+                    'nome' => $row->nome_producao
+                ),
+                'produto' => array(
+                    'id' => $row->id_produto,
+                    'nome' => $row->nome_produto,
+                    'cor' => $row->cor_produto
+                ),
+                'conjunto' => array(
+                    'id' => $row->id_conjunto,
+                    'nome' => $row->nome_conjunto
+                ),
+                'setor' => array(
+                    'id' => $row->id_setor,
+                    'nome' => $row->nome_setor
+                ),
+                'subproduto' => array(
+                    'id' => $row->id_subproduto,
+                    'nome' => $row->nome_subproduto,
+                    'sequencial' => $row->sequencial
+                ),
+                'funcionario' => array(
+                    'id' => $row->id_funcionario,
+                    'nome' => $row->nome_funcionario
+                ),
+                'codigoDeBarras' => array(
+                    'codigo' => $row->codigo,
+                    'conferido' => $row->conferido,
+                    'estornado' => $row->estornado,
+                    'defeito' => $row->lancado
+                )
+            );
+        }
+
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Lista de códigos de barras com defeito recuperado com sucesso.',
             'payload' => $responseData
         ));
     }
