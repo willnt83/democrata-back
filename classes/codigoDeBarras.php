@@ -804,11 +804,11 @@ class CodigoDeBarras{
 
             // Parâmetros
             $sqlWhere = '';
-            if(array_key_exists('idProducao', $request) and $request['idProducao'] !== '')
+            if(isset($request['idProducao']) and $request['idProducao'] !== '')
                 $sqlWhere .= ' and cb.id_producao = :idProducao';
-            if(array_key_exists('idSetor', $request) or $request['idSetor'] !== '')
+            if(array_key_exists('idSetor', $request) and $request['idSetor'] !== '')
                 $sqlWhere .= ' and cb.id_setor = :idSetor';
-            if(array_key_exists('idSubproduto', $request) or $request['idSubproduto'] !== '')
+            if(array_key_exists('idSubproduto', $request) and $request['idSubproduto'] !== '')
                 $sqlWhere .= ' and cb.id_subproduto = :idSubproduto';
 
             $sql = '
@@ -821,7 +821,7 @@ class CodigoDeBarras{
                     cb.id_subproduto, ss.nome nome_subproduto,
                     cb.id_funcionario, f.nome nome_funcionario,
                     cb.sequencial, cb.codigo, cb.lancado, cb.conferido,
-                    cb.estornado, cb.defeito
+                    cb.estornado, cb.defeito, cb.qtdeDefeito
                 FROM pcp_codigo_de_barras cb
                 JOIN pcp_producoes pro ON pro.id = cb.id_producao
                 JOIN pcp_produtos p ON p.id = cb.id_produto
@@ -883,7 +883,8 @@ class CodigoDeBarras{
                         'lancado' => $row->lancado,
                         'conferido' => $row->conferido,
                         'estornado' => $row->estornado,
-                        'defeito' => $row->defeito
+                        'defeito' => $row->defeito,
+                        'qtdeDefeito' => $row->qtdeDefeito,
                     )
                 );
             }
