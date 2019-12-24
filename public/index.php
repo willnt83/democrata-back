@@ -20,18 +20,18 @@ $config['displayErrorDetails'] = true;
 $config['addContentLengthHeader'] = false;
 
 // Produção
+/*
 $config['db']['host']   = 'br522.hostgator.com.br';
 $config['db']['user']   = 'gerado49_democra';
 $config['db']['pass']   = 'Pr0DD3m0Cr';
 $config['db']['dbname'] = 'gerado49_democrata';
+*/
 
 // Homolog
-/*
 $config['db']['host']   = 'br522.hostgator.com.br';
 $config['db']['user']   = 'gerado49_hmdemoc';
 $config['db']['pass']   = 'D3m0Cr4t4Pass!@#';
 $config['db']['dbname'] = 'gerado49_hmdemocrata';
-*/
 
 // Local
 /*

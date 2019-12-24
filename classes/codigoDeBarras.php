@@ -821,7 +821,8 @@ class CodigoDeBarras{
                     cb.id_subproduto, ss.nome nome_subproduto,
                     cb.id_funcionario, f.nome nome_funcionario,
                     cb.sequencial, cb.codigo, cb.lancado, cb.conferido,
-                    cb.estornado, cb.defeito, cb.qtdeDefeito
+                    cb.estornado, cb.defeito, 
+                    ifnull(cb.qtdeDefeito, 0) qtdeDefeito
                 FROM pcp_codigo_de_barras cb
                 JOIN pcp_producoes pro ON pro.id = cb.id_producao
                 JOIN pcp_produtos p ON p.id = cb.id_produto
