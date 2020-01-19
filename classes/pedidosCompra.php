@@ -84,7 +84,7 @@ class PedidosCompra{
         $sql = 'select 	pc.id, pc.dthr_pedido, pc.dt_prevista, pc.chave_nf, 
                         pc.id_fornecedor as idFornecedor, f.nome as nomeFornecedor,
                         pci.id as item, pci.id_insumo as idInsumo, ins.nome as nomeInsumo, ins.ins, 
-                        um.unidade as unidadeUnidadeMedida, pci.quantidade,
+                        um.unidade as unidadeUnidadeMedida, pci.valor, pci.quantidade,
                         ifnull((select sum(quantidade) from pcp_entrada_insumos e where e.id_pedido_insumo = pci.id),0) as quantidade_conferida
                 from	pcp_pedidos pc
                         inner join pcp_pedidos_insumos pci on pci.id_pedido = pc.id
@@ -124,6 +124,7 @@ class PedidosCompra{
                 'nome'                  => $row->nomeInsumo,
                 'ins'                   => $row->ins,
                 'unidademedida'         => $row->unidadeUnidadeMedida,
+                'valor'                 => (float) $row->valor,
                 'quantidade'            => (float) $row->quantidade,
                 'quantidade_conferida'  => (float) $row->quantidade_conferida
             );
@@ -208,11 +209,13 @@ class PedidosCompra{
                     $sql = 'update  pcp_pedidos_insumos
                             set     id_pedido = :id_pedido,
                                     id_insumo = :id_insumo,
+                                    valor = :valor,
                                     quantidade = :quantidade
                             where   id = :item ';
                     $stmt = $this->pdo->prepare($sql);
                     $stmt->bindParam(':id_pedido', $pedidoId);
                     $stmt->bindParam(':id_insumo', $insumo['idInsumo']);
+                    $stmt->bindParam(':valor', $insumo['valor']);
                     $stmt->bindParam(':quantidade', $insumo['quantidade']);
                     $stmt->bindParam(':item', $insumo['item']);
                     $stmt->execute();
@@ -220,10 +223,12 @@ class PedidosCompra{
                     $sql = 'insert into pcp_pedidos_insumos
                             set id_pedido = :id_pedido,
                                 id_insumo = :id_insumo,
+                                valor = :valor, 
                                 quantidade = :quantidade';
                     $stmt = $this->pdo->prepare($sql);
                     $stmt->bindParam(':id_pedido', $pedidoId);
                     $stmt->bindParam(':id_insumo', $insumo['idInsumo']);
+                    $stmt->bindParam(':valor', $insumo['valor']);
                     $stmt->bindParam(':quantidade', $insumo['quantidade']);
                     $stmt->execute();
                     $idItem = $this->pdo->lastInsertId();
@@ -363,8 +368,14 @@ class PedidosCompra{
                     $pdf->SetFont('Times','',12);
                     $pdf->Cell(($width-7), 7,$insumo->id.' '.$insumo->nome.' (INS: '.$insumo->ins.')', 0, 1, 'L');
                     
-                    // Quantidade
+                    // Valor
                     $pdf->SetX(17);
+                    $pdf->SetFont('Times','B',10);
+                    $pdf->Cell(18, 5,'Valor: ', 0, 0, 'L');
+                    $pdf->SetFont('Times','',12);
+                    $pdf->Cell(20, 5,$insumo->valor, 0, 0, 'L');
+
+                    // Quantidade 
                     $pdf->SetFont('Times','B',10);
                     $pdf->Cell(20, 5,'Quantidade: ', 0, 0, 'L');
                     $pdf->SetFont('Times','',12);
