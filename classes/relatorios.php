@@ -41,14 +41,15 @@ class Relatorios{
                 plsc.id_conjunto idConjunto,
                 con.nome nomeConjunto,
                 sp.id idSubproduto,
-                sp.nome nomeSubproduto
+                sp.nome nomeSubproduto,
+                cs.pontos_subproduto
             from pcp_produtos p
             join pcp_cores c on c.id = p.id_cor
             join pcp_linhas_de_producao lp on lp.id = p.id_linha_de_producao
             join pcp_produtos_linhas_setores_conjunto plsc on plsc.id_produto = p.id
             join pcp_setores s on s.id = plsc.id_setor
             join pcp_conjuntos con on con.id = plsc.id_conjunto
-            join pcp_conjuntos_subprodutos cs on cs.id_conjunto = c.id
+            join pcp_conjuntos_subprodutos cs on cs.id_conjunto = con.id
             join pcp_subprodutos sp on sp.id = cs.id_subproduto
             join pcp_linhas_de_producao_setores lps on lps.id_linha_de_producao = lp.id and lps.id_setor = s.id
             '.$where.'
@@ -74,7 +75,7 @@ class Relatorios{
         $sheet->setCellValue('O1', 'Ativo');
         $sheet->setCellValue('P1', 'Valor Mão de Obra');
         $sheet->setCellValue('Q1', 'Valor Matéria Prima');
-        
+        $sheet->setCellValue('R1', 'Pontos');
 
         $i = 2;
         while ($row = $stmt->fetch()) {
@@ -96,6 +97,7 @@ class Relatorios{
             $sheet->setCellValue('O'.$i, $ativo);
             $sheet->setCellValue('P'.$i, $row->mao_de_obra);
             $sheet->setCellValue('Q'.$i, $row->materia_prima);
+            $sheet->setCellValue('R'.$i, $row->pontos_subproduto);
             $i++;
         }
         $currDateTimeObj = new DateTime();
@@ -519,6 +521,7 @@ class Relatorios{
                 pins.id_pedido,
                 pins.id_insumo,
                 ins.nome nome_insumo,
+                ins.ins,
                 ei.quantidade
             FROM pcp_entradas e
             JOIN pcp_entrada_insumos ei ON ei.id_entrada = e.id
@@ -540,6 +543,7 @@ class Relatorios{
         $sheet->setCellValue('F1', 'ID Insumo');
         $sheet->setCellValue('G1', 'Insumo');
         $sheet->setCellValue('H1', 'Quantidade');
+        $sheet->setCellValue('I1', 'INS');
 
         $i = 2;
         while($row = $stmt->fetch()){
@@ -554,6 +558,7 @@ class Relatorios{
             $sheet->setCellValue('F'.$i, $row->id_insumo);
             $sheet->setCellValue('G'.$i, $row->nome_insumo);
             $sheet->setCellValue('H'.$i, $row->quantidade);
+            $sheet->setCellValue('I'.$i, $row->ins);
             $i++;
         }
 
@@ -585,7 +590,8 @@ class Relatorios{
                 al.nome nome_almoxarifado,
                 ai.id_posicao,
                 pa.posicao nome_posicao,
-                if(si.quantidade IS NOT NULL, (ai.quantidade - si.quantidade), ai.quantidade) quantidade
+                if(si.quantidade IS NOT NULL, (ai.quantidade - si.quantidade), ai.quantidade) quantidade,
+                ins.ins
             FROM pcp_armazenagens a
             JOIN pcp_armazenagem_insumos ai ON ai.id_armazenagem = a.id
             left JOIN pcp_saida_insumos si ON si.id_armazenagem_insumos = ai.id
@@ -596,6 +602,7 @@ class Relatorios{
             JOIN pcp_almoxarifado al ON al.id = ai.id_almoxarifado
             JOIN pcp_posicao_armazem pa ON pa.id_almoxarifado = al.id AND pa.id = ai.id_posicao
             GROUP BY ai.id
+            HAVING quantidade > 0
             ORDER BY a.id, ins.nome
         ';
 
@@ -614,6 +621,7 @@ class Relatorios{
         $sheet->setCellValue('J1', 'ID Posição');
         $sheet->setCellValue('K1', 'Posição');
         $sheet->setCellValue('L1', 'Quantidade');
+        $sheet->setCellValue('M1', 'INS');
 
         $i = 2;
         while($row = $stmt->fetch()){
@@ -632,6 +640,7 @@ class Relatorios{
             $sheet->setCellValue('J'.$i, $row->id_posicao);
             $sheet->setCellValue('K'.$i, $row->nome_posicao);
             $sheet->setCellValue('L'.$i, $row->quantidade);
+            $sheet->setCellValue('M'.$i, $row->ins);
             $i++;
         }
 
@@ -659,6 +668,7 @@ class Relatorios{
                 pins.id_pedido id_pedido,
                 pins.id_insumo,
                 ins.nome nome_insumo,
+                ins.ins,
                 si.id_almoxarifado,
                 al.nome nome_almoxarifado,
                 ai.id_posicao,
@@ -693,6 +703,7 @@ class Relatorios{
         $sheet->setCellValue('J1', 'ID Posição');
         $sheet->setCellValue('K1', 'Posição');
         $sheet->setCellValue('L1', 'Quantidade');
+        $sheet->setCellValue('M1', 'INS');
 
         $i = 2;
         while($row = $stmt->fetch()){
@@ -711,6 +722,7 @@ class Relatorios{
             $sheet->setCellValue('J'.$i, $row->id_posicao);
             $sheet->setCellValue('K'.$i, $row->nome_posicao);
             $sheet->setCellValue('L'.$i, $row->quantidade);
+            $sheet->setCellValue('M'.$i, $row->ins);
             $i++;
         }
 
@@ -753,14 +765,10 @@ class Relatorios{
             JOIN pcp_cores cor ON cor.id = p.id_cor
             JOIN wmsprod_almoxarifados almo ON almo.id = ap.id_almoxarifado
             JOIN wmsprod_posicoes pos ON pos.id = ap.id_posicao
-            JOIN pcp_codigo_de_barras cb ON cb.id_setor = 8 and cb.codigo = ap.codigo
+            JOIN pcp_codigo_de_barras cb ON cb.id = ap.id_codigo
             JOIN pcp_subprodutos s ON s.id = cb.id_subproduto
             WHERE 
-                NOT EXISTS (
-                    SELECT null
-                    from wmsprod_saida_produtos sai
-                    WHERE sai.codigo = ap.codigo
-                )
+                ap.estoque = "Y"
         ';
 
         $stmt = $this->pdo->prepare($sql);
@@ -840,11 +848,12 @@ class Relatorios{
             JOIN pcp_cores cor ON cor.id = p.id_cor
             JOIN pcp_codigo_de_barras cb ON cb.id = sp.id_codigo
             JOIN pcp_subprodutos sub ON sub.id = cb.id_subproduto
-            left JOIN wmsprod_armazenagem_produtos ap ON ap.codigo = sp.codigo
+            left JOIN wmsprod_armazenagem_produtos ap ON ap.id_codigo = sp.id_codigo
             JOIN wmsprod_armazenagens a ON a.id = ap.id_armazenagem
             WHERE
-                cb.id is NOT null
-                AND ap.codigo IS NOT NULL
+                sai.dthr_saida BETWEEN "'.$filters['dataInicial'].' 00:00:00" AND "'.$filters['dataFinal'].' 23:59:59"
+                AND cb.id is NOT null
+                AND ap.id_codigo IS NOT NULL
             ORDER BY sai.dthr_saida;
         ';
 
@@ -882,8 +891,8 @@ class Relatorios{
             $sheet->setCellValue('H'.$i, $dataLancamento);
             $sheet->setCellValue('I'.$i, $dataArmazenagem);
             $sheet->setCellValue('J'.$i, $dataSaida);
-            $sheet->setCellValue('J'.$i, $row->mao_de_obra);
-            $sheet->setCellValue('J'.$i, $row->materia_prima);
+            $sheet->setCellValue('K'.$i, $row->mao_de_obra);
+            $sheet->setCellValue('L'.$i, $row->materia_prima);
             $i++;
         }
 

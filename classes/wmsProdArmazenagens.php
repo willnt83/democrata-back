@@ -123,35 +123,41 @@ class WMSProdArmazenagens{
             if(!array_key_exists('idPosicao', $request) or $request['idPosicao'] === '' or $request['idPosicao'] === null)
                 throw new \Exception('idPosicao não informado');
 
-            // Valida se o produto está na entrada
-            $sql = '
-                select id
-                from pcp_codigo_de_barras cb
-                where
-                    cb.codigo = :codigo
-                    and cb.id_setor = 8
-                    and cb.lancado = "Y"
-            ';
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':codigo', $request['codigo']);
-            $stmt->execute();
-            if(count($stmt->fetchAll()) == 0){
-                throw new \Exception('Produto não encontra-se na entrada');
-            }
-
             // Valida se o produto já foi armazenado
             $sql = '
-                select id from wmsprod_armazenagem_produtos
+                select id
+                from wmsprod_armazenagem_produtos
                 where
                     codigo = :codigo
             ';
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':codigo', $request['codigo']);
             $stmt->execute();
-            if(count($stmt->fetchAll()) > 0){
+            $row = $stmt->fetch();
+            if(isset($row->id)){
                 throw new \Exception('Produto já armazenado');
             }
+
+            // Valida se o produto está na entrada
+            $sql = '
+                select id
+                from pcp_codigo_de_barras cb
+                where
+                    cb.id_setor = 8
+                    and cb.lancado = "Y"
+                    and cb.codigo = :codigo
+                limit 1
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':codigo', $request['codigo']);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            if(!isset($row->id))
+                throw new \Exception('Produto não encontra-se na entrada');
+            else
+                $idCodigo = $row->id;
             
+
             if($request['idArmazenagem']){
                 $idArmazenagem = $request['idArmazenagem'];
             }
@@ -177,7 +183,8 @@ class WMSProdArmazenagens{
                     codigo = :codigo,
                     id_produto = :idProduto,
                     id_almoxarifado = :idAlmoxarifado,
-                    id_posicao = :idPosicao
+                    id_posicao = :idPosicao,
+                    id_codigo = :idCodigo
             ';
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':idArmazenagem', $idArmazenagem);
@@ -185,6 +192,7 @@ class WMSProdArmazenagens{
             $stmt->bindParam(':idProduto', $request['idProduto']);
             $stmt->bindParam(':idAlmoxarifado', $request['idAlmoxarifado']);
             $stmt->bindParam(':idPosicao', $request['idPosicao']);
+            $stmt->bindParam(':idCodigo', $idCodigo);
             $stmt->execute();
 
             return json_encode(array(
@@ -194,8 +202,6 @@ class WMSProdArmazenagens{
                     'idArmazenagem' => $idArmazenagem
                 )
             ));
-
-
         } catch(\Exception $e) {
             return json_encode(array(
                 'success' => false,

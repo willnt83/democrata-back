@@ -202,8 +202,16 @@ class WMSProdSaidas{
             $stmt->bindParam(':idCodigo', $idCodigo);
             $stmt->execute();
             $idSaidaProduto = $this->pdo->lastInsertId();
-
             $this->pdo->commit(); 
+
+            $sqlUp = '
+                UPDATE wmsprod_armazenagem_produtos
+                SET estoque = "N"
+                WHERE id_codigo = :idCodigo
+            ';
+            $stmt = $this->pdo->prepare($sqlUp);
+            $stmt->bindParam(':idCodigo', $idCodigo);
+            $stmt->execute();
 
             return json_encode(array(
                 'success' => true,

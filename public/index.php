@@ -20,11 +20,12 @@ $config['displayErrorDetails'] = true;
 $config['addContentLengthHeader'] = false;
 
 // Produção
+/*
 $config['db']['host']   = 'br522.hostgator.com.br';
 $config['db']['user']   = 'gerado49_democra';
 $config['db']['pass']   = 'Pr0DD3m0Cr';
 $config['db']['dbname'] = 'gerado49_democrata';
-
+*/
 // Homolog
 /*
 $config['db']['host']   = 'br522.hostgator.com.br';
@@ -34,12 +35,10 @@ $config['db']['dbname'] = 'gerado49_hmdemocrata';
 */
 
 // Local
-/*
 $config['db']['host']   = 'localhost';
 $config['db']['user']   = 'root';
 $config['db']['pass']   = 'asdzxcc11';
 $config['db']['dbname'] = 'pcp_prod';
-*/
 
 
 // Instantiate the app

@@ -6,7 +6,7 @@
 
     $sql = '
         SELECT s.id, s.codigo
-        FROM wmsprod_saida_produtos s
+        FROM wmsprod_armazenagem_produtos s
         where s.id_codigo is null
     ';
 
@@ -44,7 +44,7 @@
             
             //insert
             $sqlIns = '
-                update wmsprod_saida_produtos
+                update wmsprod_armazenagem_produtos
                 set
                     id_codigo = '.$row2->id.'
                 where

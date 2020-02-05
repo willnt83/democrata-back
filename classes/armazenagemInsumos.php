@@ -155,7 +155,7 @@ class ArmazenagemInsumos{
             JOIN pcp_unidades_medida um ON um.id = ins.id_unidade_medida
             '.$where.'
             GROUP BY ai.id
-            ORDER BY ei.id
+            ORDER BY pins.id_pedido, ei.id
         ';
 
         $stmt = $this->pdo->prepare($sql);
@@ -174,6 +174,7 @@ class ArmazenagemInsumos{
                 'nomeFornecedor' => $row->nome_fornecedor,
                 'insumo' => array(
                     'id' => (int)$row->id_insumo,
+                    'idEntradaInsumo' => (int)$row->id_entrada_insumo,
                     'nome' => $row->nome_insumo,
                     'ins' => $row->ins_insumo,
                     'unidadeMedida' => $row->unidadeMedida,
@@ -328,7 +329,7 @@ class ArmazenagemInsumos{
         catch(PDOException $e){
             return json_encode(array(
                 'success' => false,
-                'msg' => $e->getMessage()
+                'msg' => 'Não é permitido excluir armazenagens que possuem insumos com saída'
             ));
         }
     }
@@ -386,8 +387,8 @@ class ArmazenagemInsumos{
             else $proximo = false;
             */
 
-            $pdf->Cell(50, 7.5, utf8_decode('CÓDIGO'), 'LTR', 0, 'L');
-            $pdf->Cell(140, 7.5, $etiquetas[$i]['codigo'], 'LTR', 0, 'L');
+            $pdf->Cell(55, 7.5, utf8_decode('CÓDIGO'), 'LTR', 0, 'L');
+            $pdf->Cell(135, 7.5, $etiquetas[$i]['codigo'], 'LTR', 0, 'L');
             /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
@@ -397,8 +398,8 @@ class ArmazenagemInsumos{
             */
             $pdf->Ln();
 
-            $pdf->Cell(50, 7.5, 'NOME', 'LTR', 0, 'L');
-            $pdf->Cell(140, 7.5, utf8_decode($etiquetas[$i]['nome']), 'LTR', 0, 'L');
+            $pdf->Cell(55, 7.5, 'NOME', 'LTR', 0, 'L');
+            $pdf->Cell(135, 7.5, utf8_decode($etiquetas[$i]['nome']), 'LTR', 0, 'L');
             /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
@@ -408,8 +409,8 @@ class ArmazenagemInsumos{
             */
             $pdf->Ln();
 
-            $pdf->Cell(50, 7.5, utf8_decode('LOCAL FÍSICO'), 'LTR', 0, 'L');
-            $pdf->Cell(140, 7.5, utf8_decode($etiquetas[$i]['localFisico']), 'LTR', 0, 'L');
+            $pdf->Cell(55, 7.5, utf8_decode('LOCAL FÍSICO'), 'LTR', 0, 'L');
+            $pdf->Cell(135, 7.5, utf8_decode($etiquetas[$i]['localFisico']), 'LTR', 0, 'L');
             /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
@@ -419,8 +420,8 @@ class ArmazenagemInsumos{
             */
             $pdf->Ln();
 
-            $pdf->Cell(50, 7.5, 'DATA DE RECEBIMENTO', 'LTR', 0, 'L');
-            $pdf->Cell(140, 7.5, $dataRecebimento1, 'LTR', 0, 'L');
+            $pdf->Cell(55, 7.5, 'DATA DE RECEBIMENTO', 'LTR', 0, 'L');
+            $pdf->Cell(135, 7.5, $dataRecebimento1, 'LTR', 0, 'L');
             /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
@@ -430,8 +431,8 @@ class ArmazenagemInsumos{
             */
             $pdf->Ln();
 
-            $pdf->Cell(50, 7.5, 'QUANTIDADE', 'LTRB', 0, 'L');
-            $pdf->Cell(140, 7.5, $etiquetas[$i]['quantidade'], 'LTR', 0, 'L');
+            $pdf->Cell(55, 7.5, 'QUANTIDADE', 'LTRB', 0, 'L');
+            $pdf->Cell(135, 7.5, $etiquetas[$i]['quantidade'], 'LTR', 0, 'L');
             /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
@@ -441,8 +442,8 @@ class ArmazenagemInsumos{
             */
             $pdf->Ln();
 
-            $pdf->Cell(50, 7.5, 'UNIDADE DE MEDIDA', 'LTRB', 0, 'L');
-            $pdf->Cell(140, 7.5, utf8_decode($etiquetas[$i]['unidadeMedida']), 'LTRB', 0, 'L');
+            $pdf->Cell(55, 7.5, 'UNIDADE DE MEDIDA', 'LTRB', 0, 'L');
+            $pdf->Cell(135, 7.5, utf8_decode($etiquetas[$i]['unidadeMedida']), 'LTRB', 0, 'L');
             /*
             if($proximo){
                 $pdf->Cell(2, 7.5, '', 0, 0, 'C');
@@ -457,8 +458,8 @@ class ArmazenagemInsumos{
             $strBase64 = 'data:image/png;base64,'.base64_encode($generator->getBarcode($cod, $generator::TYPE_CODE_128));
             $img = $this->generateImage($strBase64, 'etiquetasArmazenagem/images/'.$cod.'.png');
           
-            $pdf->Cell(50, 12, utf8_decode('Cód. de Barras: '.$cod), 'LTRB', 0, 'L');
-            $pdf->Cell(140, 12, $pdf->Image($img, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTRB', 0, 'L', false);
+            $pdf->Cell(55, 12, utf8_decode('Cód. de Barras: '.$cod), 'LTRB', 0, 'L');
+            $pdf->Cell(135, 12, $pdf->Image($img, $pdf->GetX()+3, $pdf->GetY()+2, 40, 8), 'LTRB', 0, 'L', false);
             /*
             if($proximo){
                 $pdf->Cell(2, 12, '', 0, 0, 'C');
