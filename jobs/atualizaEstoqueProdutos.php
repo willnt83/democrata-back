@@ -3,23 +3,22 @@
     require 'database.php';
 
     $pdo = new Database();
-    $offset = 0;
-    echo "\nIniciando...";
+    //echo "\nIniciando...";
+    $i = 0;
     while(true){
         $sql = '
             SELECT *
             FROM wmsprod_armazenagem_produtos ap
-            where pros = "N"
+            where
+                pros = "N"
             LIMIT 1000
-            OFFSET '.$offset.'
         ';
 
         $pdo->query($sql);
         $rowI = $pdo->multiple();
-        if(count($rowI) > 0){
+        //if(count($rowI) > 0){
             foreach($rowI as $item => $row){
-                echo "\n----\nid: ".$row->id;
-                usleep(500);
+                //echo "-".$row->id;
                 $sqlSai = '
                     SELECT COUNT(*) qtd, sai.id
                     FROM wmsprod_saida_produtos sai
@@ -31,7 +30,8 @@
 
                 $pdo2 = new Database();
                 if($row2->qtd == 0){
-                    echo "\nNAO ENCONTROU!!!";
+                    $i++;
+                    //echo "\n\nNAO ENCONTROU!!!";
                     //Repondo o estoque
                     $sqlIns = '
                         update wmsprod_armazenagem_produtos
@@ -43,10 +43,10 @@
                     ';
                     $pdo2->query($sqlIns);
                     $pdo2->execute();
-                    echo "\nRepondo no estoque: ".$row->id_codigo;
+                    echo ",".$row->id_codigo;
                 }
                 else{
-                    echo "\nENCONTROU...";
+                    //echo "\nENCONTROU...";
                     //Retira do estoque
                     $sqlIns = '
                         update wmsprod_armazenagem_produtos
@@ -58,17 +58,16 @@
                     ';
                     $pdo2->query($sqlIns);
                     $pdo2->execute();
-                    echo "\nRetirando do estoque: ".$row->id_codigo;
+                    //echo "\nRetirando do estoque: ".$row->id_codigo;
                 }
             }
-
-            $offset += 1000;
-            echo "\n\nOFFSET: ".$offset;
-            sleep(1);
-        }
+        //}
+        /*
         else{
+            echo "\nNao encontrados: ".$i;
             echo "\nFIM";
             break;
         }
+        */
     }
 ?>

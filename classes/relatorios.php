@@ -108,7 +108,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/produtosCadastrados-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/produtosCadastrados-'.$currDateTime.'.xlsx'
             )
         ));
     }
@@ -166,7 +166,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/funcionariosCadastrados-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/funcionariosCadastrados-'.$currDateTime.'.xlsx'
             )
         ));
     }
@@ -262,7 +262,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/producoes-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/producoes-'.$currDateTime.'.xlsx'
             )
         ));
     }
@@ -317,7 +317,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/funcionariosPontuacoes-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/funcionariosPontuacoes-'.$currDateTime.'.xlsx'
             )
         ));
     }
@@ -428,7 +428,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/geralLancamentoProducao-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/geralLancamentoProducao-'.$currDateTime.'.xlsx'
             )
         ));
     }
@@ -505,7 +505,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportNaoProduzidos-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/reportNaoProduzidos-'.$currDateTime.'.xlsx'
             )
         ));
     }
@@ -570,7 +570,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportEntradaInsumos-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/reportEntradaInsumos-'.$currDateTime.'.xlsx'
             )
         ));
     }
@@ -652,7 +652,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportArmazenagemInsumos-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/reportArmazenagemInsumos-'.$currDateTime.'.xlsx'
             )
         ));
     }
@@ -734,7 +734,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportSaidaInsumos-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/reportSaidaInsumos-'.$currDateTime.'.xlsx'
             )
         ));
     }
@@ -820,7 +820,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportEstoqueProdutos-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/reportEstoqueProdutos-'.$currDateTime.'.xlsx'
             )
         ));
     }
@@ -904,7 +904,7 @@ class Relatorios{
             'success' => true,
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
-                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/reports/reportSaidaProdutos-'.$currDateTime.'.xlsx'
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/reportSaidaProdutos-'.$currDateTime.'.xlsx'
             )
         ));
     }

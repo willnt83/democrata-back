@@ -518,6 +518,11 @@ $app->get('/wms-produtos/getArmazenagemProdutos', function (Request $request, Re
     return $response->write($classArmazenagemProdutosFinalizados->getArmazenagemProdutos($request->getQueryParams()));
 });
 
+$app->get('/wms-produtos/getProdutoArmazenadoInfo', function (Request $request, Response $response){
+    $classArmazenagemProdutosFinalizados = new WMSProdArmazenagens($this->db);
+    return $response->write($classArmazenagemProdutosFinalizados->getProdutoArmazenadoInfo($request->getQueryParams()));
+});
+
 /* Saída */
 $app->get('/wms-produtos/getSaidas', function (Request $request, Response $response){
     $WMSProdSaidas = new WMSProdSaidas($this->db);
@@ -758,6 +763,11 @@ $app->post('/wms-produtos/lancamentoEntradaProdutos', function ($request, $respo
 $app->post('/wms-produtos/lancamentoArmazenagemProdutos', function ($request, $response){
     $classArmazenagemProdutos = new WMSProdArmazenagens($this->db);
     return $response->write($classArmazenagemProdutos->lancamentoArmazenagemProdutos(json_decode($request->getBody(), true)));
+});
+
+$app->post('/wms-produtos/alteracaoEndereco', function ($request, $response){
+    $classArmazenagemProdutos = new WMSProdArmazenagens($this->db);
+    return $response->write($classArmazenagemProdutos->alteracaoEndereco(json_decode($request->getBody(), true)));
 });
 
 /* Saída */

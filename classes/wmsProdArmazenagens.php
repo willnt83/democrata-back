@@ -109,6 +109,64 @@ class WMSProdArmazenagens{
         ));
     }
 
+    public function getProdutoArmazenadoInfo($filters){
+        $where = '';
+        if(count($filters) > 0){
+            $where = 'where ';
+            $i = 0;
+            foreach($filters as $key => $value){
+                $and = $i > 0 ? ' and ' : '';
+                $where .= $and.'ap.'.$key.' = :'.$key;
+                $i++;
+            }
+        }
+
+        $sql = '
+            SELECT
+                ap.id,
+                pro.id id_produto,
+                pro.nome nome_produto,
+                cor.nome cor_produto,
+                ap.id_almoxarifado,
+                a.nome nome_almoxarifado,
+                ap.id_posicao,
+                p.posicao nome_posicao
+            FROM wmsprod_armazenagem_produtos ap
+            JOIN pcp_produtos pro ON pro.id = ap.id_produto
+            JOIN pcp_cores cor ON cor.id = pro.id_cor
+            JOIN wmsprod_almoxarifados a ON a.id = ap.id_almoxarifado
+            JOIN wmsprod_posicoes p ON p.id = ap.id_posicao
+            '.$where.'
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($filters);
+
+        while($row = $stmt->fetch()) {
+            $responseData = array(
+                'idArmazenagemProduto' => (int)$row->id,
+                'produto' => array(
+                    'id' => (int)$row->id_produto,
+                    'nome' => $row->nome_produto,
+                    'cor' => $row->cor_produto,
+                ),
+                'almoxarifado' => array(
+                    'id' => (int)$row->id_almoxarifado,
+                    'nome' => $row->nome_almoxarifado
+                ),
+                'posicao' => array(
+                    'id' => (int)$row->id_posicao,
+                    'nome' => $row->nome_posicao
+                )
+            );
+        }
+
+        return json_encode(array(
+            'success' => true,
+            'payload' => $responseData
+        ));
+    }
+
     public function lancamentoArmazenagemProdutos($request){
         try{
             // Valida a request
@@ -210,5 +268,56 @@ class WMSProdArmazenagens{
         }
     }
 
-    
+    public function alteracaoEndereco($request){
+        try{
+            // Valida a request
+            if(!array_key_exists('idArmazenagemProduto', $request) or $request['idArmazenagemProduto'] === '' or $request['idArmazenagemProduto'] === null)
+                throw new \Exception('idArmazenagemProduto não informado');
+            if(!array_key_exists('idAlmoxarifado', $request) or $request['idAlmoxarifado'] === '' or $request['idAlmoxarifado'] === null)
+                throw new \Exception('idAlmoxarifado não informado');
+            if(!array_key_exists('idPosicao', $request) or $request['idPosicao'] === '' or $request['idPosicao'] === null)
+                throw new \Exception('idPosicao não informado');
+
+            // Valida se o produto está armazenado e em estoque
+            $sql = '
+                select id
+                from wmsprod_armazenagem_produtos
+                where
+                    id = :idArmazenagemProduto
+                    and estoque = "Y"
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':idArmazenagemProduto', $request['idArmazenagemProduto']);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            if(!isset($row->id)){
+                throw new \Exception('Produto não encontra-se armazenado ou já foi registrado sua saída');
+            }
+
+            
+            $sql = '
+                update wmsprod_armazenagem_produtos
+                set
+                    id_almoxarifado = :idAlmoxarifado,
+                    id_posicao = :idPosicao
+                where
+                    id = :idArmazenagemProduto
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':idAlmoxarifado', $request['idAlmoxarifado']);
+            $stmt->bindParam(':idPosicao', $request['idPosicao']);
+            $stmt->bindParam(':idArmazenagemProduto', $request['idArmazenagemProduto']);
+            $stmt->execute();
+
+            return json_encode(array(
+                'success' => true,
+                'msg' => 'Alteração de endereço realizada com sucesso'
+            ));
+        } catch(\Exception $e) {
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
+        }
+    }
 }
