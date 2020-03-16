@@ -173,27 +173,16 @@ class Relatorios{
 
     public function reportProducoes($filters){
         $sheet = $this->spreadsheet->getActiveSheet();
-        /*
-        $where = '';
-        if(count($filters) > 0){
-            $where = 'where ';
-            $i = 0;
-            foreach($filters as $key => $value){
-                $and = $i > 0 ? ' and ' : '';
-                $where .= $and.'pro.'.$key.' = :'.$key;
-                $i++;
-            }
-        }
-        */
         $sql = '
             select
+                p.sku skuProduto,
+                p.codigo codigoProduto,
                 pa.id_producao idProducao,
                 pro.nome nomeProducao,
                 pa.id_produto idProduto,
-                p.nome nomeProduto,
+                CONCAT(p.nome, " (", cor.nome, ")") nomeProduto,
                 p.mao_de_obra,
                 p.materia_prima,
-                cor.nome nomeCor,
                 pa.id id_acompanhamento,
                 pa.id_setor idSetor,
                 s.nome nomeSetor,
@@ -202,7 +191,6 @@ class Relatorios{
                 plsc.id_conjunto idConjunto,
                 c.nome nomeConjunto,
                 pa.id_produto,
-                -- p.id_cor,
                 pa.id_subproduto idSubproduto,
                 ss.nome nomeSubproduto,
                 pa.realizado_quantidade realizadoQuantidade,
@@ -219,39 +207,40 @@ class Relatorios{
             where pro.data_inicial between "'.$filters['dataInicial'].'" and "'.$filters['dataFinal'].'"
             order by pa.id_producao, pa.id_produto, lps.ordem, pa.id_setor, pa.id_subproduto;
         ';
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($filters);
-
-        $sheet->setCellValue('A1', 'Código');
-        $sheet->setCellValue('B1', 'Produção');
-        $sheet->setCellValue('C1', 'Produto');
-        $sheet->setCellValue('D1', 'Cor');
-        $sheet->setCellValue('E1', 'Setor');
-        $sheet->setCellValue('F1', 'Ordem');
-        $sheet->setCellValue('G1', 'Data Início');
-        $sheet->setCellValue('H1', 'Conjunto');
-        $sheet->setCellValue('I1', 'Subproduto');
-        $sheet->setCellValue('J1', 'Quantidade Realizado');
-        $sheet->setCellValue('K1', 'Quantidade Total');
-        $sheet->setCellValue('L1', 'Valor Mão de Obra');
-        $sheet->setCellValue('M1', 'Valor Matéria Prima');
-        
+        $sheet->setCellValue('A1', 'SKU');
+        $sheet->setCellValue('B1', 'Código');
+        $sheet->setCellValue('C1', 'Cód. Bar');
+        $sheet->setCellValue('D1', 'Produção');
+        $sheet->setCellValue('E1', 'Produto');
+        $sheet->setCellValue('F1', 'Setor');
+        $sheet->setCellValue('G1', 'Ordem');
+        $sheet->setCellValue('H1', 'Data Início');
+        $sheet->setCellValue('I1', 'Conjunto');
+        $sheet->setCellValue('J1', 'Subproduto');
+        $sheet->setCellValue('K1', 'Quantidade Realizado');
+        $sheet->setCellValue('L1', 'Quantidade Total');
+        $sheet->setCellValue('M1', 'Valor Mão de Obra');
+        $sheet->setCellValue('N1', 'Valor Matéria Prima');
 
         $i = 2;
         while ($row = $stmt->fetch()) {
-            $sheet->setCellValue('A'.$i, $row->idProducao.'-'.$row->idProduto.'-'.$row->idConjunto.'-'.$row->idSetor.'-'.$row->idSubproduto);
-            $sheet->setCellValue('B'.$i, $row->nomeProducao);
-            $sheet->setCellValue('C'.$i, $row->nomeProduto);
-            $sheet->setCellValue('D'.$i, $row->nomeCor);
-            $sheet->setCellValue('E'.$i, $row->nomeSetor);
-            $sheet->setCellValue('F'.$i, $row->ordem);
-            $sheet->setCellValue('G'.$i, $row->dataInicial);
-            $sheet->setCellValue('H'.$i, $row->nomeConjunto);
-            $sheet->setCellValue('I'.$i, $row->nomeSubproduto);
-            $sheet->setCellValue('J'.$i, $row->realizadoQuantidade);
-            $sheet->setCellValue('K'.$i, $row->totalQuantidade);
-            $sheet->setCellValue('L'.$i, $row->mao_de_obra);
-            $sheet->setCellValue('M'.$i, $row->materia_prima);
+            $sheet->setCellValue('A'.$i, $row->skuProduto);
+            $sheet->setCellValue('B'.$i, $row->codigoProduto);
+            $sheet->setCellValue('C'.$i, $row->idProducao.'-'.$row->idProduto.'-'.$row->idConjunto.'-'.$row->idSetor.'-'.$row->idSubproduto);
+            $sheet->setCellValue('D'.$i, $row->nomeProducao);
+            $sheet->setCellValue('E'.$i, $row->nomeProduto);
+            $sheet->setCellValue('F'.$i, $row->nomeSetor);
+            $sheet->setCellValue('G'.$i, $row->ordem);
+            $sheet->setCellValue('H'.$i, $row->dataInicial);
+            $sheet->setCellValue('I'.$i, $row->nomeConjunto);
+            $sheet->setCellValue('J'.$i, $row->nomeSubproduto);
+            $sheet->setCellValue('K'.$i, $row->realizadoQuantidade);
+            $sheet->setCellValue('L'.$i, $row->totalQuantidade);
+            $sheet->setCellValue('M'.$i, $row->mao_de_obra);
+            $sheet->setCellValue('N'.$i, $row->materia_prima);
             $i++;
         }
         $currDateTimeObj = new DateTime();
@@ -263,6 +252,75 @@ class Relatorios{
             'msg' => 'Relatório gerado com sucesso.',
             'payload' => array(
                 'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/producoes-'.$currDateTime.'.xlsx'
+            )
+        ));
+    }
+
+    public function reportProducoesAnalitico($filters){
+        $sheet = $this->spreadsheet->getActiveSheet();
+        $sql = '
+            SELECT
+                pro.sku skuProduto,
+                pro.codigo codigoProduto,
+                cb.codigo codigoBarras,
+                prod.nome nomeProducao,
+                CONCAT(pro.nome, " (", cor.nome, ")") nomeProduto,
+                pro.mao_de_obra maoDeObraProduto,
+                pro.materia_prima materiaPrimaProduto,
+                s.nome nomeSetor,
+                c.nome nomeConjunto,
+                sub.nome nomeSubproduto,
+                prod.data_inicial dataInicial,
+                cb.lancado lancado
+            FROM pcp_codigo_de_barras cb
+            JOIN pcp_producoes prod ON prod.id = cb.id_producao
+            JOIN pcp_produtos pro ON pro.id = cb.id_produto
+            JOIN pcp_cores cor ON cor.id = pro.id_cor
+            JOIN pcp_setores s ON s.id = cb.id_setor
+            JOIN pcp_conjuntos c ON c.id = cb.id_conjunto
+            JOIN pcp_subprodutos sub ON sub.id = cb.id_subproduto
+            where prod.data_inicial BETWEEN "'.$filters['dataInicial'].'" and "'.$filters['dataFinal'].'"
+            ;
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($filters);
+        $sheet->setCellValue('A1', 'SKU');
+        $sheet->setCellValue('B1', 'Código');
+        $sheet->setCellValue('C1', 'Cód. Bar');
+        $sheet->setCellValue('D1', 'Produção');
+        $sheet->setCellValue('E1', 'Produto');
+        $sheet->setCellValue('F1', 'Setor');
+        $sheet->setCellValue('G1', 'Data Início');
+        $sheet->setCellValue('H1', 'Conjunto');
+        $sheet->setCellValue('I1', 'Subproduto');
+        $sheet->setCellValue('J1', 'Valor Mão de Obra');
+        $sheet->setCellValue('K1', 'Valor Matéria Prima');
+
+        $i = 2;
+        while ($row = $stmt->fetch()) {
+            $sheet->setCellValue('A'.$i, $row->skuProduto);
+            $sheet->setCellValue('B'.$i, $row->codigoProduto);
+            $sheet->setCellValue('C'.$i, $row->codigoBarras);
+            $sheet->setCellValue('D'.$i, $row->nomeProducao);
+            $sheet->setCellValue('E'.$i, $row->nomeProduto);
+            $sheet->setCellValue('F'.$i, $row->nomeSetor);
+            $sheet->setCellValue('G'.$i, $row->dataInicial);
+            $sheet->setCellValue('H'.$i, $row->nomeConjunto);
+            $sheet->setCellValue('I'.$i, $row->nomeSubproduto);
+            $sheet->setCellValue('J'.$i, $row->maoDeObraProduto);
+            $sheet->setCellValue('K'.$i, $row->materiaPrimaProduto);
+            $i++;
+        }
+        $currDateTimeObj = new DateTime();
+        $currDateTime = $currDateTimeObj->format('d-m-Y-H-i-s');
+        $this->writer->save('reports/producoesAnalitico-'.$currDateTime.'.xlsx');
+        
+        return json_encode(array(
+            'success' => true,
+            'msg' => 'Relatório gerado com sucesso.',
+            'payload' => array(
+                'url' => 'http://'.$_SERVER['SERVER_NAME'].'/public/reports/producoesAnalitico-'.$currDateTime.'.xlsx'
             )
         ));
     }

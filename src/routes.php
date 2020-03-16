@@ -353,6 +353,11 @@ $app->get('/reportProducoes', function (Request $request, Response $response){
     return $response->write($classRelatorios->reportProducoes($request->getQueryParams()));
 });
 
+$app->get('/reportProducoesAnalitico', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportProducoesAnalitico($request->getQueryParams()));
+});
+
 $app->get('/reportFuncionariosPontuacoes', function (Request $request, Response $response){
     $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
     return $response->write($classRelatorios->reportBonusPontuacao($request->getQueryParams()));
