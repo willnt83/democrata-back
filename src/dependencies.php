@@ -34,4 +34,9 @@ $container['writer'] = function($c) {
     return $writer;
 };
 
+$container['simplexlsx'] = function() {
+    $simplexlsx = new SimpleXLSX();
+    return $simplexlsx;
+};
+
 $container['upload_directory'] = __DIR__ . '/../public/uploads';

@@ -31,6 +31,7 @@ require '../classes/wmsProdArmazenagens.php';
 require '../classes/wmsProdSaidas.php';
 require '../classes/wmsProdAlmoxarifados.php';
 require '../classes/wmsProdPosicoes.php';
+require '../classes/agendas.php';
 
 // Routes
 /************************ GET ************************/
@@ -373,6 +374,11 @@ $app->get('/reportNaoProduzidos', function (Request $request, Response $response
     return $response->write($classRelatorios->reportNaoProduzidos($request->getQueryParams()));
 });
 
+$app->get('/reportPedidoInsumos', function (Request $request, Response $response){
+    $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
+    return $response->write($classRelatorios->reportPedidoInsumos($request->getQueryParams()));
+});
+
 $app->get('/reportEntradaInsumos', function (Request $request, Response $response){
     $classRelatorios = new Relatorios($this->db, $this->spreadsheet, $this->writer);
     return $response->write($classRelatorios->reportEntradaInsumos($request->getQueryParams()));
@@ -548,6 +554,23 @@ $app->get('/wms-produtos/deleteSaidaProdutos', function (Request $request, Respo
     $WMSProdSaidas = new WMSProdSaidas($this->db);
     return $response->write($WMSProdSaidas->deleteSaidaProdutos($request->getQueryParams()));
 });
+
+/* Agendas */
+$app->get('/getAgendas', function (Request $request, Response $response){
+    $classAgendas = new Agendas($this->db, $this->simplexlsx);
+    return $response->write($classAgendas->getAgendas($request->getQueryParams()));
+});
+
+$app->get('/getAgenda', function (Request $request, Response $response){
+    $classAgendas = new Agendas($this->db, $this->simplexlsx);
+    return $response->write($classAgendas->getAgenda($request->getQueryParams()));
+});
+
+$app->get('/deletarAgenda', function (Request $request, Response $response){
+    $classAgendas = new Agendas($this->db, $this->simplexlsx);
+    return $response->write($classAgendas->deletarAgenda($request->getQueryParams()));
+});
+
 
 /*****************************************************/
 /*****************************************************/
@@ -781,4 +804,19 @@ $app->post('/wms-produtos/lancamentoSaidaProdutos', function (Request $request, 
     return $response->write($WMSProdSaidas->lancamentoSaidaProdutos(json_decode($request->getBody(), true)));
 });
 
+/* Agenda */
+$app->post('/importarAgenda', function (Request $request, Response $response){
+    $directory = $this->get('upload_directory');
+    $uploadedFiles = $request->getUploadedFiles();
+    $uploadedFile = $uploadedFiles['file'];
+    $extension = pathinfo($uploadedFile->getClientFilename(), PATHINFO_EXTENSION);
+    $uploadedFile->moveTo($directory . DIRECTORY_SEPARATOR . 'agenda.xlsx');
+    $classAgendas = new Agendas($this->db, $this->simplexlsx);
+    return $response->write($classAgendas->importarAgenda(json_decode($request->getBody(), true)));
+});
+
+$app->post('/salvarAgenda', function (Request $request, Response $response){
+    $classAgendas = new Agendas($this->db, $this->simplexlsx);
+    return $response->write($classAgendas->salvarAgenda(json_decode($request->getBody(), true)));
+});
 /******************************************************/
