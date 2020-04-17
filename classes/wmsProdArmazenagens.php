@@ -46,12 +46,11 @@ class WMSProdArmazenagens{
     }
 
     public function getArmazenagemProdutos($filters){
-        $where = '';
+        $where = 'where ap.estorno = "N"';
         if(count($filters) > 0){
-            $where = 'where ';
             $i = 0;
             foreach($filters as $key => $value){
-                $and = $i > 0 ? ' and ' : '';
+                $and = ' and ';
                 $where .= $and.'ap.'.$key.' = :'.$key;
                 $i++;
             }
@@ -63,6 +62,7 @@ class WMSProdArmazenagens{
                 ap.id_armazenagem,
                 ap.codigo,
                 ap.id_produto,
+                ap.estoque,
                 pro.nome nome_produto,
                 cor.nome cor_produto,
                 ap.id_almoxarifado,
@@ -87,6 +87,7 @@ class WMSProdArmazenagens{
                 'id' => (int)$row->id,
                 'idArmazenagem' => (int)$row->id_armazenagem,
                 'codigo' => $row->codigo,
+                'estoque' => $row->estoque,
                 'produto' => array(
                     'id' => (int)$row->id_produto,
                     'nome' => $row->nome_produto,
@@ -312,6 +313,62 @@ class WMSProdArmazenagens{
             return json_encode(array(
                 'success' => true,
                 'msg' => 'Alteração de endereço realizada com sucesso'
+            ));
+        } catch(\Exception $e) {
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
+        }
+    }
+
+    public function estornarArmazenagemProduto($request){
+        try{
+            // Valida a request
+            if(!array_key_exists('idUsuario', $request) or $request['idUsuario'] === '' or $request['idUsuario'] === null)
+                throw new \Exception('idUsuario não informado');
+            if(!array_key_exists('idArmazenagemProduto', $request) or $request['idArmazenagemProduto'] === '' or $request['idArmazenagemProduto'] === null)
+                throw new \Exception('idArmazenagemProduto não informado');
+
+            // Valida se o produto está armazenado e em estoque
+            $sql = '
+                select id, estoque, estorno
+                from wmsprod_armazenagem_produtos
+                where
+                    id = :idArmazenagemProduto
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':idArmazenagemProduto', $request['idArmazenagemProduto']);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            if(!isset($row->id)){
+                throw new \Exception('Produto não encontra-se armazenado');
+            }
+            else if($row->estoque != 'Y'){
+                throw new \Exception('Produto já foi expedido');
+            }
+            else if($row->estorno == 'Y'){
+                throw new \Exception('Produto já foi estornado');
+            }
+
+            
+            $sql = '
+                update wmsprod_armazenagem_produtos
+                set
+                    estorno = "Y",
+                    id_usuario_estorno = :idUsuarioEstorno
+                where
+                    id = :idArmazenagemProduto
+            ';
+            $stmt = $this->pdo->prepare($sql);
+
+            $stmt->bindParam(':idUsuarioEstorno', $request['idUsuario']);
+            $stmt->bindParam(':idArmazenagemProduto', $request['idArmazenagemProduto']);
+            $stmt->execute();
+
+            return json_encode(array(
+                'success' => true,
+                'msg' => 'Estorno de armazenagem realizado com sucesso'
             ));
         } catch(\Exception $e) {
             return json_encode(array(

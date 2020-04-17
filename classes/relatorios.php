@@ -810,6 +810,7 @@ class Relatorios{
             JOIN pcp_posicao_armazem pa ON pa.id_almoxarifado = al.id AND pa.id = si.id_posicao
             WHERE
                 s.dthr_saida BETWEEN "'.$filters['dataInicial'].' 00:00:00" AND "'.$filters['dataFinal'].' 23:59:59"
+                AND estorno = "N"
             ORDER BY s.id, ins.nome
         ';
 
@@ -894,6 +895,7 @@ class Relatorios{
             JOIN pcp_subprodutos s ON s.id = cb.id_subproduto
             WHERE 
                 ap.estoque = "Y"
+                and ap.estorno = "N"
         ';
 
         $stmt = $this->pdo->prepare($sql);

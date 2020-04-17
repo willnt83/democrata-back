@@ -26,7 +26,7 @@ require '../classes/relatorios.php';
 require '../classes/codigoDeBarras.php';
 require '../classes/armazenagemInsumos.php';
 require '../classes/saidaInsumos.php';
-//require '../classes/wmsProdEntradas.php';
+require '../classes/wmsProdEntradas.php';
 require '../classes/wmsProdArmazenagens.php';
 require '../classes/wmsProdSaidas.php';
 require '../classes/wmsProdAlmoxarifados.php';
@@ -511,12 +511,11 @@ $app->get('/wms-produtos/getEntradas', function (Request $request, Response $res
     $classEntradaProdutosFinalizados = new WMSProdEntradas($this->db);
     return $response->write($classEntradaProdutosFinalizados->getEntradas($request->getQueryParams()));
 });
-
-$app->get('/wms-produtos/getEntradaProdutos', function (Request $request, Response $response){
-    $classEntradaProdutosFinalizados = new WMSProdEntradas($this->db);
-    return $response->write($classEntradaProdutosFinalizados->getEntradaProdutos($request->getQueryParams()));
-});
 */
+$app->get('/wms-produtos/getEntradaProdutos', function (Request $request, Response $response){
+    $classEntrada = new WMSProdEntradas($this->db);
+    return $response->write($classEntrada->getEntradaProdutos($request->getQueryParams()));
+});
 
 /* Armazenagem */
 $app->get('/wms-produtos/getArmazenagens', function (Request $request, Response $response){
@@ -782,9 +781,16 @@ $app->post('/wms-produtos/createUpdatePosicao', function ($request, $response){
 });
 
 /* Entrada */
+/*
 $app->post('/wms-produtos/lancamentoEntradaProdutos', function ($request, $response){
     $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
     return $response->write($classEntradaProdutosFinalizados->lancamentoEntradaProdutos(json_decode($request->getBody(), true)));
+});
+*/
+
+$app->post('/wms-produtos/estornarEntradaProduto', function ($request, $response){
+    $classEntrada = new WMSProdEntradas($this->db);
+    return $response->write($classEntrada->estornarEntradaProduto(json_decode($request->getBody(), true)));
 });
 
 /* Armazenagem */
@@ -798,10 +804,20 @@ $app->post('/wms-produtos/alteracaoEndereco', function ($request, $response){
     return $response->write($classArmazenagemProdutos->alteracaoEndereco(json_decode($request->getBody(), true)));
 });
 
+$app->post('/wms-produtos/estornarArmazenagemProduto', function ($request, $response){
+    $classArmazenagemProdutos = new WMSProdArmazenagens($this->db);
+    return $response->write($classArmazenagemProdutos->estornarArmazenagemProduto(json_decode($request->getBody(), true)));
+});
+
 /* Saída */
 $app->post('/wms-produtos/lancamentoSaidaProdutos', function (Request $request, Response $response){
     $WMSProdSaidas = new WMSProdSaidas($this->db);
     return $response->write($WMSProdSaidas->lancamentoSaidaProdutos(json_decode($request->getBody(), true)));
+});
+
+$app->post('/wms-produtos/estornarSaidaProduto', function ($request, $response){
+    $classSaidaProdutos = new WMSProdSaidas($this->db);
+    return $response->write($classSaidaProdutos->estornarSaidaProduto(json_decode($request->getBody(), true)));
 });
 
 /* Agenda */

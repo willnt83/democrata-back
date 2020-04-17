@@ -48,12 +48,11 @@ class WMSProdSaidas{
 
     public function getSaidaProdutos($filters){
         try{
-            $where = '';
+            $where = 'where sp.estorno = "N"';
             if(count($filters) > 0){
-                $where = 'where ';
                 $i = 0;
                 foreach($filters as $key => $value){
-                    $and = $i > 0 ? ' and ' : '';
+                    $and = ' and ';
                     $where .= $and.'sp.'.$key.' = :'.$key;
                     $i++;
                 }
@@ -225,6 +224,59 @@ class WMSProdSaidas{
 
         } catch(\Exception $e) {
             $this->pdo->rollBack();
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
+        }
+    }
+
+    public function estornarSaidaProduto($request){
+        try{
+            // Valida a request
+            if(!array_key_exists('idUsuario', $request) or $request['idUsuario'] === '' or $request['idUsuario'] === null)
+                throw new \Exception('idUsuario não informado');
+            if(!array_key_exists('idSaidaProduto', $request) or $request['idSaidaProduto'] === '' or $request['idSaidaProduto'] === null)
+                throw new \Exception('idSaidaProduto não informado');
+
+            // Valida se o produto está armazenado e em estoque
+            $sql = '
+                select id, estorno
+                from wmsprod_saida_produtos
+                where
+                    id = :idSaidaProduto
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':idSaidaProduto', $request['idSaidaProduto']);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            if(!isset($row->id)){
+                throw new \Exception('Produto ainda não foi expedido');
+            }
+            else if($row->estorno == 'Y'){
+                throw new \Exception('Produto já foi estornado');
+            }
+
+            
+            $sql = '
+                update wmsprod_saida_produtos
+                set
+                    estorno = "Y",
+                    id_usuario_estorno = :idUsuarioEstorno
+                where
+                    id = :idSaidaProduto
+            ';
+            $stmt = $this->pdo->prepare($sql);
+
+            $stmt->bindParam(':idUsuarioEstorno', $request['idUsuario']);
+            $stmt->bindParam(':idSaidaProduto', $request['idSaidaProduto']);
+            $stmt->execute();
+
+            return json_encode(array(
+                'success' => true,
+                'msg' => 'Estorno de expedição realizado com sucesso'
+            ));
+        } catch(\Exception $e) {
             return json_encode(array(
                 'success' => false,
                 'msg' => $e->getMessage()
