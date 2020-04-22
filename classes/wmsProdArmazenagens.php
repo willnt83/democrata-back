@@ -350,7 +350,6 @@ class WMSProdArmazenagens{
             else if($row->estorno == 'Y'){
                 throw new \Exception('Produto já foi estornado');
             }
-
             
             $sql = '
                 update wmsprod_armazenagem_produtos

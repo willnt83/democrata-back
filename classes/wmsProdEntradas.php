@@ -6,7 +6,7 @@ class WMSProdEntradas{
     }
 
     public function getEntradaProdutos($filters){
-        $where = 'where cb.estorno = "N"';
+        $where = 'WHERE cb.estorno = "N" AND cb.lancado = "Y"';
         if(count($filters) > 0){
             $i = 0;
             foreach($filters as $key => $value){
@@ -54,7 +54,7 @@ class WMSProdEntradas{
             if(!array_key_exists('idEntradaProduto', $request) or $request['idEntradaProduto'] === '' or $request['idEntradaProduto'] === null)
                 throw new \Exception('idEntradaProduto não informado');
 
-            // Valida se o produto está armazenado e em estoque
+            // Valida se o produto já foi lançado e não foi estornado
             $sql = '
                 select id, lancado, estorno
                 from pcp_codigo_de_barras
@@ -71,7 +71,31 @@ class WMSProdEntradas{
                 else if($row->estorno == 'Y')
                     throw new \Exception('Produto já foi estornado');
             }
-            
+
+            $idCodigo = $row->id;
+
+            // Valida se o produto já se encontra armazenado
+            $sql = '
+                SELECT
+                    ap.id,
+                    ap.id_armazenagem idArmazenagem,
+                    a.nome nomeAlmoxarifado,
+                    p.posicao nomePosicao,
+                    ap.estorno
+                FROM wmsprod_armazenagem_produtos ap
+                JOIN wmsprod_almoxarifados a ON a.id = ap.id_almoxarifado
+                JOIN wmsprod_posicoes p ON p.id = ap.id_posicao
+                WHERE ap.id_codigo = :idCodigo;
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':idCodigo', $idCodigo);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            if(isset($row->id) and $row->estorno == 'N'){
+                throw new \Exception('Não foi possível realizar estorno de entrada pois o produto já está armazenado no endereço: '.$row->nomeAlmoxarifado.' - '.$row->nomePosicao);
+            }
+
+            // Lançamento validado, seguindo com estorno
             $sql = '
                 update pcp_codigo_de_barras
                 set
