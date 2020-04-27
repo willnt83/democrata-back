@@ -317,6 +317,11 @@ $app->get('/deleteArmazenagem', function (Request $request, Response $response){
     return $response->write($classArmazenagemInsumos->deleteArmazenagem($request->getQueryParams()));
 });
 
+$app->get('/getEstoqueDeInsumos', function (Request $request, Response $response){
+    $classArmazenagemInsumos = new ArmazenagemInsumos($this->db);
+    return $response->write($classArmazenagemInsumos->getEstoqueDeInsumos($request->getQueryParams()));
+});
+
 /* Saída de Insumos */
 $app->get('/getSaidas', function (Request $request, Response $response){
     $classSaidaInsumos = new SaidaInsumos($this->db);
@@ -481,6 +486,7 @@ $app->get('/getPedidosCompraInsumosArmazenarAvailables', function (Request $requ
     return $response->write($classPedidosInsumos->getPedidosCompraInsumosArmazenarAvailables($request->getQueryParams()));
 });
 
+
 /* WMS Produtos */
 /* Almoxarifados */
 $app->get('/wms-produtos/getAlmoxarifados', function (Request $request, Response $response){
@@ -532,6 +538,7 @@ $app->get('/wms-produtos/getProdutoArmazenadoInfo', function (Request $request, 
     $classArmazenagemProdutosFinalizados = new WMSProdArmazenagens($this->db);
     return $response->write($classArmazenagemProdutosFinalizados->getProdutoArmazenadoInfo($request->getQueryParams()));
 });
+
 
 /* Saída */
 $app->get('/wms-produtos/getSaidas', function (Request $request, Response $response){

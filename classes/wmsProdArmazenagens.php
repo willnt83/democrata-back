@@ -188,6 +188,7 @@ class WMSProdArmazenagens{
                 from wmsprod_armazenagem_produtos
                 where
                     codigo = :codigo
+                    and estorno = "N"
             ';
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':codigo', $request['codigo']);

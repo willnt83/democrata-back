@@ -6,6 +6,7 @@ class PosicaoArmazem{
     }
 
     public function getPosicaoArmazens($filters){
+        sleep(2);
         $where = '';
         if(count($filters) > 0){
             $where = 'where ';

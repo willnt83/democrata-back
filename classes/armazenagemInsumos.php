@@ -488,4 +488,73 @@ class ArmazenagemInsumos{
             )
         ));
     }
+
+    public function getEstoqueDeInsumos($filters){
+        try{
+            $where = '';
+            if(count($filters) > 0){
+                $where = 'where ';
+                $first = true;
+                foreach($filters as $filtro => $valor){
+                    $and = $first ? '' : ' and ';
+                    if($filtro == 'nome'){
+                        $where .= $and.'i.nome like "%'.$valor.'%"';
+                    }
+                    else if($filtro == 'ins'){
+                        $where .= $and.'i.ins = "'.$valor.'"';
+                    }
+                    else if($filtro == 'id_almoxarifado'){
+                        $where .= $and.'ai.id_almoxarifado = "'.$valor.'"';
+                    }
+                    else if($filtro == 'id_posicao'){
+                        $where .= $and.'ai.id_posicao = "'.$valor.'"';
+                    }
+                    $first = false;
+                }
+            }
+
+            $sql = '
+                SELECT
+                    pin.id_insumo idInsumo,
+                    i.nome nomeInsumo,
+                    i.ins insInsumo,
+                    um.nome unidadeMedidaInsumo,
+                    ai.id_almoxarifado idAlmoxarifado,
+                    a.nome nomeAlmoxarifado,
+                    ai.id_posicao idPosicao,
+                    pa.posicao nomePosicao,
+                    ai.quantidade
+                FROM pcp_armazenagem_insumos ai
+                JOIN pcp_entrada_insumos ei ON ei.id = ai.id_entrada_insumo
+                JOIN pcp_pedidos_insumos pin ON pin.id = ei.id_pedido_insumo
+                JOIN pcp_insumos i ON i.id = pin.id_insumo
+                JOIN pcp_unidades_medida um ON um.id = i.id_unidade_medida
+                JOIN pcp_almoxarifado a ON a.id = ai.id_almoxarifado
+                JOIN pcp_posicao_armazem pa ON pa.id = ai.id_posicao
+                '.$where.'
+            ;';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $responseData = array();
+            while($row = $stmt->fetch()){
+                $row->idInsumo = (int)$row->idInsumo;
+                $row->idAlmoxarifado = (int)$row->idAlmoxarifado;
+                $row->idPosicao = (int)$row->idPosicao;
+                $row->quantidade = (float)$row->quantidade;
+                $responseData[] = $row;
+            }
+
+            // Reponse
+            return json_encode(array(
+                'success' => true,
+                'msg' => 'Insumos recuperados com sucesso',
+                'payload' => $responseData
+            ));
+        }catch(\Exception $e){
+            return json_encode(array(
+                'success' => false,
+                'msg' => $e->getMessage()
+            ));
+        }
+    }
 }
