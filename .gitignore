@@ -22,3 +22,4 @@ public/barcodes
 public/reports
 public/uploads
 public/etiquetasArmazenagem
+.env
