@@ -89,6 +89,11 @@ $app->get('/deleteProduto', function (Request $request, Response $response){
     return $response->write($classProdutos->deleteProduto($request->getQueryParams()));
 });
 
+$app->get('/getProdutoInsumos', function (Request $request, Response $response){
+    $classProdutos = new Produtos($this->db);
+    return $response->write($classProdutos->getProdutoInsumos($request->getQueryParams()));
+});
+
 /* Subprodutos */
 $app->get('/getSubprodutos', function (Request $request, Response $response){
     $classSubprodutos = new Subprodutos($this->db);
