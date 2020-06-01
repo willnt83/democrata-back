@@ -1,6 +1,6 @@
 <?php
 
-class Produtos{
+class Produtos {
     public function __construct($db){
         $this->pdo = $db;
         //require_once 'goods.php';
@@ -69,6 +69,7 @@ class Produtos{
                 p.mao_de_obra,
                 p.materia_prima,
                 p.id_linha_de_producao idLinhaDeProducao,
+                p.volume,
                 lp.nome nomeLinhaDeProducao,
                 plsc.id_setor idSetor,
                 s.nome nomeSetor,
@@ -105,6 +106,7 @@ class Produtos{
                     'ativo' => $row->ativo,
                     'maoDeObra' => $row->mao_de_obra,
                     'materiaPrima' => $row->materia_prima,
+                    'volume' => $row->volume,
                     'cor' => array(
                         'id' => (int)$row->idCor,
                         'nome' => $row->nomeCor
@@ -129,6 +131,7 @@ class Produtos{
                         'ativo' => $row->ativo,
                         'maoDeObra' => $row->mao_de_obra,
                         'materiaPrima' => $row->materia_prima,
+                        'volume' => $row->volume,
                         'cor' => array(
                             'id' => (int)$row->idCor,
                             'nome' => $row->nomeCor
@@ -192,7 +195,8 @@ class Produtos{
                         ativo = :ativo,
                         id_cor = :cor,
                         mao_de_obra = :maoDeObra,
-                        materia_prima = :materiaPrima
+                        materia_prima = :materiaPrima,
+                        volue = :volume
                     where id = :id;
                 ';
 
@@ -205,6 +209,7 @@ class Produtos{
                 $stmt->bindParam(':maoDeObra', $request['maoDeObra']);
                 $stmt->bindParam(':materiaPrima', $request['materiaPrima']);
                 $stmt->bindParam(':ativo', $request['ativo']);
+                $stmt->bindParam(':volume', $request['volume']);
                 $stmt->execute();
                 $produtoId = $request['id'];
                 $msg = 'Produto atualizado com sucesso.';
@@ -221,7 +226,8 @@ class Produtos{
                         mao_de_obra = :maoDeObra,
                         materia_prima = :materiaPrima,
                         id_linha_de_producao = :id_linha_de_producao,
-                        ativo = :ativo
+                        ativo = :ativo,
+                        volue = :volume
                 ';
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindParam(':nome', $request['nome']);
@@ -232,6 +238,7 @@ class Produtos{
                 $stmt->bindParam(':materiaPrima', $request['materiaPrima']);
                 $stmt->bindParam(':id_linha_de_producao', $request['idLinhaDeProducao']);
                 $stmt->bindParam(':ativo', $request['ativo']);
+                $stmt->bindParam(':volume', $request['volume']);
                 $stmt->execute();
                 $produtoId = $this->pdo->lastInsertId();
                 $msg = 'Produto cadastrado com sucesso.';
@@ -266,6 +273,30 @@ class Produtos{
                 }
             }
 
+            // Insumos do Produto
+            $sql = '
+                delete from pcp_produtos_insumos
+                where id_produto = :id;
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':id', $produtoId);
+            $stmt->execute();
+
+            foreach($request['insumos'] as $key => $insumos){
+                $sql = '
+                    insert into pcp_produtos_insumos
+                    set
+                        id_produto = :id_produto,
+                        id_insumo  = :id_insumo,
+                        qtd_insumo = :qtd_insumo
+                ';
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->bindParam(':id_produto', $produtoId);
+                $stmt->bindParam(':id_insumo', $insumos['id']);
+                $stmt->bindParam(':qtd_insumo', $insumos['qtd']);
+                $stmt->execute();
+            }            
+
             // Reponse
             return json_encode(array(
                 'success' => true,
@@ -290,6 +321,14 @@ class Produtos{
             $stmt->execute();
 
             $sql = '
+                delete from pcp_produtos_insumos
+                where id_produto = :id
+            ';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':id', $filters['id']); 
+            $stmt->execute();
+            
+            $sql = '
                 delete from pcp_produtos
                 where id = :id
             ';
@@ -308,5 +347,51 @@ class Produtos{
                 'msg' => $e->getMessage()
             ));
         }
+    }
+
+    public function getProdutoInsumos($filters){
+        $where = '';
+        if(count($filters) > 0){
+            $where = 'where ';
+            $i = 0;
+            foreach($filters as $key => $value){
+                $and = $i > 0 ? ' and ' : '';
+                $where .= $and.'pin.'.$key.' = :'.$key;
+                $i++;
+            }
+        }
+
+        $sql = '
+        select 	    pin.id_produto, pin.qtd_insumo, 
+                    ins.id idInsumo, ins.nome nomeInsumo, pin.qtd_insumo, ins.ins,
+                    uni.id idUnidade, uni.nome nomeUnidade, uni.unidade unidadeUnidade
+        from	    pcp_produtos p
+		            inner join pcp_produtos_insumos pin on pin.id_produto = p.id 
+		            inner join pcp_insumos ins on ins.id = pin.id_insumo 
+		            inner join pcp_unidades_medida uni on uni.id = ins.id_unidade_medida 
+        '.$where.'
+        order by    ins.id';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($filters);
+        
+        $responseData = array();
+        while ($row = $stmt->fetch()) {
+            $responseData[] = array(
+                'id'        => (int) $row->idInsumo,
+                'nome'      => $row->nomeInsumo,
+                'ins'       => $row->ins,
+                'qtd'       => (float) $row->qtd_insumo,
+                'unidade'   => array(
+                    'id'       => (int) $row->idUnidade,
+                    'nome'     => $row->nomeUnidade,
+                    'medida'   => $row->unidadeUnidade
+                )
+            );
+        }
+
+        return json_encode(array(
+            'success' => true,
+            'payload' => $responseData
+        ));        
     }
 }

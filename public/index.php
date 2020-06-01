@@ -1,4 +1,5 @@
 <?php
+session_start();
 set_time_limit(60);
 
 if (PHP_SAPI == 'cli-server') {
@@ -15,35 +16,13 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use Tuupola\Middleware\CorsMiddleware;
 
-session_start();
-$config['displayErrorDetails'] = true;
-$config['addContentLengthHeader'] = false;
-
-// Produção
-/*
-$config['db']['host']   = 'br522.hostgator.com.br';
-$config['db']['user']   = 'gerado49_democra';
-$config['db']['pass']   = 'Pr0DD3m0Cr';
-$config['db']['dbname'] = 'gerado49_democrata';
-*/
-// Homolog
-/*
-$config['db']['host']   = 'br522.hostgator.com.br';
-$config['db']['user']   = 'gerado49_hmdemoc';
-$config['db']['pass']   = 'D3m0Cr4t4Pass!@#';
-$config['db']['dbname'] = 'gerado49_hmdemocrata';
-*/
-
-// Local
-$config['db']['host']   = 'localhost';
-$config['db']['user']   = 'root';
-$config['db']['pass']   = 'asdzxcc11';
-$config['db']['dbname'] = 'pcp_prod';
-
+// Initializing dotEnv (root directory)
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__.'/..');
+$dotenv->load();
 
 // Instantiate the app
 $settings = require __DIR__ . '/../src/settings.php';
-$app = new \Slim\App(['settings' => $config]);
+$app = new \Slim\App($settings);
 
 // Set up dependencies
 require __DIR__ . '/../src/dependencies.php';
