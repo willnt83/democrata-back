@@ -236,18 +236,18 @@ class WMSProdSaidas{
             // Valida a request
             if(!array_key_exists('idUsuario', $request) or $request['idUsuario'] === '' or $request['idUsuario'] === null)
                 throw new \Exception('idUsuario não informado');
-            if(!array_key_exists('idSaidaProduto', $request) or $request['idSaidaProduto'] === '' or $request['idSaidaProduto'] === null)
-                throw new \Exception('idSaidaProduto não informado');
+            if(!array_key_exists('codigo', $request) or $request['codigo'] === '' or $request['codigo'] === null)
+                throw new \Exception('codigo não informado');
 
             // Valida se o produto está armazenado e em estoque
             $sql = '
                 select id, estorno
                 from wmsprod_saida_produtos
                 where
-                    id = :idSaidaProduto
+                    codigo = :codigo
             ';
             $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':idSaidaProduto', $request['idSaidaProduto']);
+            $stmt->bindParam(':codigo', $request['codigo']);
             $stmt->execute();
             $row = $stmt->fetch();
             if(!isset($row->id)){
@@ -262,14 +262,15 @@ class WMSProdSaidas{
                 update wmsprod_saida_produtos
                 set
                     estorno = "Y",
-                    id_usuario_estorno = :idUsuarioEstorno
+                    id_usuario_estorno = :idUsuarioEstorno,
+                    dthr_estorno = now()
                 where
-                    id = :idSaidaProduto
+                    codigo = :codigo
             ';
             $stmt = $this->pdo->prepare($sql);
 
             $stmt->bindParam(':idUsuarioEstorno', $request['idUsuario']);
-            $stmt->bindParam(':idSaidaProduto', $request['idSaidaProduto']);
+            $stmt->bindParam(':codigo', $request['codigo']);
             $stmt->execute();
 
             return json_encode(array(
@@ -282,5 +283,39 @@ class WMSProdSaidas{
                 'msg' => $e->getMessage()
             ));
         }
+    }
+
+    public function getEstornosSaidaProduto(){
+        $sql = '
+            SELECT
+                sp.codigo codigoProduto,
+                CONCAT(p.nome, " (", c.nome, ")") descricaoProduto,
+                u.nome nomeUsuario,
+                sp.dthr_estorno dthrEstorno
+            FROM wmsprod_saida_produtos sp
+            JOIN pcp_produtos p ON p.id = sp.id_produto
+            JOIN pcp_cores c ON c.id = p.id_cor
+            JOIN pcp_usuarios u ON u.id = sp.id_usuario_estorno
+            WHERE
+                sp.estorno = "Y"
+            ORDER BY sp.dthr_estorno DESC;
+        ';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $responseData = array();
+        while($row = $stmt->fetch()){
+            $responseData[] = array(
+                'codigoProduto' => $row->codigoProduto,
+                'descricaoProduto' => $row->descricaoProduto,
+                'nomeUsuario' => $row->nomeUsuario,
+                'dthrEstorno' => $row->dthrEstorno
+            );
+        }
+
+        return json_encode(array(
+            'success' => true,
+            'payload' => $responseData
+        ));
     }
 }

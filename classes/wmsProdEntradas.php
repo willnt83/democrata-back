@@ -5,6 +5,7 @@ class WMSProdEntradas{
         $this->pdo = $db;
     }
 
+    /*
     public function getEntradaProdutos($filters){
         $where = 'WHERE cb.estorno = "N" AND cb.lancado = "Y"';
         if(count($filters) > 0){
@@ -45,24 +46,25 @@ class WMSProdEntradas{
             'payload' => $responseData
         ));
     }
+    */
 
     public function estornarEntradaProduto($request){
         try{
             // Valida a request
             if(!array_key_exists('idUsuario', $request) or $request['idUsuario'] === '' or $request['idUsuario'] === null)
                 throw new \Exception('idUsuario não informado');
-            if(!array_key_exists('idEntradaProduto', $request) or $request['idEntradaProduto'] === '' or $request['idEntradaProduto'] === null)
-                throw new \Exception('idEntradaProduto não informado');
+            if(!array_key_exists('codigo', $request) or $request['codigo'] === '' or $request['codigo'] === null)
+                throw new \Exception('codigo não informado');
 
             // Valida se o produto já foi lançado e não foi estornado
             $sql = '
                 select id, lancado, estorno
                 from pcp_codigo_de_barras
                 where
-                    id = :idEntradaProduto
+                    codigo = :codigo
             ';
             $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':idEntradaProduto', $request['idEntradaProduto']);
+            $stmt->bindParam(':codigo', $request['codigo']);
             $stmt->execute();
             $row = $stmt->fetch();
             if($row->lancado == 'N'){
@@ -101,14 +103,15 @@ class WMSProdEntradas{
                 set
                     lancado = "N",
                     estorno = "Y",
-                    id_usuario_estorno = :idUsuarioEstorno
+                    id_usuario_estorno = :idUsuarioEstorno,
+                    dthr_estorno = now()
                 where
-                    id = :idEntradaProduto
+                    codigo = :codigo
             ';
             $stmt = $this->pdo->prepare($sql);
 
             $stmt->bindParam(':idUsuarioEstorno', $request['idUsuario']);
-            $stmt->bindParam(':idEntradaProduto', $request['idEntradaProduto']);
+            $stmt->bindParam(':codigo', $request['codigo']);
             $stmt->execute();
 
             return json_encode(array(
@@ -121,5 +124,41 @@ class WMSProdEntradas{
                 'msg' => $e->getMessage()
             ));
         }
+    }
+
+    public function getEstornosEntradaProduto(){
+        $sql = '
+            SELECT
+                cb.codigo codigoProduto,
+                concat(p.nome," (", c.nome,")") descricaoProduto,
+                u.nome nomeUsuario,
+                cb.dthr_estorno dthrEstorno
+            FROM pcp_codigo_de_barras cb
+            JOIN pcp_produtos p ON p.id = cb.id_produto
+            JOIN pcp_cores c ON c.id = p.id_cor
+            JOIN pcp_usuarios u ON u.id = cb.id_usuario_estorno
+            WHERE
+                cb.id_setor = 8
+                AND cb.lancado = "N"
+                AND cb.estorno = "Y"
+            ORDER BY cb.dthr_estorno DESC;
+        ';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $responseData = array();
+        while($row = $stmt->fetch()){
+            $responseData[] = array(
+                'codigoProduto' => $row->codigoProduto,
+                'descricaoProduto' => $row->descricaoProduto,
+                'nomeUsuario' => $row->nomeUsuario,
+                'dthrEstorno' => $row->dthrEstorno
+            );
+        }
+
+        return json_encode(array(
+            'success' => true,
+            'payload' => $responseData
+        ));
     }
 }

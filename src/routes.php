@@ -511,17 +511,12 @@ $app->get('/wms-produtos/deletePosicao', function (Request $request, Response $r
 });
 
 
-/* Entrada */
-/*
-$app->get('/wms-produtos/getEntradas', function (Request $request, Response $response){
-    $classEntradaProdutosFinalizados = new WMSProdEntradas($this->db);
-    return $response->write($classEntradaProdutosFinalizados->getEntradas($request->getQueryParams()));
-});
-*/
-$app->get('/wms-produtos/getEntradaProdutos', function (Request $request, Response $response){
+/* Entrada Produtos */
+$app->get('/wms-produtos/getEstornosEntradaProduto', function (Request $request, Response $response){
     $classEntrada = new WMSProdEntradas($this->db);
-    return $response->write($classEntrada->getEntradaProdutos($request->getQueryParams()));
+    return $response->write($classEntrada->getEstornosEntradaProduto($request->getQueryParams()));
 });
+
 
 /* Armazenagem */
 $app->get('/wms-produtos/getArmazenagens', function (Request $request, Response $response){
@@ -537,6 +532,16 @@ $app->get('/wms-produtos/getArmazenagemProdutos', function (Request $request, Re
 $app->get('/wms-produtos/getProdutoArmazenadoInfo', function (Request $request, Response $response){
     $classArmazenagemProdutosFinalizados = new WMSProdArmazenagens($this->db);
     return $response->write($classArmazenagemProdutosFinalizados->getProdutoArmazenadoInfo($request->getQueryParams()));
+});
+
+$app->get('/wms-produtos/estornarArmazenagemProduto', function (Request $request, Response $response){
+    $classArmazenagemProdutosFinalizados = new WMSProdArmazenagens($this->db);
+    return $response->write($classArmazenagemProdutosFinalizados->estornarArmazenagemProduto($request->getQueryParams()));
+});
+
+$app->get('/wms-produtos/getEstornosArmazenagemProduto', function (Request $request, Response $response){
+    $classArmazenagemProdutosFinalizados = new WMSProdArmazenagens($this->db);
+    return $response->write($classArmazenagemProdutosFinalizados->getEstornosArmazenagemProduto($request->getQueryParams()));
 });
 
 
@@ -559,6 +564,11 @@ $app->get('/wms-produtos/deleteSaida', function (Request $request, Response $res
 $app->get('/wms-produtos/deleteSaidaProdutos', function (Request $request, Response $response){
     $WMSProdSaidas = new WMSProdSaidas($this->db);
     return $response->write($WMSProdSaidas->deleteSaidaProdutos($request->getQueryParams()));
+});
+
+$app->get('/wms-produtos/getEstornosSaidaProduto', function (Request $request, Response $response){
+    $WMSProdSaidas = new WMSProdSaidas($this->db);
+    return $response->write($WMSProdSaidas->getEstornosSaidaProduto($request->getQueryParams()));
 });
 
 /* Agendas */
@@ -788,13 +798,6 @@ $app->post('/wms-produtos/createUpdatePosicao', function ($request, $response){
 });
 
 /* Entrada */
-/*
-$app->post('/wms-produtos/lancamentoEntradaProdutos', function ($request, $response){
-    $classEntradaProdutosFinalizados = new EntradaProdutosFinalizados($this->db);
-    return $response->write($classEntradaProdutosFinalizados->lancamentoEntradaProdutos(json_decode($request->getBody(), true)));
-});
-*/
-
 $app->post('/wms-produtos/estornarEntradaProduto', function ($request, $response){
     $classEntrada = new WMSProdEntradas($this->db);
     return $response->write($classEntrada->estornarEntradaProduto(json_decode($request->getBody(), true)));

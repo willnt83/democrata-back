@@ -328,18 +328,18 @@ class WMSProdArmazenagens{
             // Valida a request
             if(!array_key_exists('idUsuario', $request) or $request['idUsuario'] === '' or $request['idUsuario'] === null)
                 throw new \Exception('idUsuario não informado');
-            if(!array_key_exists('idArmazenagemProduto', $request) or $request['idArmazenagemProduto'] === '' or $request['idArmazenagemProduto'] === null)
-                throw new \Exception('idArmazenagemProduto não informado');
+            if(!array_key_exists('codigo', $request) or $request['codigo'] === '' or $request['codigo'] === null)
+                throw new \Exception('codigo não informado');
 
             // Valida se o produto está armazenado e em estoque
             $sql = '
                 select id, estoque, estorno
                 from wmsprod_armazenagem_produtos
                 where
-                    id = :idArmazenagemProduto
+                    codigo = :codigo
             ';
             $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':idArmazenagemProduto', $request['idArmazenagemProduto']);
+            $stmt->bindParam(':codigo', $request['codigo']);
             $stmt->execute();
             $row = $stmt->fetch();
             if(!isset($row->id)){
@@ -356,14 +356,15 @@ class WMSProdArmazenagens{
                 update wmsprod_armazenagem_produtos
                 set
                     estorno = "Y",
-                    id_usuario_estorno = :idUsuarioEstorno
+                    id_usuario_estorno = :idUsuarioEstorno,
+                    dthr_estorno = now()
                 where
-                    id = :idArmazenagemProduto
+                    codigo = :codigo
             ';
             $stmt = $this->pdo->prepare($sql);
 
             $stmt->bindParam(':idUsuarioEstorno', $request['idUsuario']);
-            $stmt->bindParam(':idArmazenagemProduto', $request['idArmazenagemProduto']);
+            $stmt->bindParam(':codigo', $request['codigo']);
             $stmt->execute();
 
             return json_encode(array(
@@ -376,5 +377,39 @@ class WMSProdArmazenagens{
                 'msg' => $e->getMessage()
             ));
         }
+    }
+
+    public function getEstornosArmazenagemProduto(){
+        $sql = '
+            SELECT
+                ap.codigo codigoProduto,
+                CONCAT(p.nome, " (", c.nome, ")") descricaoProduto,
+                u.nome nomeUsuario,
+                ap.dthr_estorno dthrEstorno
+            FROM wmsprod_armazenagem_produtos ap
+            JOIN pcp_produtos p ON p.id = ap.id_produto
+            JOIN pcp_cores c ON c.id = p.id_cor
+            JOIN pcp_usuarios u ON u.id = ap.id_usuario_estorno
+            WHERE
+                ap.estorno = "Y"
+            ORDER BY ap.dthr_estorno DESC;
+        ';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $responseData = array();
+        while($row = $stmt->fetch()){
+            $responseData[] = array(
+                'codigoProduto' => $row->codigoProduto,
+                'descricaoProduto' => $row->descricaoProduto,
+                'nomeUsuario' => $row->nomeUsuario,
+                'dthrEstorno' => $row->dthrEstorno
+            );
+        }
+
+        return json_encode(array(
+            'success' => true,
+            'payload' => $responseData
+        ));
     }
 }
